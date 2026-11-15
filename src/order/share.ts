@@ -3,6 +3,7 @@
 import { BOX_AUTO, BOX_NONE, BOXES } from '../parts/boxes';
 import {
   GENERATOR_VERSION,
+  STRIP_PROFILES,
   STRIP_VOLTAGES,
   CONTROLLERS,
   PLATE_CORNER_R,
@@ -320,6 +321,11 @@ function paramsOf(value: unknown, warnings: string[]): Partial<Params> {
     const box = value.BOX_ID;
     if (typeof box === 'string' && (box === BOX_AUTO || box === BOX_NONE || BOXES.some((b) => b.id === box))) params.BOX_ID = box;
     else warnings.push('Scatola sconosciuta: scelta automatica.');
+  }
+  if ('STRIP_ID' in value) {
+    if (typeof value.STRIP_ID === 'string' && STRIP_PROFILES.some((s) => s.id === value.STRIP_ID)) {
+      params.STRIP_ID = value.STRIP_ID;
+    } else warnings.push('Striscia sconosciuta: usata quella predefinita.');
   }
   if ('CONTROLLER_ID' in value) {
     if (typeof value.CONTROLLER_ID === 'string' && CONTROLLERS.some((c) => c.id === value.CONTROLLER_ID)) {

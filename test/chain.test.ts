@@ -1,9 +1,15 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_PARAMS, rMin } from '../src/config';
+import { resolveParams, rMin } from '../src/config';
 import { resampleChain, type ChainHinge } from '../src/geometry/chain';
 import type { Point } from '../src/geometry/rasterize';
 
-const PITCH = DEFAULT_PARAMS.HINGE_PITCH;
+/**
+ * Queste prove riguardano la piega della striscia, quindi usano una striscia che piega: la COB.
+ * La predefinita (WS2812B su circuito flessibile) non curva, e qui non direbbe nulla di utile.
+ */
+const BENDABLE = resolveParams({ STRIP_ID: 'cob-5mm' });
+
+const PITCH = BENDABLE.HINGE_PITCH;
 
 const dist = (a: Point, b: Point): number => Math.hypot(b[0] - a[0], b[1] - a[1]);
 
@@ -43,8 +49,8 @@ describe('catena su archi di raggio noto', () => {
       ],
       {
         hingePitch: PITCH,
-        hingeMaxDeg: DEFAULT_PARAMS.HINGE_MAX_DEG,
-        channelW: DEFAULT_PARAMS.CHANNEL_W,
+        hingeMaxDeg: BENDABLE.HINGE_MAX_DEG,
+        channelW: BENDABLE.CHANNEL_W,
         closed: false,
       },
     );
@@ -57,7 +63,7 @@ describe('catena su archi di raggio noto', () => {
       expect(hinge.angleDeg).toBeLessThan(0.01);
       expect(hinge.radiusMm).toBeNull();
       expect(hinge.sagittaMm).toBe(0);
-      expect(hinge.channelWMm).toBe(DEFAULT_PARAMS.CHANNEL_W);
+      expect(hinge.channelWMm).toBe(BENDABLE.CHANNEL_W);
       expect(hinge.over).toBe(false);
     }
   });
@@ -66,8 +72,8 @@ describe('catena su archi di raggio noto', () => {
     const radius = 40;
     const chain = resampleChain(circularArc(radius, 120), {
       hingePitch: PITCH,
-      hingeMaxDeg: DEFAULT_PARAMS.HINGE_MAX_DEG,
-      channelW: DEFAULT_PARAMS.CHANNEL_W,
+      hingeMaxDeg: BENDABLE.HINGE_MAX_DEG,
+      channelW: BENDABLE.CHANNEL_W,
       closed: false,
     });
     const chords: number[] = [];
@@ -83,23 +89,23 @@ describe('catena su archi di raggio noto', () => {
       expect(hinge.angleDeg).toBeCloseTo(expectedAngle, 1);
       expect(hinge.radiusMm).toBeCloseTo(radius, 1);
       expect(hinge.sagittaMm).toBeCloseTo(expectedS, 2);
-      expect(hinge.channelWMm).toBeCloseTo(DEFAULT_PARAMS.CHANNEL_W + expectedS, 2);
+      expect(hinge.channelWMm).toBeCloseTo(BENDABLE.CHANNEL_W + expectedS, 2);
       expect(hinge.over).toBe(false);
     }
   });
 
   it("all'arco di raggio R_MIN l'angolo è HINGE_MAX_DEG", () => {
-    const radius = rMin(DEFAULT_PARAMS);
+    const radius = rMin(BENDABLE);
     const chain = resampleChain(circularArc(radius, 180), {
       hingePitch: PITCH,
-      hingeMaxDeg: DEFAULT_PARAMS.HINGE_MAX_DEG,
-      channelW: DEFAULT_PARAMS.CHANNEL_W,
+      hingeMaxDeg: BENDABLE.HINGE_MAX_DEG,
+      channelW: BENDABLE.CHANNEL_W,
       closed: false,
     });
     const hinges = fullHinges(chain.points, chain.hinges, PITCH);
     expect(hinges.length).toBeGreaterThanOrEqual(2);
     for (const hinge of hinges) {
-      expect(hinge.angleDeg).toBeCloseTo(DEFAULT_PARAMS.HINGE_MAX_DEG, 1);
+      expect(hinge.angleDeg).toBeCloseTo(BENDABLE.HINGE_MAX_DEG, 1);
       expect(hinge.radiusMm).toBeCloseTo(radius, 1);
       expect(hinge.over).toBe(false);
     }
@@ -109,8 +115,8 @@ describe('catena su archi di raggio noto', () => {
     const radius = 10;
     const chain = resampleChain(circularArc(radius, 180), {
       hingePitch: PITCH,
-      hingeMaxDeg: DEFAULT_PARAMS.HINGE_MAX_DEG,
-      channelW: DEFAULT_PARAMS.CHANNEL_W,
+      hingeMaxDeg: BENDABLE.HINGE_MAX_DEG,
+      channelW: BENDABLE.CHANNEL_W,
       closed: false,
     });
     const expectedS = (PITCH * PITCH) / (8 * radius);
@@ -118,10 +124,10 @@ describe('catena su archi di raggio noto', () => {
     expect(hinges.length).toBeGreaterThanOrEqual(2);
     for (const hinge of hinges) {
       expect(hinge.angleDeg).toBeCloseTo(turnDeg(radius, PITCH), 1);
-      expect(hinge.angleDeg).toBeGreaterThan(DEFAULT_PARAMS.HINGE_MAX_DEG);
+      expect(hinge.angleDeg).toBeGreaterThan(BENDABLE.HINGE_MAX_DEG);
       expect(hinge.radiusMm).toBeCloseTo(radius, 1);
       expect(hinge.sagittaMm).toBeCloseTo(expectedS, 2);
-      expect(hinge.channelWMm).toBeCloseTo(DEFAULT_PARAMS.CHANNEL_W + expectedS, 2);
+      expect(hinge.channelWMm).toBeCloseTo(BENDABLE.CHANNEL_W + expectedS, 2);
       expect(hinge.over).toBe(true);
     }
   });
@@ -130,8 +136,8 @@ describe('catena su archi di raggio noto', () => {
     const arc = circularArc(25, 150, 1);
     const options = {
       hingePitch: PITCH,
-      hingeMaxDeg: DEFAULT_PARAMS.HINGE_MAX_DEG,
-      channelW: DEFAULT_PARAMS.CHANNEL_W,
+      hingeMaxDeg: BENDABLE.HINGE_MAX_DEG,
+      channelW: BENDABLE.CHANNEL_W,
       closed: false,
     };
     expect(resampleChain(arc, options)).toEqual(resampleChain(arc, options));

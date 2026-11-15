@@ -41,6 +41,10 @@ test('editor: trascina un nodo, una curva stretta blocca l\'invio, Ctrl+Z lo ria
   await expect(page.locator('#preview-status')).toContainText('LED');
   expect(scripts.join('\n').toLowerCase()).not.toContain('paper');
 
+  // L'editor si prova con una striscia che curva: la predefinita non piega di lato e bloccherebbe sempre.
+  await page.locator('[data-tool="tech"]').click();
+  await page.locator('select[name="tech-STRIP_ID"]').selectOption('cob-5mm');
+
   await page.locator('[data-tool="text"]').click();
   await page.locator('input[name="text"]').fill('c');
   await page.locator('[data-tool="size"]').click();

@@ -1,7 +1,10 @@
 // Pezzi di prova per misurare HINGE_MAX_DEG e R_MIN reali della striscia (SPEC §2, §10).
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { DEFAULT_PARAMS, type EdgeProfile } from '../config';
+import { COB_5MM, resolveParams, type EdgeProfile } from '../config';
+
+// I pezzi di prova nascono per la COB con gli intagli: la striscia predefinita non piega di lato.
+const DEFAULT_PARAMS = resolveParams({ STRIP_ID: COB_5MM.id });
 import { meshToStl, type StlMesh } from '../export/stl';
 import {
   buildBendTest,

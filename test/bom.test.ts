@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_PARAMS } from '../src/config';
+import { resolveParams } from '../src/config';
 import { anchorHoleCount, buildBom } from '../src/export/bom';
+
+/**
+ * Queste prove riguardano la piega della striscia, quindi usano una striscia che piega: la COB.
+ * La predefinita (WS2812B su circuito flessibile) non curva, e qui non direbbe nulla di utile.
+ */
+const BENDABLE = resolveParams({ STRIP_ID: 'cob-5mm' });
 
 describe('BOM', () => {
   it('taglia per difetto al passo e conta i LED', () => {
@@ -17,7 +23,7 @@ describe('BOM', () => {
           dot: false,
         },
       ],
-      DEFAULT_PARAMS,
+      BENDABLE,
       [],
     );
     expect(bom.segments[0]).toMatchObject({
@@ -32,8 +38,8 @@ describe('BOM', () => {
     });
     expect(bom.totalLeds).toBe(2);
     expect(bom.wireSlots).toBe(2);
-    expect(bom.wireSlotW).toBe(DEFAULT_PARAMS.CHANNEL_W);
-    expect(bom.wireSlotL).toBe(DEFAULT_PARAMS.WIRE_SLOT_L);
+    expect(bom.wireSlotW).toBe(BENDABLE.CHANNEL_W);
+    expect(bom.wireSlotL).toBe(BENDABLE.WIRE_SLOT_L);
     expect(bom.anchorHoles).toBe(0);
     expect(bom.assembly).toMatchObject({
       segments: 1,
@@ -47,8 +53,8 @@ describe('BOM', () => {
   });
 
   it('i fori rispettano il minimo e i 10 mm di margine', () => {
-    expect(anchorHoleCount(15, DEFAULT_PARAMS)).toBe(0);
-    expect(anchorHoleCount(50, DEFAULT_PARAMS)).toBe(2);
-    expect(anchorHoleCount(200, DEFAULT_PARAMS)).toBe(3);
+    expect(anchorHoleCount(15, BENDABLE)).toBe(0);
+    expect(anchorHoleCount(50, BENDABLE)).toBe(2);
+    expect(anchorHoleCount(200, BENDABLE)).toBe(3);
   });
 });

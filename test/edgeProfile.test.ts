@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { CrossSection } from 'manifold-3d';
-import { COB_5MM, DEFAULT_PARAMS, type EdgeProfile } from '../src/config';
+import { COB_5MM, type EdgeProfile, resolveParams } from '../src/config';
 import { MIN_TOP_WALL, planChamfer, type EdgeProfileParams } from '../src/geometry/edgeProfile';
 import { getManifold } from '../src/geometry/manifold';
 import {
@@ -9,6 +9,12 @@ import {
   channelSection,
   resolveBendTestParams,
 } from '../src/tools/bendTestGeometry';
+
+/**
+ * Queste prove riguardano la piega della striscia, quindi usano una striscia che piega: la COB.
+ * La predefinita (WS2812B su circuito flessibile) non curva, e qui non direbbe nulla di utile.
+ */
+const BENDABLE = resolveParams({ STRIP_ID: 'cob-5mm' });
 
 const PROFILES: EdgeProfile[] = ['square', 'outer', 'inner', 'both'];
 const KINDS = ['arcs', 'corners'] as const;
@@ -19,7 +25,7 @@ const SQUARE_BASELINE: Record<'arcs' | 'corners', { volume: number; tris: number
   corners: { volume: 13643.147918, tris: 5406 },
 };
 
-const base: EdgeProfileParams = DEFAULT_PARAMS;
+const base: EdgeProfileParams = BENDABLE;
 /** I pezzi di prova sono disegnati per la COB da 5 mm. */
 const COB = { STRIP_W: COB_5MM.STRIP_W, STRIP_T: COB_5MM.STRIP_T, CHANNEL_W: COB_5MM.CHANNEL_W, WIRE_SLOT_W: COB_5MM.CHANNEL_W, CHANNEL_DEPTH: 8 };
 const plan = (o: Partial<EdgeProfileParams>) => planChamfer({ ...base, ...o });
@@ -52,12 +58,12 @@ describe('planChamfer', () => {
 
   it('inner/both: ridotto perché in cima restino 0.8 mm di parete, con avviso', () => {
     const inner = plan({ EDGE_PROFILE: 'inner' });
-    expect(DEFAULT_PARAMS.WALL - inner.run).toBeCloseTo(MIN_TOP_WALL, 9);
-    expect(inner.height).toBeLessThan(DEFAULT_PARAMS.CHAMFER_SIZE);
+    expect(BENDABLE.WALL - inner.run).toBeCloseTo(MIN_TOP_WALL, 9);
+    expect(inner.height).toBeLessThan(BENDABLE.CHAMFER_SIZE);
     expect(inner.warnings).toHaveLength(1);
 
     const both = plan({ EDGE_PROFILE: 'both' });
-    expect(DEFAULT_PARAMS.WALL - 2 * both.run).toBeCloseTo(MIN_TOP_WALL, 9);
+    expect(BENDABLE.WALL - 2 * both.run).toBeCloseTo(MIN_TOP_WALL, 9);
     expect(both.warnings).toHaveLength(1);
 
     const ok = plan({ EDGE_PROFILE: 'inner', CHAMFER_SIZE: 1.0 });
@@ -67,7 +73,7 @@ describe('planChamfer', () => {
 
   it('CHAMFER_SIZE limitato a CHANNEL_DEPTH', () => {
     const c = plan({ EDGE_PROFILE: 'outer', CHAMFER_SIZE: 20 });
-    expect(c.height).toBe(DEFAULT_PARAMS.CHANNEL_DEPTH);
+    expect(c.height).toBe(BENDABLE.CHANNEL_DEPTH);
     expect(c.warnings).toHaveLength(1);
   });
 

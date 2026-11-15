@@ -1,10 +1,16 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_PARAMS, rMin } from '../src/config';
+import { resolveParams, rMin } from '../src/config';
 import type { GraphEdge, GraphNode } from '../src/geometry/graph';
 import type { Point } from '../src/geometry/rasterize';
 import { segmentGraph } from '../src/geometry/segment';
 
-const gap = DEFAULT_PARAMS.CROSSING_GAP;
+/**
+ * Queste prove riguardano la piega della striscia, quindi usano una striscia che piega: la COB.
+ * La predefinita (WS2812B su circuito flessibile) non curva, e qui non direbbe nulla di utile.
+ */
+const BENDABLE = resolveParams({ STRIP_ID: 'cob-5mm' });
+
+const gap = BENDABLE.CROSSING_GAP;
 
 function edge(id: number, a: number, b: number, points: Point[]): GraphEdge {
   let lengthMm = 0;
@@ -24,7 +30,7 @@ function circle(radius: number, n = 32): Point[] {
 }
 
 function run(nodes: GraphNode[], edges: GraphEdge[]) {
-  return segmentGraph({ nodes, edges }, { crossingGap: gap, rMin: rMin(DEFAULT_PARAMS) });
+  return segmentGraph({ nodes, edges }, { crossingGap: gap, rMin: rMin(BENDABLE) });
 }
 
 describe('segmentazione', () => {
@@ -114,6 +120,6 @@ describe('segmentazione', () => {
     expect(kept.notices).toHaveLength(0);
     expect(kept.segments).toHaveLength(1);
     expect(kept.segments[0]!.closed).toBe(true);
-    expect(kept.segments[0]!.lengthMm / (2 * Math.PI)).toBeGreaterThan(rMin(DEFAULT_PARAMS));
+    expect(kept.segments[0]!.lengthMm / (2 * Math.PI)).toBeGreaterThan(rMin(BENDABLE));
   });
 });

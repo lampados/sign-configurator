@@ -13,14 +13,22 @@ import {
 } from '../src/config';
 
 describe('config', () => {
-  it('R_MIN ≈ 14,6 mm con cerniere da 10 mm a 40°', () => {
-    expect(DEFAULT_PARAMS.HINGE_MAX_DEG).toBe(40);
-    expect(rMin(DEFAULT_PARAMS)).toBeCloseTo(14.62, 2);
+  it('R_MIN ≈ 14,6 mm con cerniere da 10 mm a 40°, come la COB', () => {
+    const cob = STRIP_PROFILES.find((s) => s.id === 'cob-5mm')!;
+    expect(cob.HINGE_MAX_DEG).toBe(40);
+    expect(rMin(cob)).toBeCloseTo(14.62, 2);
+  });
+
+  it('la striscia predefinita non piega di lato: raggio minimo quasi un metro', () => {
+    expect(DEFAULT_STRIP.sideBend).toBe(false);
+    expect(DEFAULT_PARAMS.HINGE_MAX_DEG).toBe(1);
+    // Non è un numero da taratura: dice che una curva con questa striscia non si fa.
+    expect(rMin(DEFAULT_PARAMS)).toBeGreaterThan(900);
   });
 
   it('altezza totale = FLOOR + CHANNEL_DEPTH', () => {
     expect(totalHeight(DEFAULT_PARAMS)).toBe(DEFAULT_PARAMS.FLOOR + DEFAULT_PARAMS.CHANNEL_DEPTH);
-    expect(totalHeight(DEFAULT_PARAMS)).toBe(16);
+    expect(totalHeight(DEFAULT_PARAMS)).toBe(12);
   });
 
   it("l'asola è larga quanto il canale e sta negli ultimi millimetri", () => {
@@ -31,13 +39,14 @@ describe('config', () => {
     expect(DEFAULT_PARAMS.SLOT_LIP_CHAMFER).toBe(1);
   });
 
-  it('la striscia standard è larga 10 e spessa 6, e MIN_LETTER_H è il doppio di R_MIN', () => {
-    expect(DEFAULT_STRIP.id).toBe('strip-10mm');
+  it('la striscia standard è la WS2812B 60 LED/m, e MIN_LETTER_H è il doppio di R_MIN', () => {
+    expect(DEFAULT_STRIP.id).toBe('ws2812b-60');
     expect(DEFAULT_PARAMS.STRIP_W).toBe(10);
-    expect(DEFAULT_PARAMS.STRIP_T).toBe(6);
+    expect(DEFAULT_PARAMS.STRIP_T).toBe(2);
     expect(DEFAULT_PARAMS.CHANNEL_W).toBe(10.4);
-    // Fra i LED e il diffusore restano 6 mm, come con la COB.
-    expect(DEFAULT_PARAMS.CHANNEL_DEPTH - DEFAULT_PARAMS.STRIP_T).toBe(6);
+    expect(DEFAULT_PARAMS.LED_PER_M).toBe(60);
+    // Fra i LED e il diffusore resta LED_AIR.
+    expect(DEFAULT_PARAMS.CHANNEL_DEPTH - DEFAULT_PARAMS.STRIP_T).toBe(LED_AIR);
     expect(DEFAULT_PARAMS.STRIP_W).toBe(DEFAULT_STRIP.STRIP_W);
     expect(DEFAULT_PARAMS.STRIP_T).toBe(DEFAULT_STRIP.STRIP_T);
     expect(DEFAULT_PARAMS.CHANNEL_W).toBe(DEFAULT_STRIP.CHANNEL_W);
@@ -50,7 +59,9 @@ describe('config', () => {
     const wider = resolveParams({ HINGE_PITCH: 20 });
     expect(wider.MIN_LETTER_H).toBeCloseTo(2 * rMin(wider));
     expect(wider.HINGE_PITCH).toBe(20);
-    expect(DEFAULT_PARAMS.HINGE_PITCH).toBe(10);
+    // Una cerniera per LED: 1000 / 60.
+    expect(DEFAULT_PARAMS.HINGE_PITCH).toBeCloseTo(16.67, 2);
+    expect(DEFAULT_PARAMS.CUT_PITCH).toBe(DEFAULT_PARAMS.HINGE_PITCH);
   });
 
   it('gli override non toccano i default', () => {
@@ -77,9 +88,9 @@ describe('striscia e canale', () => {
     const narrow = stripFitWarnings({ ...DEFAULT_PARAMS, CHANNEL_W: 6 });
     expect(narrow).toHaveLength(1);
     expect(narrow[0]).toMatch(/Canale largo 6 mm: la striscia da 10 mm non ci entra/);
-    const shallow = stripFitWarnings({ ...DEFAULT_PARAMS, CHANNEL_DEPTH: 3 });
+    const shallow = stripFitWarnings({ ...DEFAULT_PARAMS, CHANNEL_DEPTH: 1 });
     expect(shallow).toHaveLength(1);
-    expect(shallow[0]).toMatch(/Canale profondo 3 mm: la striscia è spessa 6 mm/);
+    expect(shallow[0]).toMatch(/Canale profondo 1 mm: la striscia è spessa 2 mm/);
     // Il canale esattamente largo quanto la striscia passa: la tolleranza è un consiglio, non un obbligo.
     expect(stripFitWarnings({ ...DEFAULT_PARAMS, CHANNEL_W: DEFAULT_PARAMS.STRIP_W })).toEqual([]);
   });

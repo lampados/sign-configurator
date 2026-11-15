@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_PARAMS, GENERATOR_VERSION } from '../src/config';
+import { DEFAULT_PARAMS, GENERATOR_VERSION, resolveParams, STRIP_PROFILES } from '../src/config';
 import { migrateOrder } from '../src/order/schema';
 import { decodeShare, encodeShare } from '../src/order/share';
-import { DEFAULT_LED_DENSITY, LED_DENSITIES, TECH_FIELDS, ledDensityOptions, techFieldInvalid, techParams } from '../src/ui/techParams';
+import { DEFAULT_LED_DENSITY, LED_DENSITIES, TECH_FIELDS, ledDensityOptions, stripOptions, techFieldInvalid, techParams } from '../src/ui/techParams';
 import { lightPointsFromChains } from '../src/geometry/lights';
 import type { Point } from '../src/geometry/rasterize';
 
@@ -54,16 +54,18 @@ describe('parametri tecnici della pagina cliente', () => {
     expect(read.order?.params).toEqual(params);
   });
 
-  it('densità dei LED: solo la scala 30–144, predefinita 144', () => {
+  it('densità dei LED: solo la scala 30–144, predefinita quella della striscia', () => {
     expect(LED_DENSITIES).toEqual([30, 60, 74, 96, 144]);
     const options = ledDensityOptions();
     expect(options.map((o) => o.value)).toEqual([30, 60, 74, 96, 144]);
     expect(options.filter((o) => o.isDefault).map((o) => o.value)).toEqual([DEFAULT_LED_DENSITY]);
-    expect(DEFAULT_LED_DENSITY).toBe(144);
-    expect(techParams({ numbers: {}, edgeProfile: 'square', ledPerM: '60' })).toEqual({ LED_PER_M: 60 });
-    // 144 è anche la densità del profilo standard: uguale al default, non va nell'ordine.
-    expect(techParams({ numbers: {}, edgeProfile: 'square', ledPerM: '144' })).toEqual({});
-    // Un valore fuori scala torna a 144.
+    // La densità predefinita è quella della striscia predefinita.
+    expect(DEFAULT_LED_DENSITY).toBe(DEFAULT_PARAMS.LED_PER_M);
+    expect(DEFAULT_LED_DENSITY).toBe(60);
+    expect(techParams({ numbers: {}, edgeProfile: 'square', ledPerM: '144' })).toEqual({ LED_PER_M: 144 });
+    // 60 è la densità della striscia predefinita: uguale al default, non va nell'ordine.
+    expect(techParams({ numbers: {}, edgeProfile: 'square', ledPerM: '60' })).toEqual({});
+    // Un valore fuori scala torna alla predefinita.
     expect(techParams({ numbers: {}, edgeProfile: 'square', ledPerM: '160' })).toEqual({});
     expect(techParams({ numbers: {}, edgeProfile: 'square' })).toEqual({});
   });
@@ -77,5 +79,63 @@ describe('parametri tecnici della pagina cliente', () => {
       const lights = lightPointsFromChains([{ id: 1, points: line, closed: false }], { ...DEFAULT_PARAMS, LED_PER_M: density });
       expect(lights).toHaveLength(density);
     }
+  });
+});
+
+describe('modello di striscia', () => {
+  it('il menu elenca tutti i profili e segna quello predefinito', () => {
+    const options = stripOptions();
+    expect(options.map((o) => o.value)).toEqual(STRIP_PROFILES.map((s) => s.id));
+    expect(options.filter((o) => o.isDefault).map((o) => o.value)).toEqual([DEFAULT_PARAMS.STRIP_ID]);
+    // Le strisce che non seguono le curve lo dicono già nell'etichetta.
+    expect(options[0]!.value).toBe(DEFAULT_PARAMS.STRIP_ID);
+    const plain = options.find((o) => o.value === 'ws2812b-60')!;
+    expect(plain.label).toMatch(/non curva/);
+    expect(options.find((o) => o.value === 'cob-5mm')!.label).not.toMatch(/non curva/);
+  });
+
+  it("l'id della striscia finisce nell'ordine solo se diversa dalla predefinita", () => {
+    expect(techParams({ numbers: {}, edgeProfile: 'square', strip: 'cob-5mm' })).toEqual({ STRIP_ID: 'cob-5mm' });
+    expect(techParams({ numbers: {}, edgeProfile: 'square', strip: DEFAULT_PARAMS.STRIP_ID })).toEqual({});
+    expect(techParams({ numbers: {}, edgeProfile: 'square', strip: 'inventata' })).toEqual({});
+  });
+
+  it('il modello detta le misure, ma un valore scritto a mano vince', () => {
+    const p = resolveParams({ STRIP_ID: 'ws2812b-60' });
+    expect(p.STRIP_W).toBe(10);
+    expect(p.STRIP_T).toBe(2);
+    expect(p.CHANNEL_W).toBe(10.4);
+    expect(p.CHANNEL_DEPTH).toBe(8);
+    expect(p.LED_PER_M).toBe(60);
+    expect(p.HINGE_MAX_DEG).toBe(1);
+    // Senza piega di lato il raggio minimo è enorme: l'insegna corsiva non si può fare.
+    expect(p.MIN_LETTER_H).toBeGreaterThan(1000);
+    expect(resolveParams({ STRIP_ID: 'ws2812b-60', CHANNEL_W: 12 }).CHANNEL_W).toBe(12);
+    // Una striscia sconosciuta torna alla predefinita invece di lasciare misure a caso.
+    expect(resolveParams({ STRIP_ID: 'inventata' }).STRIP_W).toBe(DEFAULT_PARAMS.STRIP_W);
+  });
+
+  it('la striscia sopravvive al link, una inventata avvisa', () => {
+    const shared = (params: Record<string, unknown>) =>
+      decodeShare(
+        encodeShare(
+          migrateOrder({
+            schemaVersion: 2,
+            generatorVersion: GENERATOR_VERSION,
+            source: { kind: 'text', text: 'Ciao', fontId: 'sacramento' },
+            heightMm: 120,
+            color: '#ff2fd6',
+            params,
+            paths: null,
+            crossings: [],
+          }),
+        ).hash ?? '',
+      );
+    const ok = shared({ STRIP_ID: 'ws2812b-144' });
+    expect(ok.warnings).toEqual([]);
+    expect(ok.order?.params.STRIP_ID).toBe('ws2812b-144');
+    const bad = shared({ STRIP_ID: 'inventata' });
+    expect(bad.warnings.join(' ')).toMatch(/Striscia sconosciuta/);
+    expect(bad.order?.params.STRIP_ID).toBeUndefined();
   });
 });

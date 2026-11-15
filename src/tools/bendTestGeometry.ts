@@ -6,7 +6,13 @@
 // Marcature senza testo: fori passanti sul fondo prima di ogni piega, tacche sul bordo esterno.
 // Come nell'insegna: asole fili DIN/DOUT sull'intera estremità del canale (holes.ts).
 import type { Box, CrossSection, ErrorStatus, Manifold, ManifoldToplevel, Vec2, Vec3 } from 'manifold-3d';
-import { DEFAULT_PARAMS, type Params, totalHeight } from '../config';
+import { COB_5MM, resolveParams, type Params, totalHeight } from '../config';
+
+/**
+ * I pezzi di prova sono disegnati per la striscia COB con gli intagli, l'unica che segue le curve.
+ * Non seguono la striscia predefinita del configuratore, che non piega di lato.
+ */
+const DEFAULT_PARAMS = resolveParams({ STRIP_ID: COB_5MM.id });
 import { planChamfer, profiledBody, type ChamferPlan } from '../geometry/edgeProfile';
 import { lipChamferSolid, wireSlotCuts, wireSlotSection, type SlotEnd } from '../geometry/holes';
 import { getManifold } from '../geometry/manifold';

@@ -1,8 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_PARAMS } from '../src/config';
+import { resolveParams } from '../src/config';
 import type { Point } from '../src/geometry/rasterize';
 import { sourceFromPaths } from '../src/geometry/segment';
 import { buildStrip } from '../src/geometry/strip';
+
+/**
+ * Queste prove riguardano la piega della striscia, quindi usano una striscia che piega: la COB.
+ * La predefinita (WS2812B su circuito flessibile) non curva, e qui non direbbe nulla di utile.
+ */
+const BENDABLE = resolveParams({ STRIP_ID: 'cob-5mm' });
 
 function arc(radius: number, sweepDeg: number): Point[] {
   const n = sweepDeg;
@@ -37,7 +43,7 @@ function ring(cx: number, cy: number, radius: number): Point[] {
 describe('classificazione delle pieghe', () => {
   it('un arco di raggio noto, confrontato con la scala ×2, è una curva', () => {
     const pts = arc(10, 180);
-    const model = buildStrip(sourceFromPaths([{ points: pts }]), DEFAULT_PARAMS, 100);
+    const model = buildStrip(sourceFromPaths([{ points: pts }]), BENDABLE, 100);
     const bends = model.issues.filter((issue) => issue.bend !== null);
     expect(bends.length).toBeGreaterThan(0);
     expect(bends.every((issue) => issue.bend === 'curva')).toBe(true);
@@ -45,7 +51,7 @@ describe('classificazione delle pieghe', () => {
 
   it('uno spigolo a V resta spigolo a qualsiasi scala', () => {
     for (const scale of [1, 2, 4]) {
-      const model = buildStrip(sourceFromPaths([{ points: vee(scale) }]), { ...DEFAULT_PARAMS, CUSP_MODE: 'warn' }, 100);
+      const model = buildStrip(sourceFromPaths([{ points: vee(scale) }]), { ...BENDABLE, CUSP_MODE: 'warn' }, 100);
       const bends = model.issues.filter((issue) => issue.bend !== null);
       expect(bends.length, `scala ${scale}`).toBeGreaterThan(0);
       expect(bends.every((issue) => issue.bend === 'spigolo'), `scala ${scale}`).toBe(true);
@@ -55,7 +61,7 @@ describe('classificazione delle pieghe', () => {
   it('CUSP_MODE split taglia lo spigolo in due spezzoni coerenti', () => {
     const model = buildStrip(
       sourceFromPaths([{ points: vee(1) }]),
-      { ...DEFAULT_PARAMS, CUSP_MODE: 'split' },
+      { ...BENDABLE, CUSP_MODE: 'split' },
       100,
     );
     expect(model.chains).toHaveLength(2);
@@ -86,16 +92,16 @@ describe('classificazione delle pieghe', () => {
     ];
     const model = buildStrip(
       sourceFromPaths([{ points: stem }, { points: ring(0, 48, 12) }]),
-      { ...DEFAULT_PARAMS, I_DOT_MODE: 'dash' },
+      { ...BENDABLE, I_DOT_MODE: 'dash' },
       100,
     );
-    const dashes = model.chains.filter((chain) => Math.abs(chain.lengthMm - DEFAULT_PARAMS.CUT_PITCH) < 0.05);
+    const dashes = model.chains.filter((chain) => Math.abs(chain.lengthMm - BENDABLE.CUT_PITCH) < 0.05);
     expect(dashes).toHaveLength(1);
     expect(model.chains).toHaveLength(2);
     const dash = dashes[0]!;
     const a = dash.points[0]!;
     const b = dash.points[dash.points.length - 1]!;
-    expect(Math.hypot(b[0] - a[0], b[1] - a[1])).toBeCloseTo(DEFAULT_PARAMS.CUT_PITCH, 1);
+    expect(Math.hypot(b[0] - a[0], b[1] - a[1])).toBeCloseTo(BENDABLE.CUT_PITCH, 1);
     expect(Math.abs(a[0] - b[0])).toBeLessThan(0.5);
     expect((a[1] + b[1]) / 2).toBeCloseTo(48, 0);
     expect(model.issues.some((issue) => issue.message.startsWith('Anello chiuso escluso'))).toBe(false);
@@ -109,7 +115,7 @@ describe('classificazione delle pieghe', () => {
     ];
     const model = buildStrip(
       sourceFromPaths([{ points: stem }, { points: ring(0, 48, 2) }]),
-      { ...DEFAULT_PARAMS, I_DOT_MODE: 'dash' },
+      { ...BENDABLE, I_DOT_MODE: 'dash' },
       100,
     );
     expect(model.chains).toHaveLength(1);
@@ -127,16 +133,16 @@ describe('classificazione delle pieghe', () => {
     ];
     const model = buildStrip(
       sourceFromPaths([{ points: stem }, { points: ring(0, 60, 12) }]),
-      { ...DEFAULT_PARAMS, I_DOT_MODE: 'dot' },
+      { ...BENDABLE, I_DOT_MODE: 'dot' },
       100,
     );
     const dots = model.chains.filter((chain) => chain.dot);
     expect(dots).toHaveLength(1);
     expect(model.unlit).toHaveLength(0);
-    expect(Math.abs(dots[0]!.lengthMm - DEFAULT_PARAMS.CUT_PITCH)).toBeLessThan(0.2);
+    expect(Math.abs(dots[0]!.lengthMm - BENDABLE.CUT_PITCH)).toBeLessThan(0.2);
     const bomDot = model.bom.segments.find((segment) => segment.id === dots[0]!.id);
     expect(bomDot).toBeTruthy();
-    expect(bomDot!.cutLengthMm).toBe(DEFAULT_PARAMS.CUT_PITCH);
+    expect(bomDot!.cutLengthMm).toBe(BENDABLE.CUT_PITCH);
     expect(model.bom.wireSlots).toBe(2);
   });
 
@@ -147,7 +153,7 @@ describe('classificazione delle pieghe', () => {
     ];
     const model = buildStrip(
       sourceFromPaths([{ points: stem }, { points: ring(0, 48, 2) }]),
-      { ...DEFAULT_PARAMS, I_DOT_MODE: 'dot' },
+      { ...BENDABLE, I_DOT_MODE: 'dot' },
       100,
     );
     const dots = model.chains.filter((chain) => chain.dot);
@@ -176,13 +182,13 @@ describe('classificazione delle pieghe', () => {
     ];
     const model = buildStrip(
       sourceFromPaths([{ points: stem }, { points: accent }, { points: short }]),
-      { ...DEFAULT_PARAMS, I_DOT_MODE: 'dot' },
+      { ...BENDABLE, I_DOT_MODE: 'dot' },
       100,
     );
     const marks = model.chains.filter((chain) => chain.dot);
     expect(marks).toHaveLength(2);
     for (const mark of marks) {
-      expect(mark.lengthMm).toBeGreaterThanOrEqual(DEFAULT_PARAMS.CUT_PITCH - 0.2);
+      expect(mark.lengthMm).toBeGreaterThanOrEqual(BENDABLE.CUT_PITCH - 0.2);
       expect(model.bom.segments.find((segment) => segment.id === mark.id)?.ledCount).toBe(1);
     }
     expect(model.issues.some((issue) => issue.message.includes('sotto il passo di taglio'))).toBe(false);

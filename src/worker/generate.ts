@@ -1,7 +1,7 @@
 // [A]–[I] nel worker: dall'ordine alle mesh, ai fori e alla distinta (SPEC §5, §6).
 import { buildPlate, plateBom, type PlateBom, type PlateModel } from '../geometry/plate';
 import type { Manifold, Mesh } from 'manifold-3d';
-import { resolveParams, stripFitWarnings } from '../config';
+import { resolveParams, stripFitWarnings, stripProfileOf } from '../config';
 import type { Bom } from '../export/bom';
 import type { FontBytesReader } from '../fonts/loadFont';
 import { buildGraph, type SkeletonGraph } from '../geometry/graph';
@@ -216,6 +216,15 @@ export async function generateSign(order: AnyOrder, read?: FontBytesReader): Pro
   });
   applyCoverage(strip, coverage);
   warnings.push(...strip.issues.map((issue) => issue.message));
+  // Una striscia che non piega di lato non segue le curve: l'avviso spiega perché l'altezza minima
+  // esce enorme, invece di lasciar credere che basti ingrandire l'insegna.
+  const profile = stripProfileOf(params.STRIP_ID);
+  if (!profile.sideBend && warnings.some((w) => w.includes('curva troppo stretta'))) {
+    warnings.push(
+      `Striscia «${profile.name}»: non piega di lato, quindi ogni curva va tagliata e risaldata. ` +
+        'Per seguire le curve serve una striscia con gli intagli sui bordi o a serpentina.',
+    );
+  }
 
   const wasm = await getManifold();
   const housing = buildHousing(wasm, {

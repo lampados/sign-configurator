@@ -30,6 +30,15 @@ Una voce si spunta quando `npm run check` passa.
 - [ ] Puntino della *i*: l'accesso sono due fori Ø2,5 (`DOT_WIRE_HOLE_D`), stretti per 3 fili e per la striscia da 10 mm: decidere fra fori più larghi, asola piena o puntino non illuminato
 - [x] Spessore della cornice spostato dall'anteprima allo strumento Tech, gruppo Channel, come «Wall thickness»
 - [ ] Strumento Tech: disegno della sezione del pezzo (canale, pareti, fondo, striscia) con le quote, e una riga di spiegazione **in inglese** per ogni parametro (es. «Channel width: the groove the strip sits in. Strip width plus a little play.»)
+- [x] Menu **Strip** in Technical settings: il modello detta misure, cerniere, passo di taglio e
+      densità, e finisce nell'ordine come `STRIP_ID`. In listino: WS2812B 30/60/144 IP20 e 60 IP65
+      (misure di catalogo, **da confermare col calibro**) e la COB 5 mm misurata
+- [ ] Le strisce WS2812B normali **non piegano di lato**: la pagina lo dice, ma il generatore le
+      tratta come curve troppo strette. Servirebbe una modalità «taglia e salda a ogni curva»
+- [x] Predefinita: **WS2812B 60 LED/m IP20**. Tolto il profilo generico 10 × 6. Le prove di piega e
+      la pagina bend test restano agganciate alla COB, l'unica che curva
+- [ ] L'insegna di partenza nasce con l'avviso «does not bend sideways» e l'invio bloccato: è la
+      conseguenza voluta della predefinita, finché non c'è la modalità «taglia e salda a ogni curva»
 - [x] Striscia e canale legati: cambiando `STRIP_W` il canale e l'asola lo seguono (+0,4 mm di
       tolleranza), e `STRIP_T` comanda la profondità (+6 mm d'aria sopra i LED). Toccato a mano,
       il campo a valle smette di seguire. Se la striscia non ci sta, la pagina lo dice

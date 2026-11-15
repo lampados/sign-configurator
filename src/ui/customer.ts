@@ -1,6 +1,6 @@
 // Cliente: l'insegna a tutto schermo, gli strumenti in un foglio (SPEC §12.2).
 import './customer.css';
-import { CHANNEL_CLEARANCE, controllerOf, CUSTOMER_STL_DOWNLOAD, DEFAULT_PARAMS, GENERATOR_VERSION, LED_AIR, ORDER_SCHEMA_VERSION, resolveParams, type Params } from '../config';
+import { CHANNEL_CLEARANCE, controllerOf, CUSTOMER_STL_DOWNLOAD, DEFAULT_PARAMS, GENERATOR_VERSION, LED_AIR, ORDER_SCHEMA_VERSION, resolveParams, stripProfileOf, type Params } from '../config';
 import { PRICING_VERSION } from '../pricing';
 import { decodeShare, encodeShare } from '../order/share';
 import type { RasterImageSource, SvgImageSource } from '../order/schema';
@@ -40,7 +40,7 @@ import {
 import { PLATE_CORNER_R_MAX, PLATE_CORNER_R_MIN, PLATE_MARGIN_MAX, PLATE_MARGIN_MIN } from '../config';
 import { SIZES } from './sizes';
 import { PLUGS, plugOf } from './plugs';
-import { DEFAULT_LED_DENSITY, LED_DENSITIES, EDGE_PROFILES, TECH_FIELDS, TECH_GROUPS, ledDensityOptions, voltageOptions, controllerOptions, boxOptions, techFieldInvalid, techParams, type TechNumericKey } from './techParams';
+import { DEFAULT_LED_DENSITY, LED_DENSITIES, EDGE_PROFILES, TECH_FIELDS, TECH_GROUPS, ledDensityOptions, voltageOptions, controllerOptions, boxOptions, stripOptions, techFieldInvalid, techParams, type TechNumericKey } from './techParams';
 import { mountSignScene, type PreviewMode } from '../viewer/scene';
 import { createGenerator } from '../worker/api';
 
@@ -101,6 +101,13 @@ const techGroups = TECH_GROUPS.map((group) => `
         <span>${field.unit}</span>
       </span>
     </label>`).join('')}
+    ${group.id === 'strip' ? `
+    <label class="tech-field">
+      <span>${S.tech.strip} <small>STRIP_ID</small></span>
+      <select name="tech-STRIP_ID">
+        ${stripOptions().map((o) => `<option value="${o.value}"${o.isDefault ? ' selected' : ''}>${o.label}</option>`).join('')}
+      </select>
+    </label>` : ''}
     ${group.id === 'strip' ? `
     <label class="tech-field">
       <span>${S.tech.density} <small>LED_PER_M</small></span>
@@ -475,6 +482,7 @@ const techDensityInput = document.querySelector<HTMLSelectElement>('select[name=
 const techVoltageInput = document.querySelector<HTMLSelectElement>('select[name="tech-STRIP_V"]')!;
 const techControllerInput = document.querySelector<HTMLSelectElement>('select[name="tech-CONTROLLER_ID"]')!;
 const techBoxInput = document.querySelector<HTMLSelectElement>('select[name="tech-BOX_ID"]')!;
+const techStripInput = document.querySelector<HTMLSelectElement>('select[name="tech-STRIP_ID"]')!;
 const boxLabels = new Map([...techBoxInput.options].map((o) => [o.value, o.textContent ?? '']));
 
 /** Scatole che non contengono alimentatore e controller: «too small» nel menu. */
@@ -491,7 +499,7 @@ const techReset = document.querySelector<HTMLButtonElement>('#tech-reset')!;
 function orderParams(): Partial<Params> {
   const numbers: Partial<Record<TechNumericKey, string>> = {};
   for (const [key, input] of techNumberInputs) numbers[key] = input.value;
-  return { WALL: wallMm(), ...techParams({ numbers, edgeProfile: techProfileInput.value, ledPerM: techDensityInput.value, stripV: techVoltageInput.value, controller: techControllerInput.value, box: techBoxInput.value }) };
+  return { WALL: wallMm(), ...techParams({ numbers, edgeProfile: techProfileInput.value, ledPerM: techDensityInput.value, stripV: techVoltageInput.value, controller: techControllerInput.value, box: techBoxInput.value, strip: techStripInput.value }) };
 }
 
 const plateMarginInput = document.querySelector<HTMLInputElement>('input[name="plateMarginMm"]')!;
@@ -1127,7 +1135,7 @@ async function showSign(): Promise<void> {
     const leds = result.lightPoints.length > 0 ? S.status.leds(result.lightPoints.length) : S.status.noLeds;
     // Al cliente solo gli avvisi che lo riguardano, tradotti; i bloccanti stanno in Richiedi.
     const shown = result.warnings.filter((warning) => {
-      if (/bassa risoluzione|tratto non uniforme|^Puntino troppo piccolo|^Puntino non|^Trattino fuori|^Canale /.test(warning)) return true;
+      if (/bassa risoluzione|tratto non uniforme|^Puntino troppo piccolo|^Puntino non|^Trattino fuori|^Canale |^Striscia «/.test(warning)) return true;
       return image && warning.startsWith('Sagome che si fondono');
     });
     const extra = customerMessages([...notes, ...shown]).join(' ');
@@ -1293,6 +1301,21 @@ techDensityInput.addEventListener('change', onTechChange);
 techVoltageInput.addEventListener('change', onTechChange);
 techControllerInput.addEventListener('change', onTechChange);
 techBoxInput.addEventListener('change', onTechChange);
+// Scegliere il modello di striscia riscrive le sue misure: è il senso del menu. Da lì i legami
+// ripartono, così il canale resta agganciato alla striscia nuova.
+techStripInput.addEventListener('change', () => {
+  const profile = stripProfileOf(techStripInput.value);
+  techNumberInputs.get('STRIP_W')!.value = String(profile.STRIP_W);
+  techNumberInputs.get('STRIP_T')!.value = String(profile.STRIP_T);
+  techNumberInputs.get('CHANNEL_W')!.value = String(profile.CHANNEL_W);
+  techNumberInputs.get('CHANNEL_DEPTH')!.value = String(round3(profile.STRIP_T + LED_AIR));
+  techNumberInputs.get('WIRE_SLOT_W')!.value = String(profile.CHANNEL_W);
+  techNumberInputs.get('HINGE_PITCH')!.value = String(profile.HINGE_PITCH);
+  techNumberInputs.get('HINGE_MAX_DEG')!.value = String(profile.HINGE_MAX_DEG);
+  techDensityInput.value = String(LED_DENSITIES.includes(profile.LED_PER_M) ? profile.LED_PER_M : DEFAULT_LED_DENSITY);
+  rememberTechLinks();
+  onTechChange();
+});
 for (const input of document.querySelectorAll<HTMLInputElement>('input[name="plateShape"], input[name="plateMaterial"]')) {
   input.addEventListener('change', () => {
     syncPlateFields();
@@ -1321,6 +1344,7 @@ techReset.addEventListener('click', () => {
   techVoltageInput.value = String(DEFAULT_PARAMS.STRIP_V);
   techControllerInput.value = DEFAULT_PARAMS.CONTROLLER_ID;
   techBoxInput.value = DEFAULT_PARAMS.BOX_ID;
+  techStripInput.value = DEFAULT_PARAMS.STRIP_ID;
   rememberTechLinks();
   onTechChange();
 });
@@ -1571,6 +1595,7 @@ function applyOrder(order: SignOrderV4): void {
   setSelect(techVoltageInput, String(params.STRIP_V ?? DEFAULT_PARAMS.STRIP_V), String(DEFAULT_PARAMS.STRIP_V));
   setSelect(techControllerInput, params.CONTROLLER_ID ?? DEFAULT_PARAMS.CONTROLLER_ID, DEFAULT_PARAMS.CONTROLLER_ID);
   setSelect(techBoxInput, params.BOX_ID ?? DEFAULT_PARAMS.BOX_ID, DEFAULT_PARAMS.BOX_ID);
+  setSelect(techStripInput, params.STRIP_ID ?? DEFAULT_PARAMS.STRIP_ID, DEFAULT_PARAMS.STRIP_ID);
 
   const rainbow = order.customer.effect === 'arcobaleno';
   checkRadio('effect', rainbow ? 'arcobaleno' : 'fisso');

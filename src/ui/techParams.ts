@@ -3,6 +3,7 @@
 // Modulo puro: nessun DOM.
 
 import { BOX_AUTO, BOX_NONE, BOXES } from '../parts/boxes';
+import { STRIP_PROFILES } from '../config';
 import { CONTROLLERS, DEFAULT_PARAMS, STRIP_VOLTAGES, type EdgeProfile, type Params } from '../config';
 
 export type TechNumericKey =
@@ -45,7 +46,8 @@ export const TECH_GROUPS: readonly TechGroup[] = [
       { key: 'STRIP_W', label: 'Strip width', unit: 'mm', min: 1, max: 20, step: 0.1 },
       { key: 'STRIP_T', label: 'Strip thickness', unit: 'mm', min: 0.2, max: 6, step: 0.1 },
       { key: 'HINGE_PITCH', label: 'Hinge pitch', unit: 'mm', min: 1, max: 50, step: 0.1 },
-      { key: 'HINGE_MAX_DEG', label: 'Max bend per hinge', unit: '°', min: 5, max: 90, step: 1 },
+      // 1° vuol dire «non piega di lato»: è il valore delle strisce normali, non un errore.
+      { key: 'HINGE_MAX_DEG', label: 'Max bend per hinge', unit: '°', min: 1, max: 90, step: 1 },
     ],
   },
   {
@@ -101,7 +103,7 @@ export const EDGE_PROFILES: readonly { value: EdgeProfile; label: string }[] = [
  * (anteprima, BOM, alimentatore), non il passo di taglio.
  */
 export const LED_DENSITIES: readonly number[] = [30, 60, 74, 96, 144];
-export const DEFAULT_LED_DENSITY = 144;
+export const DEFAULT_LED_DENSITY = DEFAULT_PARAMS.LED_PER_M;
 
 export function ledDensityOptions(): { value: number; label: string; isDefault: boolean }[] {
   return LED_DENSITIES.map((value) => ({ value, label: `${value} LED/m`, isDefault: value === DEFAULT_LED_DENSITY }));
@@ -110,6 +112,15 @@ export function ledDensityOptions(): { value: number; label: string; isDefault: 
 /** Tensioni della striscia nel menu; predefinita quella del profilo (5 V). */
 export function voltageOptions(): { value: number; label: string; isDefault: boolean }[] {
   return STRIP_VOLTAGES.map((value) => ({ value, label: `${value} V`, isDefault: value === DEFAULT_PARAMS.STRIP_V }));
+}
+
+/** Strisce nel menu: il modello detta misure, cerniere, passo di taglio e densità. */
+export function stripOptions(): { value: string; label: string; isDefault: boolean }[] {
+  return STRIP_PROFILES.map((strip) => ({
+    value: strip.id,
+    label: `${strip.name} · ${strip.STRIP_W} × ${strip.STRIP_T} mm${strip.sideBend ? '' : ' · non curva'}`,
+    isDefault: strip.id === DEFAULT_PARAMS.STRIP_ID,
+  }));
 }
 
 /** Controller nel menu; predefinito quello standard. */
@@ -145,6 +156,8 @@ export interface TechInput {
   controller?: string;
   /** Scatola: BOX_AUTO, BOX_NONE o un id di BOXES. Assente o sconosciuta: automatica. */
   box?: string;
+  /** Id di STRIP_PROFILES. Assente o sconosciuto: quella predefinita. */
+  strip?: string;
 }
 
 /**
@@ -165,6 +178,8 @@ export function techParams(input: TechInput): Partial<Params> {
   if (profile && profile !== DEFAULT_PARAMS.EDGE_PROFILE) out.EDGE_PROFILE = profile;
   const volts = Number(input.stripV);
   if (STRIP_VOLTAGES.includes(volts) && volts !== DEFAULT_PARAMS.STRIP_V) out.STRIP_V = volts;
+  const strip = STRIP_PROFILES.find((s) => s.id === input.strip);
+  if (strip && strip.id !== DEFAULT_PARAMS.STRIP_ID) out.STRIP_ID = strip.id;
   const controller = CONTROLLERS.find((c) => c.id === input.controller);
   if (controller && controller.id !== DEFAULT_PARAMS.CONTROLLER_ID) out.CONTROLLER_ID = controller.id;
   const box = input.box;

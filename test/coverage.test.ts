@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_PARAMS } from '../src/config';
+import { resolveParams } from '../src/config';
 import type { FontBytesReader } from '../src/fonts/loadFont';
 import { applyCoverage, coverSign, DARK_LABEL } from '../src/geometry/coverage';
 import { buildGraph } from '../src/geometry/graph';
@@ -9,6 +9,12 @@ import { rasterize } from '../src/geometry/rasterize';
 import { sourceFromPaths } from '../src/geometry/segment';
 import { buildStrip } from '../src/geometry/strip';
 import { pairTubes } from '../src/geometry/tubePairing';
+
+/**
+ * Queste prove riguardano la piega della striscia, quindi usano una striscia che piega: la COB.
+ * La predefinita (WS2812B su circuito flessibile) non curva, e qui non direbbe nulla di utile.
+ */
+const BENDABLE = resolveParams({ STRIP_ID: 'cob-5mm' });
 
 const readPublic: FontBytesReader = async (file) => {
   const b = await readFile(`public/${file}`);
@@ -28,7 +34,7 @@ async function ciao(fontId: 'sacramento' | 'neonderthaw', heightMm = 100) {
   const graph = buildGraph(raster);
   const strip = buildStrip(
     { nodes: graph.nodes, edges: graph.edges, strokeWidthMm: graph.strokeWidthMm },
-    DEFAULT_PARAMS,
+    BENDABLE,
     heightMm,
   );
   const coverage = coverSign({
@@ -38,7 +44,7 @@ async function ciao(fontId: 'sacramento' | 'neonderthaw', heightMm = 100) {
     excluded: strip.excluded,
     walls: [],
     corners: strip.bom.corners,
-    params: DEFAULT_PARAMS,
+    params: BENDABLE,
     heightMm,
   });
   applyCoverage(strip, coverage);
@@ -79,7 +85,7 @@ describe('copertura di Ciao', () => {
     expect(built.strip.issues.some((issue) => issue.message.startsWith('Sagome che si fondono'))).toBe(false);
     expect(built.coverage.letters.length).toBeGreaterThan(0);
     for (const letter of built.coverage.letters) {
-      expect(letter.ratio, letter.letter).toBeGreaterThanOrEqual(DEFAULT_PARAMS.COVERAGE_MIN);
+      expect(letter.ratio, letter.letter).toBeGreaterThanOrEqual(BENDABLE.COVERAGE_MIN);
     }
     const pairing = pairTubes(built.graph, built.raster.tube!);
     const median = buildStrip(
@@ -87,7 +93,7 @@ describe('copertura di Ciao', () => {
         ...pairing.pairs.map((pair) => ({ points: pair.midline })),
         ...pairing.singles.map((line) => ({ points: line.points })),
       ]),
-      DEFAULT_PARAMS,
+      BENDABLE,
       height,
     );
     const ratio = built.strip.bom.totalLeds / median.bom.totalLeds;
@@ -105,7 +111,7 @@ describe('copertura di Ciao', () => {
       expect(strip.chains.some((chain) => chain.id === id)).toBe(true);
       const segment = strip.bom.segments.find((item) => item.id === id);
       expect(segment).toBeTruthy();
-      if (segment && segment.lengthMm >= DEFAULT_PARAMS.CUT_PITCH + 2 * DEFAULT_PARAMS.WIRE_SLOT_L) {
+      if (segment && segment.lengthMm >= BENDABLE.CUT_PITCH + 2 * BENDABLE.WIRE_SLOT_L) {
         expect(segment.cutLengthMm).toBeGreaterThan(0);
       }
     }
@@ -115,7 +121,7 @@ describe('copertura di Ciao', () => {
     const points: Point[] = [];
     for (let t = 50; t >= 0; t -= 1) points.push([t, 0]);
     for (let t = 1; t <= 15; t += 1) points.push([0, t]);
-    const model = buildStrip(sourceFromPaths([{ points }]), DEFAULT_PARAMS, 100);
+    const model = buildStrip(sourceFromPaths([{ points }]), BENDABLE, 100);
     expect(model.chains).toHaveLength(1);
     expect(model.issues.some((issue) => issue.bend === 'spigolo')).toBe(true);
     expect(model.bom.segments[0]!.cutLengthMm).toBeGreaterThan(0);

@@ -1,8 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_PARAMS, rMin } from '../src/config';
+import { resolveParams, rMin } from '../src/config';
 import type { Point } from '../src/geometry/rasterize';
 import { sourceFromPaths } from '../src/geometry/segment';
 import { buildStrip } from '../src/geometry/strip';
+
+/**
+ * Queste prove riguardano la piega della striscia, quindi usano una striscia che piega: la COB.
+ * La predefinita (WS2812B su circuito flessibile) non curva, e qui non direbbe nulla di utile.
+ */
+const BENDABLE = resolveParams({ STRIP_ID: 'cob-5mm' });
 
 function arc(radius: number, sweepDeg: number): Point[] {
   const n = sweepDeg;
@@ -24,14 +30,14 @@ describe('altezza minima', () => {
         ],
         edges: [{ id: 0, a: 0, b: 1, points: [[0, 0], [100, 0]], lengthMm: 100 }],
       },
-      DEFAULT_PARAMS,
+      BENDABLE,
       100,
     );
     expect(model.suggestion.hasErrors).toBe(false);
-    expect(model.suggestion.heightMm).toBe(DEFAULT_PARAMS.CUT_PITCH);
+    expect(model.suggestion.heightMm).toBe(BENDABLE.CUT_PITCH);
     expect(model.bom.segments[0]?.cutLengthMm).toBe(80);
     // 100 mm meno le due asole da 6: 88 mm di luce.
-    expect(model.bom.totalLeds).toBe(Math.round((88 * DEFAULT_PARAMS.LED_PER_M) / 1000));
+    expect(model.bom.totalLeds).toBe(Math.round((88 * BENDABLE.LED_PER_M) / 1000));
   });
 
   it("alza l'altezza finché un arco stretto raggiunge R_MIN", () => {
@@ -45,11 +51,11 @@ describe('altezza minima', () => {
         ],
         edges: [{ id: 0, a: 0, b: 1, points: pts, lengthMm: Math.PI * 10 }],
       },
-      DEFAULT_PARAMS,
+      BENDABLE,
       100,
     );
     expect(model.suggestion.hasErrors).toBe(true);
-    const expected = 100 * (rMin(DEFAULT_PARAMS) / 10);
+    const expected = 100 * (rMin(BENDABLE) / 10);
     expect(model.suggestion.heightMm).toBeGreaterThan(expected - 20);
     expect(model.suggestion.heightMm).toBeLessThan(expected + 30);
   });
@@ -68,10 +74,10 @@ describe('altezza minima', () => {
           { id: 1, a: 2, b: 3, points: [[0, 8], [40, 8]], lengthMm: 40 },
         ],
       },
-      DEFAULT_PARAMS,
+      BENDABLE,
       100,
     );
-    const limit = DEFAULT_PARAMS.CHANNEL_W + 2 * DEFAULT_PARAMS.WALL + DEFAULT_PARAMS.MIN_GAP;
+    const limit = BENDABLE.CHANNEL_W + 2 * BENDABLE.WALL + BENDABLE.MIN_GAP;
     const issue = model.issues.find((item) => item.message.startsWith('Sagome che si fondono'));
     expect(issue).toBeTruthy();
     expect(issue!.message).toContain(limit.toFixed(1));
@@ -81,7 +87,7 @@ describe('altezza minima', () => {
   });
 
   it('un angolo retto non è una sagoma fusa, nemmeno spezzato in due', () => {
-    const one = buildStrip(sourceFromPaths([{ points: [[0, 0], [40, 0], [40, 40]] }]), DEFAULT_PARAMS, 100);
+    const one = buildStrip(sourceFromPaths([{ points: [[0, 0], [40, 0], [40, 40]] }]), BENDABLE, 100);
     expect(one.issues.some((issue) => issue.message.startsWith('Sagome che si fondono'))).toBe(false);
     const two = buildStrip(
       {
@@ -95,7 +101,7 @@ describe('altezza minima', () => {
           { id: 1, a: 1, b: 2, points: [[40, 0], [40, 40]], lengthMm: 40 },
         ],
       },
-      DEFAULT_PARAMS,
+      BENDABLE,
       100,
     );
     expect(two.issues.some((issue) => issue.message.startsWith('Sagome che si fondono'))).toBe(false);
@@ -116,7 +122,7 @@ describe('altezza minima', () => {
           { id: 2, a: 1, b: 3, points: [[50, 0], [50, 60]], lengthMm: 60 },
         ],
       },
-      DEFAULT_PARAMS,
+      BENDABLE,
       100,
     );
     expect(model.chains.length).toBe(2);
@@ -142,7 +148,7 @@ describe('altezza minima', () => {
           { id: 2, a: 1, b: 3, points: [[50, 0], tip], lengthMm: 80 },
         ],
       },
-      DEFAULT_PARAMS,
+      BENDABLE,
       100,
     );
     const issue = model.issues.find((item) => item.message.startsWith('Sagome che si fondono'));
@@ -154,7 +160,7 @@ describe('altezza minima', () => {
   it('una U sulla stessa linea è due pareti e alza l\'altezza', () => {
     const model = buildStrip(
       sourceFromPaths([{ points: [[0, 0], [40, 0], [40, 8], [0, 8]] }]),
-      DEFAULT_PARAMS,
+      BENDABLE,
       100,
     );
     expect(model.issues.some((issue) => issue.message.startsWith('Sagome che si fondono'))).toBe(true);

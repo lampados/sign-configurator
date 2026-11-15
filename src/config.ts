@@ -185,37 +185,17 @@ export interface StripProfile {
   HINGE_MAX_DEG: number;
   CUT_PITCH: number;
   LED_PER_M: number;
+  /**
+   * La striscia segue le curve dell'insegna piegandosi **di lato**, nel proprio piano. Ci riescono
+   * solo le strisce fatte apposta: quelle con gli intagli sui bordi (COB) e le serpentine a S. Una
+   * striscia normale su circuito flessibile no: il rame del bordo esterno dovrebbe allungarsi, e
+   * invece si accartoccia. Con `false` ogni curva va tagliata e risaldata.
+   */
+  sideBend: boolean;
+  /** `false`: misure di catalogo, ancora da confermare col calibro. */
+  measured: boolean;
+  notes: string;
 }
-
-/** TOPAI WS2812B COB 5 mm, 160 LED/m (SPEC §2). */
-export const COB_5MM: StripProfile = Object.freeze({
-  id: 'cob-5mm',
-  name: 'TOPAI WS2812B COB 5 mm',
-  STRIP_W: 5.0,
-  STRIP_T: 2.0,
-  CHANNEL_W: 5.4,
-  HINGE_PITCH: 10.0,
-  HINGE_MAX_DEG: 40,
-  CUT_PITCH: 10.0,
-  LED_PER_M: 160,
-});
-
-/**
- * Striscia standard: larga 10 mm, spessa 6 mm (SPEC §2). Canale con la stessa tolleranza
- * della COB (+0,4 mm). Cerniere, piega massima e passo di taglio DA MISURARE con il bend
- * test: per ora quelli della COB.
- */
-export const STRIP_10MM: StripProfile = Object.freeze({
-  id: 'strip-10mm',
-  name: 'Striscia 10 × 6 mm',
-  STRIP_W: 10.0,
-  STRIP_T: 6.0,
-  CHANNEL_W: 10.4,
-  HINGE_PITCH: 10.0,
-  HINGE_MAX_DEG: 40,
-  CUT_PITCH: 10.0,
-  LED_PER_M: 144,
-});
 
 /**
  * Aria fra la striscia e le pareti del canale: `CHANNEL_W = STRIP_W + CHANNEL_CLEARANCE`.
@@ -229,8 +209,71 @@ export const CHANNEL_CLEARANCE = 0.4;
  */
 export const LED_AIR = 6;
 
-export const STRIP_PROFILES: readonly StripProfile[] = Object.freeze([STRIP_10MM, COB_5MM]);
-export const DEFAULT_STRIP: StripProfile = STRIP_10MM;
+/**
+ * Famiglia WS2812B classica su circuito flessibile: 10 mm di larghezza, 2 mm di spessore, un LED
+ * per unità di taglio. **Non piega di lato**: va bene per lettere a tratti dritti, o accettando un
+ * taglio e una saldatura a ogni curva. Misure di catalogo (SK6812/WS2812B 5050, 10 mm), da
+ * confermare col calibro.
+ */
+function ws2812b(ledPerM: number, ip: 'IP20' | 'IP65', thickness: number): StripProfile {
+  return {
+    id: `ws2812b-${ledPerM}${ip === 'IP65' ? '-ip65' : ''}`,
+    name: `WS2812B ${ledPerM} LED/m ${ip === 'IP65' ? 'IP65 (siliconata)' : 'IP20 (nuda)'}`,
+    STRIP_W: 10.0,
+    STRIP_T: thickness,
+    CHANNEL_W: 10.0 + CHANNEL_CLEARANCE,
+    // Senza piega di lato la cerniera non ha senso: resta il passo di taglio, con un angolo
+    // praticamente nullo. Il generatore ne ricava un'altezza minima enorme, che è la verità.
+    HINGE_PITCH: Math.round((1000 / ledPerM) * 100) / 100,
+    HINGE_MAX_DEG: 1,
+    CUT_PITCH: Math.round((1000 / ledPerM) * 100) / 100,
+    LED_PER_M: ledPerM,
+    sideBend: false,
+    measured: false,
+    notes: 'Misure di catalogo. Non piega di lato: ogni curva va tagliata e risaldata.',
+  };
+}
+
+export const WS2812B_30: StripProfile = Object.freeze(ws2812b(30, 'IP20', 2.0));
+export const WS2812B_60: StripProfile = Object.freeze(ws2812b(60, 'IP20', 2.0));
+export const WS2812B_144: StripProfile = Object.freeze(ws2812b(144, 'IP20', 2.0));
+export const WS2812B_60_IP65: StripProfile = Object.freeze(ws2812b(60, 'IP65', 2.2));
+
+/** TOPAI WS2812B COB 5 mm, 160 LED/m (SPEC §2). */
+export const COB_5MM: StripProfile = Object.freeze({
+  id: 'cob-5mm',
+  name: 'TOPAI WS2812B COB 5 mm',
+  STRIP_W: 5.0,
+  STRIP_T: 2.0,
+  CHANNEL_W: 5.4,
+  HINGE_PITCH: 10.0,
+  HINGE_MAX_DEG: 40,
+  CUT_PITCH: 10.0,
+  LED_PER_M: 160,
+  // Intagli sui bordi ogni ~1 cm: sul pezzo B del bend test segue fino a 45°, 40° è il margine.
+  sideBend: true,
+  measured: true,
+  notes: 'Misurata sul campione stampato: segue le curve fino a 45°, al 90° va tagliata.',
+});
+
+export const STRIP_PROFILES: readonly StripProfile[] = Object.freeze([
+  WS2812B_60,
+  WS2812B_30,
+  WS2812B_144,
+  WS2812B_60_IP65,
+  COB_5MM,
+]);
+
+/**
+ * La striscia più comune e più economica. **Non piega di lato**: un'insegna corsiva con questa va
+ * tagliata e risaldata a ogni curva, e il generatore lo dice. Chi vuole seguire le curve sceglie la
+ * COB dal menu Strip.
+ */
+export const DEFAULT_STRIP: StripProfile = WS2812B_60;
+
+export function stripProfileOf(id: string | undefined): StripProfile {
+  return STRIP_PROFILES.find((profile) => profile.id === id) ?? DEFAULT_STRIP;
+}
 
 export interface Params {
   // Hardware (SPEC §2): copiati dal profilo striscia
@@ -256,6 +299,8 @@ export interface Params {
   STRIP_V: number;
   /** Controller WLED, id di `CONTROLLERS`. Cambia solo i limiti della distinta. */
   CONTROLLER_ID: string;
+  /** Modello di striscia scelto: un id di STRIP_PROFILES. Detta le misure, salvo override espliciti. */
+  STRIP_ID: string;
   /** Scatola dell'elettronica: 'auto' (la più piccola che basta), 'none' o l'id di `BOXES`. */
   BOX_ID: string;
 
@@ -322,11 +367,12 @@ export const DEFAULT_PARAMS: Readonly<Params> = Object.freeze({
   LED_MAX_MA: 60,
   STRIP_V: 5,
   CONTROLLER_ID: 'gl-c-309wl',
+  STRIP_ID: DEFAULT_STRIP.id,
   BOX_ID: 'auto',
 
   CHANNEL_W: DEFAULT_STRIP.CHANNEL_W,
-  /** Striscia (6 mm) più 6 mm fra i LED e il diffusore, come con la COB. */
-  CHANNEL_DEPTH: 12.0,
+  /** Spessore della striscia più LED_AIR: l'aria fra i LED e il diffusore. */
+  CHANNEL_DEPTH: DEFAULT_STRIP.STRIP_T + LED_AIR,
   WALL: 2.2,
   WALL_MIN: 1.2,
   MIN_GAP: 1.0,
@@ -362,7 +408,25 @@ export const DEFAULT_PARAMS: Readonly<Params> = Object.freeze({
 
 /** Applica gli override di `order.params` ai default e ricalcola MIN_LETTER_H dal profilo. */
 export function resolveParams(overrides: Partial<Params> = {}): Params {
-  const merged = { ...DEFAULT_PARAMS, ...overrides };
+  // Il modello di striscia detta le sue misure; un valore scritto a mano nell'ordine vince lo stesso.
+  const profile = overrides.STRIP_ID === undefined ? null : stripProfileOf(overrides.STRIP_ID);
+  const base: Params =
+    profile === null || profile.id === DEFAULT_STRIP.id
+      ? DEFAULT_PARAMS
+      : {
+          ...DEFAULT_PARAMS,
+          STRIP_ID: profile.id,
+          STRIP_W: profile.STRIP_W,
+          STRIP_T: profile.STRIP_T,
+          CHANNEL_W: profile.CHANNEL_W,
+          CHANNEL_DEPTH: profile.STRIP_T + LED_AIR,
+          WIRE_SLOT_W: profile.CHANNEL_W,
+          HINGE_PITCH: profile.HINGE_PITCH,
+          HINGE_MAX_DEG: profile.HINGE_MAX_DEG,
+          CUT_PITCH: profile.CUT_PITCH,
+          LED_PER_M: profile.LED_PER_M,
+        };
+  const merged = { ...base, ...overrides };
   merged.MIN_LETTER_H = minLetterH(merged);
   return merged;
 }
