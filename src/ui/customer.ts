@@ -364,7 +364,9 @@ let lastParts = 1;
 /** Giunti che cadono su un canale acceso: lì la striscia va interrotta e risaldata. */
 let lastJoins = 0;
 /** Tagli in curva e minuti di montaggio dell'ultima insegna (strisce che non piegano di lato). */
-let lastAssembly = { cuts: 0, minutes: 0 };
+let lastAssembly = { cuts: 0, minutes: 0, jumpers: 0 };
+/** Tratti molto vicini: non blocca l'invio, ma il cliente lo legge nel riepilogo. */
+let closeNote = '';
 
 function overallLabel(size: { w: number; h: number }): string {
   return `${cmLabel(size.w).replace(' cm', '')} × ${cmLabel(size.h)}`;
@@ -605,7 +607,8 @@ function summaryRows(): [string, string][] {
           ].join(' · ')
         : t.printOne,
     ],
-    [t.assembly, lastAssembly.cuts > 0 ? t.assemblyValue(lastAssembly.cuts, lastAssembly.minutes) : t.assemblyNone],
+    [t.assembly, lastAssembly.cuts + lastAssembly.jumpers > 0 ? t.assemblyValue(lastAssembly.cuts, lastAssembly.minutes, lastAssembly.jumpers) : t.assemblyNone],
+    ...(closeNote ? [[t.warning, closeNote] as [string, string]] : []),
     [t.color, color.value],
     [t.effect, effect?.value === 'arcobaleno' ? S.color.rainbow : S.color.fixed],
     [t.diffuser, diffuserOn() ? t.yes : t.no],
@@ -835,9 +838,7 @@ const sourceMemory = {
 function blocksSubmit(warnings: readonly string[]): boolean {
   return warnings.some(
     (warning) =>
-      warning.includes('curva troppo stretta') ||
-      warning.includes('sotto il passo di taglio') ||
-      warning.startsWith('Sagome che si fondono'),
+      warning.includes('curva troppo stretta') || warning.includes('sotto il passo di taglio'),
   );
 }
 
@@ -1138,16 +1139,15 @@ async function showSign(): Promise<void> {
     scene.setColor(color.value);
     lastParts = result.split ? result.split.housing.length : 1;
     lastJoins = result.split ? result.split.onChannel : 0;
-    lastAssembly = { cuts: result.bom.assembly.bendCuts, minutes: result.bom.assembly.assemblyMin };
+    lastAssembly = { cuts: result.bom.assembly.bendCuts, minutes: result.bom.assembly.assemblyMin, jumpers: result.bom.assembly.jumpers };
+    closeNote = customerMessage(result.warnings.find((warning) => warning.startsWith('Sagome che si fondono')) ?? '') ?? '';
     status.dataset.cuts = String(lastAssembly.cuts);
     showSize(result.plate ? { w: result.plate.widthMm, h: result.plate.heightMm } : outlineSize(result.outline));
     showSupply(result.bom);
     status.dataset.generation = String(Number(status.dataset.generation ?? '0') + 1);
     const blocking = result.warnings.find(
       (warning) =>
-        warning.includes('curva troppo stretta') ||
-        warning.includes('sotto il passo di taglio') ||
-        warning.startsWith('Sagome che si fondono'),
+        warning.includes('curva troppo stretta') || warning.includes('sotto il passo di taglio'),
     );
     blockReason = blocking ? (customerMessage(blocking) ?? '') : '';
     workerBlocked = blocksSubmit(result.warnings);

@@ -35,7 +35,9 @@ describe('tagli in curva e tempo di montaggio', () => {
     expect(bendCuts).toBeGreaterThan(0);
     expect(bendCuts).toBeLessThan(result.bom.assembly.totalLeds / 2);
     expect(ASSEMBLY_MIN_PER_CUT).toBe(10);
-    expect(assemblyMin).toBe(bendCuts * 10);
+    // Tagli in curva e ponticelli contano uguale: 10 minuti l'uno.
+    expect(assemblyMin).toBe((bendCuts + result.bom.assembly.jumpers) * 10);
+    expect(result.bom.assembly.jumpers).toBeGreaterThan(0);
     // Tagliare è permesso: la curva non è più un errore della striscia.
     expect(result.warnings.join('\n')).not.toMatch(/non piega di lato/);
   }, 120_000);

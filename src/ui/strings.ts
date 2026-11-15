@@ -140,11 +140,13 @@ export const S = {
     printJoins: (joins: number) => `${joins} join${joins === 1 ? '' : 's'} across a lit channel`,
     assembly: 'Assembly',
     /** Tagli in curva e tempo di montaggio: «31 strip cuts · 5 h 10 min». */
-    assemblyValue: (cuts: number, minutes: number) => {
+    assemblyValue: (cuts: number, minutes: number, jumpers = 0) => {
       const h = Math.floor(minutes / 60);
       const m = minutes % 60;
       const time = h > 0 ? (m > 0 ? `${h} h ${m} min` : `${h} h`) : `${m} min`;
-      return `${cuts} strip cut${cuts === 1 ? '' : 's'} · ${time}`;
+      const parts = [`${cuts} strip cut${cuts === 1 ? '' : 's'}`];
+      if (jumpers > 0) parts.push(`${jumpers} jumper${jumpers === 1 ? '' : 's'}`);
+      return `${parts.join(' · ')} · ${time}`;
     },
     assemblyNone: 'No strip cuts at bends',
     color: 'Color',
@@ -174,7 +176,7 @@ export function customerMessage(warning: string): string | null {
   const rules: [RegExp, (m: RegExpMatchArray) => string][] = [
     [/curva troppo stretta/, () => 'Some curves are too tight for the LED strip: make the sign bigger or choose a strip with more LEDs per metre.'],
     [/sotto il passo di taglio/, () => 'A stroke is too short for the LED strip: make the sign bigger or choose a strip with more LEDs per metre.'],
-    [/^Sagome che si fondono/, () => 'Some strokes are too close together: make the sign bigger or choose a thinner LED strip.'],
+    [/^Sagome che si fondono/, () => 'Some strokes are very close and share a channel. Where two strips cannot sit side by side, one is cut and bridged with a jumper: see Assembly. A bigger sign or a thinner strip avoids it.'],
     [/bassa risoluzione/, () => 'Low-resolution image for this size: upload a larger one.'],
     [/^Canale largo/, () => 'The channel is narrower than the LED strip: widen it under Tech.'],
     [/^Canale profondo/, () => 'The channel is shallower than the LED strip: deepen it under Tech.'],

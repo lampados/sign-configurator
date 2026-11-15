@@ -48,6 +48,8 @@ export interface BomAssembly {
    * striscia si taglia e si ricollega. 0 per le strisce che seguono le curve.
    */
   bendCuts: number;
+  /** Ponticelli di filo dove due tratti sono più vicini della larghezza della striscia. */
+  jumpers: number;
   /** Tempo di montaggio dei tagli in curva, minuti: `bendCuts · ASSEMBLY_MIN_PER_CUT`. */
   assemblyMin: number;
   segments: number;
@@ -499,6 +501,7 @@ export function bomAssembly(
   const { box, boxWarnings, boxesThatFit: fitting } = boxOf(supply, totalLeds === 0 ? null : spec, boxId);
   return {
     bendCuts: 0,
+    jumpers: 0,
     assemblyMin: 0,
     segments: segments.length,
     solderJoints,

@@ -807,8 +807,10 @@ function finishModel(model: Computed, source: SegmentSource, params: Params, hei
       radiusMm: null,
       x: clash.x,
       y: clash.y,
-      message: `Sagome che si fondono: distanza ${clash.distance.toFixed(1)} mm, minimo ${clash.limit.toFixed(1)} mm, in (${clash.x.toFixed(1)}, ${clash.y.toFixed(1)}). Altezza minima ${clearanceH.toFixed(0)} mm.`,
+      message: `Sagome che si fondono: distanza ${clash.distance.toFixed(1)} mm, minimo ${clash.limit.toFixed(1)} mm, in (${clash.x.toFixed(1)}, ${clash.y.toFixed(1)}). Altezza minima ${clearanceH.toFixed(0)} mm. Ponticelli: ${clash.overlaps}.`,
     });
+    // Dove due strisce non stanno affiancate, una si taglia e si scavalca: è lavoro, non un blocco.
+    model.bom.assembly.jumpers = clash.overlaps;
   }
   return { ...model, suggestion: suggest(source, params, heightMm, model, clearanceH) };
 }

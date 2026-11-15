@@ -226,8 +226,9 @@ export async function generateSign(order: AnyOrder, read?: FontBytesReader): Pro
       for (const hinge of chain.hinges) if (hinge.angleDeg > profile.cutBendDeg) cuts += 1;
     }
     strip.bom.assembly.bendCuts = cuts;
-    strip.bom.assembly.assemblyMin = cuts * ASSEMBLY_MIN_PER_CUT;
   }
+  // Tagli in curva e ponticelli costano lo stesso: tagliare, sistemare, risaldare.
+  strip.bom.assembly.assemblyMin = (strip.bom.assembly.bendCuts + strip.bom.assembly.jumpers) * ASSEMBLY_MIN_PER_CUT;
 
   const wasm = await getManifold();
   const housing = buildHousing(wasm, {

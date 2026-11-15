@@ -197,6 +197,11 @@ export interface ClearanceClash {
   y: number;
   distance: number;
   limit: number;
+  /**
+   * Zone in cui i due tratti sono più vicini della larghezza della striscia: lì due strisce non
+   * stanno affiancate. Una si taglia e si scavalca con un ponticello di filo.
+   */
+  overlaps: number;
 }
 
 interface ClearanceLine {
@@ -320,9 +325,13 @@ export function touchPoints(
  */
 export function centerlineClearance(
   lines: readonly ClearanceLine[],
-  params: Pick<Params, 'CHANNEL_W' | 'WALL' | 'MIN_GAP' | 'CORNER_MERGE_DIST' | 'CROSSING_GAP'>,
+  params: Pick<Params, 'CHANNEL_W' | 'WALL' | 'MIN_GAP' | 'CORNER_MERGE_DIST' | 'CROSSING_GAP'> & { STRIP_W?: number },
   crossings: readonly Point[] = [],
 ): ClearanceClash | null {
+  const stripW = params.STRIP_W ?? 0;
+  // Una zona è un tratto continuo di sovrapposizione: un punto a meno di due limiti da un punto
+  // già visto appartiene alla stessa zona, e se ne tocca due le unisce.
+  const overlapZones: Point[][] = [];
   const limit = params.CHANNEL_W + 2 * params.WALL + params.MIN_GAP;
   const joinGap = Math.max(params.CORNER_MERGE_DIST, params.CROSSING_GAP * 2 + 1.5);
   const sampled = lines
@@ -387,6 +396,9 @@ export function centerlineClearance(
         if (sep <= limit) continue;
         // Un angolo cambia direzione meno di un ritorno: la corda taglia l'angolo, non è un secondo canale.
         if (a.dir[0] * b.dir[0] + a.dir[1] * b.dir[1] > foldCos) continue;
+        // Un tratto che incrocia se stesso (l'occhiello di una «d», di una «l») si tocca lì per
+        // disegno, come due tratti diversi che si incrociano: attorno all'incrocio non è un difetto.
+        if (nearCrossing(a.p, b.p)) continue;
       } else if (!A.closed && !B.closed) {
         let through: number | null = null;
         let jointA: Point | null = null;
@@ -419,11 +431,25 @@ export function centerlineClearance(
       }
       const d = Math.hypot(a.p[0] - b.p[0], a.p[1] - b.p[1]);
       if (d >= limit - 1e-6) continue;
+      const mid: Point = [(a.p[0] + b.p[0]) / 2, (a.p[1] + b.p[1]) / 2];
+      if (d < stripW - 1e-6) {
+        const near = overlapZones.filter((zone) => zone.some((z) => Math.hypot(z[0] - mid[0], z[1] - mid[1]) <= 2 * limit));
+        if (near.length === 0) {
+          overlapZones.push([mid]);
+        } else {
+          near[0]!.push(mid);
+          for (const other of near.slice(1)) {
+            near[0]!.push(...other);
+            overlapZones.splice(overlapZones.indexOf(other), 1);
+          }
+        }
+      }
       if (best && d >= best.distance) continue;
-      best = { x: (a.p[0] + b.p[0]) / 2, y: (a.p[1] + b.p[1]) / 2, distance: d, limit };
+      best = { x: mid[0], y: mid[1], distance: d, limit, overlaps: 0 };
         }
       }
     }
   }
+  if (best) best.overlaps = overlapZones.length;
   return best;
 }
