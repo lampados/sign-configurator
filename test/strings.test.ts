@@ -6,6 +6,10 @@ describe('testi della pagina cliente', () => {
     expect(customerMessage('Spezzone 6: curva troppo stretta, raggio 6.3 mm (angolo 105.3°, minimo 14.6 mm), in (250.6, 33.1) mm.')).toMatch(/too tight/);
     expect(customerMessage('Spezzone 4: luce 2.2 mm, sotto il passo di taglio 10.0 mm, in (44.6, 55.0) mm.')).toMatch(/too short/);
     expect(customerMessage('Sagome che si fondono: distanza 8.4 mm, minimo 10.8 mm, in (245.7, 31.8).')).toMatch(/too close/);
+    // Il rimedio giusto per ogni blocco: più stretta per curve e tratti vicini, più LED al metro per i tratti corti.
+    expect(customerMessage('Spezzone 6: curva troppo stretta, raggio 6.3 mm.')).toMatch(/more LEDs per metre\.$/);
+    expect(customerMessage('Sagome che si fondono: distanza 8.4 mm.')).toMatch(/or choose a thinner LED strip\.$/);
+    expect(customerMessage('Spezzone 4: luce 2.2 mm, sotto il passo di taglio 10.0 mm.')).toMatch(/more LEDs per metre\.$/);
     expect(customerMessage('Alimentatore da 18 A a 5 V: oltre i 10 A del controller GLEDOPTO.')).toMatch(/10 A/);
     expect(customerMessage('Spezzone 1: 1 fori di ancoraggio su 2 richiesti, in (36.0, 6.3).')).toBeNull();
     expect(customerMessage('Canale largo 6 mm: la striscia da 10 mm non ci entra.')).toMatch(/narrower than the LED strip/);

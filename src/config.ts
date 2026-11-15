@@ -238,13 +238,18 @@ export const ASSEMBLY_MIN_PER_CUT = 10;
  * piega della striscia: ogni taglio costa tempo di montaggio (`ASSEMBLY_MIN_PER_CUT`). Misure di
  * catalogo (SK6812/WS2812B 5050, 10 mm), da confermare col calibro.
  */
-function ws2812b(ledPerM: number, ip: 'IP20' | 'IP65', thickness: number): StripProfile {
+/**
+ * WS2812B su circuito flessibile. `width` è la larghezza del circuito: 10 mm è la striscia comune
+ * (LED 5050), quelle strette da 8, 5 e 4 mm (LED 5050 o 3535) entrano in tratti più vicini.
+ */
+function ws2812b(ledPerM: number, ip: 'IP20' | 'IP65', thickness: number, width = 10.0): StripProfile {
+  const narrow = width < 10;
   return {
-    id: `ws2812b-${ledPerM}${ip === 'IP65' ? '-ip65' : ''}`,
-    name: `WS2812B ${ledPerM} LED/m ${ip}`,
-    STRIP_W: 10.0,
+    id: `ws2812b-${ledPerM}${ip === 'IP65' ? '-ip65' : ''}${narrow ? `-${width}mm` : ''}`,
+    name: `WS2812B ${ledPerM} LED/m ${narrow ? `${width} mm` : ip}`,
+    STRIP_W: width,
     STRIP_T: thickness,
-    CHANNEL_W: 10.0 + CHANNEL_CLEARANCE,
+    CHANNEL_W: Math.round((width + CHANNEL_CLEARANCE) * 100) / 100,
     // La «cerniera» qui è il taglio: un pezzo dritto per unità di taglio, e fra due pezzi l'angolo
     // che serve. 90° è il limite geometrico di due pezzi accostati nel canale, non della striscia.
     HINGE_PITCH: Math.round((1000 / ledPerM) * 100) / 100,
@@ -261,6 +266,12 @@ export const WS2812B_30: StripProfile = Object.freeze(ws2812b(30, 'IP20', 2.0));
 export const WS2812B_60: StripProfile = Object.freeze(ws2812b(60, 'IP20', 2.0));
 export const WS2812B_144: StripProfile = Object.freeze(ws2812b(144, 'IP20', 2.0));
 export const WS2812B_60_IP65: StripProfile = Object.freeze(ws2812b(60, 'IP65', 2.2));
+/** Strisce strette, 60 LED/m: 8 e 5 mm con LED 5050, 4 mm con LED 3535 (più basso). */
+export const WS2812B_60_8MM: StripProfile = Object.freeze(ws2812b(60, 'IP20', 2.0, 8.0));
+export const WS2812B_60_5MM: StripProfile = Object.freeze(ws2812b(60, 'IP20', 2.0, 5.0));
+export const WS2812B_60_4MM: StripProfile = Object.freeze(ws2812b(60, 'IP20', 1.8, 4.0));
+/** Stretta e fitta: pezzi da 7 mm, entra nei riccioli dei corsivi. Tanti tagli in curva. */
+export const WS2812B_144_5MM: StripProfile = Object.freeze(ws2812b(144, 'IP20', 2.0, 5.0));
 
 /** TOPAI WS2812B COB 5 mm, 160 LED/m (SPEC §2). */
 export const COB_5MM: StripProfile = Object.freeze({
@@ -281,6 +292,10 @@ export const COB_5MM: StripProfile = Object.freeze({
 
 export const STRIP_PROFILES: readonly StripProfile[] = Object.freeze([
   WS2812B_60,
+  WS2812B_60_8MM,
+  WS2812B_60_5MM,
+  WS2812B_60_4MM,
+  WS2812B_144_5MM,
   WS2812B_30,
   WS2812B_144,
   WS2812B_60_IP65,

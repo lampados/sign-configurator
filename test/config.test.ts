@@ -95,3 +95,28 @@ describe('striscia e canale', () => {
     expect(stripFitWarnings({ ...DEFAULT_PARAMS, CHANNEL_W: DEFAULT_PARAMS.STRIP_W })).toEqual([]);
   });
 });
+
+describe('strisce strette', () => {
+  it('il canale segue la larghezza, il passo resta quello della densità', async () => {
+    const { STRIP_PROFILES, CHANNEL_CLEARANCE } = await import('../src/config');
+    const byId = (id: string) => STRIP_PROFILES.find((strip) => strip.id === id)!;
+    for (const [id, width, pitch] of [
+      ['ws2812b-60-8mm', 8, 16.67],
+      ['ws2812b-60-5mm', 5, 16.67],
+      ['ws2812b-60-4mm', 4, 16.67],
+      ['ws2812b-144-5mm', 5, 6.94],
+    ] as const) {
+      const strip = byId(id);
+      expect(strip.STRIP_W).toBe(width);
+      expect(strip.CHANNEL_W).toBeCloseTo(width + CHANNEL_CLEARANCE, 6);
+      expect(strip.CUT_PITCH).toBe(pitch);
+      expect(strip.sideBend).toBe(false);
+      expect(strip.measured).toBe(false);
+    }
+    expect(new Set(STRIP_PROFILES.map((strip) => strip.id)).size).toBe(STRIP_PROFILES.length);
+    // I profili di prima non cambiano nome né codice: gli ordini salvati restano validi.
+    expect(byId('ws2812b-60').name).toBe('WS2812B 60 LED/m IP20');
+    expect(byId('ws2812b-60-ip65').STRIP_W).toBe(10);
+  });
+});
+

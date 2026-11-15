@@ -172,9 +172,9 @@ export const S = {
 /** Avviso del generatore → frase per il cliente, oppure null se non lo riguarda. */
 export function customerMessage(warning: string): string | null {
   const rules: [RegExp, (m: RegExpMatchArray) => string][] = [
-    [/curva troppo stretta/, () => 'Some curves are too tight for the LED strip: make the sign bigger.'],
-    [/sotto il passo di taglio/, () => 'A stroke is too short for the LED strip: make the sign bigger.'],
-    [/^Sagome che si fondono/, () => 'Some strokes are too close together: make the sign bigger.'],
+    [/curva troppo stretta/, () => 'Some curves are too tight for the LED strip: make the sign bigger or choose a strip with more LEDs per metre.'],
+    [/sotto il passo di taglio/, () => 'A stroke is too short for the LED strip: make the sign bigger or choose a strip with more LEDs per metre.'],
+    [/^Sagome che si fondono/, () => 'Some strokes are too close together: make the sign bigger or choose a thinner LED strip.'],
     [/bassa risoluzione/, () => 'Low-resolution image for this size: upload a larger one.'],
     [/^Canale largo/, () => 'The channel is narrower than the LED strip: widen it under Tech.'],
     [/^Canale profondo/, () => 'The channel is shallower than the LED strip: deepen it under Tech.'],

@@ -61,7 +61,7 @@ export function stripSvg(strip: StripProfile): string {
   }
 
   // LED: la COB è una fascia continua di fosforo sopra i chip, le altre hanno un LED 5050 per passo.
-  const led = Math.min(5, w * 0.5, ledPitch * 0.6);
+  const led = Math.min(5, w * 0.8, ledPitch * 0.6);
   if (strip.sideBend) {
     parts.push(`<rect class="strip-phosphor" x="${n(x0)}" y="${n(y0 + w * 0.25)}" width="${n(len)}" height="${n(w * 0.5)}" rx="${n(w * 0.25)}"/>`);
     for (let i = 0; i < stats.leds; i += 1) {
