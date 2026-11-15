@@ -78,10 +78,10 @@ export const TECH_GROUPS: readonly TechGroup[] = [
   },
   {
     id: 'bed',
-    title: 'Print bed',
+    title: 'Printing plate',
     fields: [
-      { key: 'BED_W', label: 'Bed width', unit: 'mm', min: 100, max: 1000, step: 1 },
-      { key: 'BED_H', label: 'Bed depth', unit: 'mm', min: 100, max: 1000, step: 1 },
+      { key: 'BED_W', label: 'Plate width', unit: 'mm', min: 100, max: 1000, step: 1 },
+      { key: 'BED_H', label: 'Plate height', unit: 'mm', min: 100, max: 1000, step: 1 },
     ],
   },
 ];

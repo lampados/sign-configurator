@@ -129,7 +129,7 @@ export const S = {
     letter: 'Letter height',
     print: 'Printing',
     printOne: 'One piece',
-    printParts: (parts: number, bedW: number, bedH: number) => `${parts} parts for a ${bedW} × ${bedH} mm bed`,
+    printParts: (parts: number, bedW: number, bedH: number) => `${parts} parts for a ${bedW} × ${bedH} mm plate`,
     /** Un giunto cade su un canale: lì la striscia va tagliata e risaldata. */
     printJoins: (joins: number) => `${joins} join${joins === 1 ? '' : 's'} across a lit channel`,
     assembly: 'Assembly',

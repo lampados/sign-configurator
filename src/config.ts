@@ -411,8 +411,9 @@ export const DEFAULT_PARAMS: Readonly<Params> = Object.freeze({
   DOT_WIRE_HOLE_D: 2.5,
   DOT_OVERHANG_MM: 1.5,
   COVERAGE_MIN: 0.85,
-  BED_W: 300,
-  BED_H: 300,
+  // Bambu Lab H2D: piatto da 350 × 320 mm.
+  BED_W: 350,
+  BED_H: 320,
 });
 
 /** Applica gli override di `order.params` ai default e ricalcola MIN_LETTER_H dal profilo. */

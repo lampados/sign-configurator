@@ -1,4 +1,5 @@
 import { readFile } from 'node:fs/promises';
+import { DEFAULT_PARAMS } from '../src/config';
 import { describe, expect, it } from 'vitest';
 import type { FontBytesReader } from '../src/fonts/loadFont';
 import { BED_MARGIN, SPLIT_CLEARANCE } from '../src/geometry/split';
@@ -73,7 +74,7 @@ function volume(mesh: MeshData): number {
 }
 
 describe('insegna divisa per il piatto di stampa', () => {
-  it('«Ciao» a 12 cm sta sul piatto da 300 mm: nessun taglio', async () => {
+  it('«Ciao» a 12 cm sta sul piatto da 350 mm: nessun taglio', async () => {
     const result = await generateSign(order('Ciao'), readPublic);
     expect(result.split).toBeNull();
   }, 120_000);
@@ -88,7 +89,7 @@ describe('insegna divisa per il piatto di stampa', () => {
     for (const piece of pieces) {
       expect(piece.triVerts.length).toBeGreaterThan(0);
       const { min, max } = xExtent(piece);
-      expect(max - min).toBeLessThanOrEqual(300 - 2 * BED_MARGIN + 1e-3);
+      expect(max - min).toBeLessThanOrEqual(DEFAULT_PARAMS.BED_W - 2 * BED_MARGIN + 1e-3);
     }
     // Il materiale tolto è solo l'aria dei tagli: una fetta larga 2·SPLIT_CLEARANCE per taglio.
     const whole = volume(result.housingMesh);

@@ -28,7 +28,7 @@ test('piatto di stampa: «Ciao Torino» si divide in pezzi, uno ZIP li contiene 
   await page.goto('index.html', { waitUntil: 'load' });
   await expect(page.locator('#preview-status')).toContainText('LED');
   const button = page.locator('#download-stl');
-  // «Ciao» a 12 cm è largo 29 cm: sta sul piatto da 30 in un pezzo.
+  // «Ciao» a 12 cm è largo 29 cm: sta sul piatto da 35 in un pezzo.
   await expect(button).toHaveAttribute('data-parts', '1');
 
   await page.locator('input[name="text"]').fill('Ciao Torino');
@@ -41,7 +41,7 @@ test('piatto di stampa: «Ciao Torino» si divide in pezzi, uno ZIP li contiene 
   await page.locator('[data-tool="size"]').click();
   await expect(page.locator('#size-overall')).toContainText(`prints in ${parts} parts`);
   await page.locator('#open-request').click();
-  await expect(page.locator('#summary')).toContainText(`${parts} parts for a 300 × 300 mm bed`);
+  await expect(page.locator('#summary')).toContainText(`${parts} parts for a 350 × 320 mm plate`);
   await expect(button).toHaveText(`Download STL · ${parts} parts (.zip)`);
 
   const downloads: Download[] = [];

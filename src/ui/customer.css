@@ -927,3 +927,67 @@ input[type="color"] {
   .shell[data-sheet="config"] #sheet-close { display: none; }
 
 }
+
+/* Disegno della striscia scelta, sotto il menu: in scala, vista dall'alto. */
+.strip-figure {
+  padding: 6px 8px;
+  border-radius: 10px;
+  background: var(--sheet);
+}
+
+.strip-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.strip-pcb {
+  fill: #f4f1e8;
+  stroke: #8d8778;
+  stroke-width: 0.25;
+}
+
+.strip-pad {
+  fill: #c98a3c;
+}
+
+.strip-cut {
+  stroke: #d21f3c;
+  stroke-width: 0.3;
+  stroke-dasharray: 1 0.7;
+}
+
+.strip-notch {
+  fill: var(--sheet);
+  stroke: #8d8778;
+  stroke-width: 0.2;
+}
+
+.strip-led {
+  fill: #fff;
+  stroke: #55524a;
+  stroke-width: 0.25;
+}
+
+.strip-lens,
+.strip-phosphor {
+  fill: #ffd84a;
+  stroke: #b8901a;
+  stroke-width: 0.2;
+}
+
+.strip-chip {
+  fill: #b8901a;
+}
+
+.strip-dim {
+  fill: none;
+  stroke: var(--muted);
+  stroke-width: 0.2;
+}
+
+.strip-label {
+  fill: var(--muted);
+  font-size: 3px;
+  font-family: ui-monospace, monospace;
+}

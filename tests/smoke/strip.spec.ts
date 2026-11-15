@@ -15,12 +15,22 @@ test('Tecnica: il menu della striscia riscrive le misure', async ({ page }) => {
   const channelD = page.locator('input[name="tech-CHANNEL_DEPTH"]');
   const density = page.locator('select[name="tech-LED_PER_M"]');
 
+  // Il modello è la prima voce del gruppo, con il disegno della striscia subito sotto.
+  const group = page.locator('fieldset.tech-group', { has: strip });
+  await expect(group.locator('input, select').first()).toHaveAttribute('name', 'tech-STRIP_ID');
+  const figure = page.locator('#strip-figure svg');
+  await expect(figure).toBeVisible();
+  await expect(figure.locator('[data-led]')).toHaveCount(4);
+  await expect(figure).toContainText('cut at bends');
+
   // La COB da 5 mm: misure più piccole, canale stretto, 160 LED/m fuori scala → resta il default.
   await strip.selectOption('cob-5mm');
   await expect(stripW).toHaveValue('5');
   await expect(stripT).toHaveValue('2');
   await expect(channelW).toHaveValue('5.4');
   await expect(channelD).toHaveValue('8');
+  await expect(figure.locator('[data-led]')).toHaveCount(11);
+  await expect(figure).toContainText('bends sideways');
 
   // Una WS2812B normale: 10 × 2, 60 LED/m, e il menu avvisa che non segue le curve.
   await strip.selectOption('ws2812b-60');

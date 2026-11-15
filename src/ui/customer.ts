@@ -1,6 +1,6 @@
 // Cliente: l'insegna a tutto schermo, gli strumenti in un foglio (SPEC §12.2).
 import './customer.css';
-import { CHANNEL_CLEARANCE, controllerOf, CUSTOMER_STL_DOWNLOAD, DEFAULT_PARAMS, GENERATOR_VERSION, LED_AIR, ORDER_SCHEMA_VERSION, resolveParams, stripProfileOf, type Params } from '../config';
+import { CHANNEL_CLEARANCE, controllerOf, DEFAULT_STRIP, CUSTOMER_STL_DOWNLOAD, DEFAULT_PARAMS, GENERATOR_VERSION, LED_AIR, ORDER_SCHEMA_VERSION, resolveParams, stripProfileOf, type Params } from '../config';
 import { PRICING_VERSION } from '../pricing';
 import { decodeShare, encodeShare } from '../order/share';
 import type { RasterImageSource, SvgImageSource } from '../order/schema';
@@ -40,6 +40,7 @@ import {
 import { PLATE_CORNER_R_MAX, PLATE_CORNER_R_MIN, PLATE_MARGIN_MAX, PLATE_MARGIN_MIN } from '../config';
 import { SIZES } from './sizes';
 import { PLUGS, plugOf } from './plugs';
+import { stripSvg } from './stripSvg';
 import { DEFAULT_LED_DENSITY, LED_DENSITIES, EDGE_PROFILES, TECH_FIELDS, TECH_GROUPS, ledDensityOptions, voltageOptions, controllerOptions, boxOptions, stripOptions, techFieldInvalid, techParams, type TechNumericKey } from './techParams';
 import { mountSignScene, type PreviewMode } from '../viewer/scene';
 import { createGenerator } from '../worker/api';
@@ -93,6 +94,14 @@ const tools = [
 const techGroups = TECH_GROUPS.map((group) => `
   <fieldset class="tech-group">
     <legend>${group.title}</legend>
+    ${group.id === 'strip' ? `
+    <label class="tech-field">
+      <span>${S.tech.strip} <small>STRIP_ID</small></span>
+      <select name="tech-STRIP_ID">
+        ${stripOptions().map((o) => `<option value="${o.value}"${o.isDefault ? ' selected' : ''}>${o.label}</option>`).join('')}
+      </select>
+    </label>
+    <div id="strip-figure" class="strip-figure">${stripSvg(DEFAULT_STRIP)}</div>` : ''}
     ${group.fields.map((field) => `
     <label class="tech-field">
       <span>${field.label} <small>${field.key}</small></span>
@@ -101,13 +110,6 @@ const techGroups = TECH_GROUPS.map((group) => `
         <span>${field.unit}</span>
       </span>
     </label>`).join('')}
-    ${group.id === 'strip' ? `
-    <label class="tech-field">
-      <span>${S.tech.strip} <small>STRIP_ID</small></span>
-      <select name="tech-STRIP_ID">
-        ${stripOptions().map((o) => `<option value="${o.value}"${o.isDefault ? ' selected' : ''}>${o.label}</option>`).join('')}
-      </select>
-    </label>` : ''}
     ${group.id === 'strip' ? `
     <label class="tech-field">
       <span>${S.tech.density} <small>LED_PER_M</small></span>
@@ -485,6 +487,11 @@ const techVoltageInput = document.querySelector<HTMLSelectElement>('select[name=
 const techControllerInput = document.querySelector<HTMLSelectElement>('select[name="tech-CONTROLLER_ID"]')!;
 const techBoxInput = document.querySelector<HTMLSelectElement>('select[name="tech-BOX_ID"]')!;
 const techStripInput = document.querySelector<HTMLSelectElement>('select[name="tech-STRIP_ID"]')!;
+const stripFigure = document.querySelector<HTMLDivElement>('#strip-figure')!;
+/** Il disegno segue il menu: da chiamare dopo ogni cambio di striscia, anche da ripristino. */
+function drawStrip(): void {
+  stripFigure.innerHTML = stripSvg(stripProfileOf(techStripInput.value));
+}
 const boxLabels = new Map([...techBoxInput.options].map((o) => [o.value, o.textContent ?? '']));
 
 /** Scatole che non contengono alimentatore e controller: «too small» nel menu. */
@@ -1310,6 +1317,7 @@ techBoxInput.addEventListener('change', onTechChange);
 // ripartono, così il canale resta agganciato alla striscia nuova.
 techStripInput.addEventListener('change', () => {
   const profile = stripProfileOf(techStripInput.value);
+  drawStrip();
   techNumberInputs.get('STRIP_W')!.value = String(profile.STRIP_W);
   techNumberInputs.get('STRIP_T')!.value = String(profile.STRIP_T);
   techNumberInputs.get('CHANNEL_W')!.value = String(profile.CHANNEL_W);
@@ -1350,6 +1358,7 @@ techReset.addEventListener('click', () => {
   techControllerInput.value = DEFAULT_PARAMS.CONTROLLER_ID;
   techBoxInput.value = DEFAULT_PARAMS.BOX_ID;
   techStripInput.value = DEFAULT_PARAMS.STRIP_ID;
+  drawStrip();
   rememberTechLinks();
   onTechChange();
 });
@@ -1601,6 +1610,7 @@ function applyOrder(order: SignOrderV4): void {
   setSelect(techControllerInput, params.CONTROLLER_ID ?? DEFAULT_PARAMS.CONTROLLER_ID, DEFAULT_PARAMS.CONTROLLER_ID);
   setSelect(techBoxInput, params.BOX_ID ?? DEFAULT_PARAMS.BOX_ID, DEFAULT_PARAMS.BOX_ID);
   setSelect(techStripInput, params.STRIP_ID ?? DEFAULT_PARAMS.STRIP_ID, DEFAULT_PARAMS.STRIP_ID);
+  drawStrip();
 
   const rainbow = order.customer.effect === 'arcobaleno';
   checkRadio('effect', rainbow ? 'arcobaleno' : 'fisso');

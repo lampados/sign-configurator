@@ -38,6 +38,12 @@ Una voce si spunta quando `npm run check` passa.
       10 minuti (`ASSEMBLY_MIN_PER_CUT`) e la somma compare nel riepilogo come «Assembly»
 - [x] Predefinita: **WS2812B 60 LED/m IP20**. Tolto il profilo generico 10 × 6. Le prove di piega e
       la pagina bend test restano agganciate alla COB, l'unica che curva
+- [x] Piatto predefinito **350 × 320 mm** (Bambu Lab H2D); il gruppo in Tech si chiama «Printing
+      plate», con «Plate width» e «Plate height» modificabili
+- [ ] H2D: un ugello solo arriva a 325 mm di larghezza, i 350 servono entrambi. Con il margine di
+      5 mm un pezzo può essere largo 340: verificare sulla macchina, altrimenti scendere a 325
+- [x] In Tech il modello di striscia è la prima voce di «LED strip», con sotto un disegno SVG in
+      scala (LED, punti di taglio, larghezza e passo quotati, intagli per la COB)
 - [x] Soglia di taglio `CUT_BEND_MIN_DEG` alzata da 1° a 10°: sotto, due pezzi restano uniti
 - [ ] «Ciao» a 12 cm con la WS2812B 60: 38 tagli su 42 LED anche con la soglia a 10° (erano 40),
       cioè 6 h 20 di montaggio. In un corsivo piccolo quasi ogni LED è in curva: proporre la COB
