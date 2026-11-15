@@ -184,14 +184,16 @@ describe('sagoma frontale', () => {
   });
 
   it('uno spigolo con tasca non esce dalla sagoma', async () => {
+    // La tasca d'angolo nasce quando lo spigolo supera la piega ammessa: qui 15°, larghezze di P.
+    const BENDABLE = resolveParams({ HINGE_MAX_DEG: 15 });
     const pts: Point[] = [];
     for (let t = 40; t > 0; t -= 1) pts.push([-t, t]);
     pts.push([0, 0]);
     for (let t = 1; t <= 40; t += 1) pts.push([t, t]);
-    const model = buildStrip(sourceFromPaths([{ points: pts }]), P, 100);
+    const model = buildStrip(sourceFromPaths([{ points: pts }]), BENDABLE, 100);
     expect(model.bom.corners).toHaveLength(1);
     const wasm = await getManifold();
-    const built = buildHousing(wasm, { paths: model.chains, crossings: [], unlit: model.unlit, params: P });
+    const built = buildHousing(wasm, { paths: model.chains, crossings: [], unlit: model.unlit, params: BENDABLE });
     try {
       expect(built.solid.status()).toBe('NoError');
       expect(built.holes.cornerPockets).toHaveLength(1);

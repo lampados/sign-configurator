@@ -1,7 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { describe, expect, it } from 'vitest';
 import type { Manifold, Vec2 } from 'manifold-3d';
-import { DEFAULT_PARAMS, resolveParams, totalHeight } from '../src/config';
+import { resolveParams, totalHeight } from '../src/config';
 import { anchorHoleCount } from '../src/export/bom';
 import { toDxf } from '../src/export/dxf';
 import { resampleChain } from '../src/geometry/chain';
@@ -19,6 +19,8 @@ const readPublic: FontBytesReader = async (file) => {
   return b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength) as ArrayBuffer;
 };
 
+// Gli spigoli con tasca valgono per una striscia che segue le curve: la COB.
+const BENDABLE = resolveParams({ STRIP_ID: 'cob-5mm' });
 const P = resolveParams();
 
 function line(length: number, id: number, origin: Vec2 = [0, 0]): HousingPath {
@@ -217,21 +219,21 @@ describe('tasca d\'angolo', () => {
     for (let t = arm; t > 0; t -= 1) pts.push([-t, t]);
     pts.push([0, 0]);
     for (let t = 1; t <= arm; t += 1) pts.push([t, t]);
-    const model = buildStrip(sourceFromPaths([{ points: pts }]), DEFAULT_PARAMS, 100);
+    const model = buildStrip(sourceFromPaths([{ points: pts }]), BENDABLE, 100);
     expect(model.chains).toHaveLength(2);
     expect(model.bom.corners).toHaveLength(1);
     expect(model.bom.corners[0]!.wireMm).toBe(0);
     expect(model.bom.wireSlots).toBe(2);
     const corner = model.bom.corners[0]!;
     for (const chain of model.chains) {
-      const holes = anchorHolesAlong(chain.points, [], DEFAULT_PARAMS, [[corner.x, corner.y]]);
+      const holes = anchorHolesAlong(chain.points, [], BENDABLE, [[corner.x, corner.y]]);
       for (const hole of holes) {
         expect(Math.hypot(hole.x - corner.x, hole.y - corner.y)).toBeGreaterThanOrEqual(10 - 1e-6);
       }
     }
 
     const wasm = await getManifold();
-    const built = buildHousing(wasm, { paths: model.chains, crossings: [], unlit: [], params: DEFAULT_PARAMS });
+    const built = buildHousing(wasm, { paths: model.chains, crossings: [], unlit: [], params: BENDABLE });
     try {
       expect(built.solid.status()).toBe('NoError');
       expect(built.holes.cornerPockets).toHaveLength(1);

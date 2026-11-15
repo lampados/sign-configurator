@@ -43,6 +43,13 @@ export interface Bom {
 }
 
 export interface BomAssembly {
+  /**
+   * Tagli in curva di una striscia che non piega di lato: fra due unità di taglio consecutive la
+   * striscia si taglia e si ricollega. 0 per le strisce che seguono le curve.
+   */
+  bendCuts: number;
+  /** Tempo di montaggio dei tagli in curva, minuti: `bendCuts · ASSEMBLY_MIN_PER_CUT`. */
+  assemblyMin: number;
   segments: number;
   /** Collegamenti DIN/DOUT da saldare. I giunti d'angolo non contano. */
   solderJoints: number;
@@ -491,6 +498,8 @@ export function bomAssembly(
   const supply = supplyOf(volts, supplyA);
   const { box, boxWarnings, boxesThatFit: fitting } = boxOf(supply, totalLeds === 0 ? null : spec, boxId);
   return {
+    bendCuts: 0,
+    assemblyMin: 0,
     segments: segments.length,
     solderJoints,
     wires: solderJoints * 3,

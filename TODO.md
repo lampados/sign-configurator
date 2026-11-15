@@ -33,12 +33,17 @@ Una voce si spunta quando `npm run check` passa.
 - [x] Menu **Strip** in Technical settings: il modello detta misure, cerniere, passo di taglio e
       densità, e finisce nell'ordine come `STRIP_ID`. In listino: WS2812B 30/60/144 IP20 e 60 IP65
       (misure di catalogo, **da confermare col calibro**) e la COB 5 mm misurata
-- [ ] Le strisce WS2812B normali **non piegano di lato**: la pagina lo dice, ma il generatore le
-      tratta come curve troppo strette. Servirebbe una modalità «taglia e salda a ogni curva»
+- [x] Le strisce WS2812B non piegano di lato, ma **si tagliano**: nessun limite di piega, pezzi
+      lunghi un passo di taglio con fino a 90° fra l'uno e l'altro. Ogni taglio in curva conta
+      10 minuti (`ASSEMBLY_MIN_PER_CUT`) e la somma compare nel riepilogo come «Assembly»
 - [x] Predefinita: **WS2812B 60 LED/m IP20**. Tolto il profilo generico 10 × 6. Le prove di piega e
       la pagina bend test restano agganciate alla COB, l'unica che curva
-- [ ] L'insegna di partenza nasce con l'avviso «does not bend sideways» e l'invio bloccato: è la
-      conseguenza voluta della predefinita, finché non c'è la modalità «taglia e salda a ogni curva»
+- [x] Soglia di taglio `CUT_BEND_MIN_DEG` alzata da 1° a 10°: sotto, due pezzi restano uniti
+- [ ] «Ciao» a 12 cm con la WS2812B 60: 38 tagli su 42 LED anche con la soglia a 10° (erano 40),
+      cioè 6 h 20 di montaggio. In un corsivo piccolo quasi ogni LED è in curva: proporre la COB
+      o una misura più grande quando i tagli sono troppi; il tempo va poi nel prezzo (§12.5, strato 2)
+- [ ] Spigolo a 90° con striscia tagliata: oggi niente tasca d'angolo. Verificare sul pezzo
+      stampato se i ponticelli saldati ci stanno nel canale
 - [x] Striscia e canale legati: cambiando `STRIP_W` il canale e l'asola lo seguono (+0,4 mm di
       tolleranza), e `STRIP_T` comanda la profondità (+6 mm d'aria sopra i LED). Toccato a mano,
       il campo a valle smette di seguire. Se la striscia non ci sta, la pagina lo dice

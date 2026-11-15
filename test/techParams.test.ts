@@ -90,8 +90,8 @@ describe('modello di striscia', () => {
     // Le strisce che non seguono le curve lo dicono già nell'etichetta.
     expect(options[0]!.value).toBe(DEFAULT_PARAMS.STRIP_ID);
     const plain = options.find((o) => o.value === 'ws2812b-60')!;
-    expect(plain.label).toMatch(/non curva/);
-    expect(options.find((o) => o.value === 'cob-5mm')!.label).not.toMatch(/non curva/);
+    expect(plain.label).toMatch(/cut at bends/);
+    expect(options.find((o) => o.value === 'cob-5mm')!.label).not.toMatch(/cut at bends/);
   });
 
   it("l'id della striscia finisce nell'ordine solo se diversa dalla predefinita", () => {
@@ -107,9 +107,9 @@ describe('modello di striscia', () => {
     expect(p.CHANNEL_W).toBe(10.4);
     expect(p.CHANNEL_DEPTH).toBe(8);
     expect(p.LED_PER_M).toBe(60);
-    expect(p.HINGE_MAX_DEG).toBe(1);
-    // Senza piega di lato il raggio minimo è enorme: l'insegna corsiva non si può fare.
-    expect(p.MIN_LETTER_H).toBeGreaterThan(1000);
+    // In curva si taglia: il limite è quello di due pezzi accostati, non della striscia.
+    expect(p.HINGE_MAX_DEG).toBe(90);
+    expect(p.MIN_LETTER_H).toBeLessThan(30);
     expect(resolveParams({ STRIP_ID: 'ws2812b-60', CHANNEL_W: 12 }).CHANNEL_W).toBe(12);
     // Una striscia sconosciuta torna alla predefinita invece di lasciare misure a caso.
     expect(resolveParams({ STRIP_ID: 'inventata' }).STRIP_W).toBe(DEFAULT_PARAMS.STRIP_W);

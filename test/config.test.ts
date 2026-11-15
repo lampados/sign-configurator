@@ -19,11 +19,11 @@ describe('config', () => {
     expect(rMin(cob)).toBeCloseTo(14.62, 2);
   });
 
-  it('la striscia predefinita non piega di lato: raggio minimo quasi un metro', () => {
+  it('la striscia predefinita non piega di lato: in curva si taglia, senza limite di piega suo', () => {
     expect(DEFAULT_STRIP.sideBend).toBe(false);
-    expect(DEFAULT_PARAMS.HINGE_MAX_DEG).toBe(1);
-    // Non è un numero da taratura: dice che una curva con questa striscia non si fa.
-    expect(rMin(DEFAULT_PARAMS)).toBeGreaterThan(900);
+    // 90° è il limite di due pezzi dritti accostati, non della striscia.
+    expect(DEFAULT_PARAMS.HINGE_MAX_DEG).toBe(90);
+    expect(rMin(DEFAULT_PARAMS)).toBeCloseTo(DEFAULT_PARAMS.HINGE_PITCH / Math.SQRT2, 6);
   });
 
   it('altezza totale = FLOOR + CHANNEL_DEPTH', () => {

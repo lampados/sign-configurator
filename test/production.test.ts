@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_PARAMS } from '../src/config';
+import { resolveParams } from '../src/config';
 import { meshToStl } from '../src/export/stl';
 import type { FontBytesReader } from '../src/fonts/loadFont';
 import { resampleChain } from '../src/geometry/chain';
@@ -10,6 +10,9 @@ import type { Point } from '../src/geometry/rasterize';
 import { sourceFromPaths } from '../src/geometry/segment';
 import { buildStrip } from '../src/geometry/strip';
 import { generateSign } from '../src/worker/generate';
+
+// Gli spigoli con tasca valgono per una striscia che segue le curve: la COB.
+const BENDABLE = resolveParams({ STRIP_ID: 'cob-5mm' });
 
 const readPublic: FontBytesReader = async (file) => {
   const b = await readFile(`public/${file}`);
@@ -23,9 +26,9 @@ function straight(length: number): HousingPath {
       [length, 0],
     ],
     {
-      hingePitch: DEFAULT_PARAMS.HINGE_PITCH,
-      hingeMaxDeg: DEFAULT_PARAMS.HINGE_MAX_DEG,
-      channelW: DEFAULT_PARAMS.CHANNEL_W,
+      hingePitch: BENDABLE.HINGE_PITCH,
+      hingeMaxDeg: BENDABLE.HINGE_MAX_DEG,
+      channelW: BENDABLE.CHANNEL_W,
       closed: false,
     },
   );
@@ -58,7 +61,7 @@ describe('geometria di produzione', () => {
   it('dritto da 100 mm: genus 2, volume stabile, STL identico, ancoraggi fuori dalle asole', async () => {
     const wasm = await getManifold();
     const path = straight(100);
-    const build = () => buildHousing(wasm, { paths: [path], crossings: [], unlit: [], params: DEFAULT_PARAMS });
+    const build = () => buildHousing(wasm, { paths: [path], crossings: [], unlit: [], params: BENDABLE });
     const a = build();
     const b = build();
     try {
@@ -85,9 +88,9 @@ describe('geometria di produzione', () => {
   });
 
   it('lo spigolo a 90° non mette ancoraggi nella tasca', async () => {
-    const model = buildStrip(sourceFromPaths([{ points: vee() }]), DEFAULT_PARAMS, 100);
+    const model = buildStrip(sourceFromPaths([{ points: vee() }]), BENDABLE, 100);
     const wasm = await getManifold();
-    const built = buildHousing(wasm, { paths: model.chains, crossings: [], unlit: [], params: DEFAULT_PARAMS });
+    const built = buildHousing(wasm, { paths: model.chains, crossings: [], unlit: [], params: BENDABLE });
     try {
       expect(built.solid.status()).toBe('NoError');
       expect(built.holes.cornerPockets.length).toBeGreaterThan(0);

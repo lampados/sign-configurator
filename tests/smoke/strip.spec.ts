@@ -27,10 +27,20 @@ test('Tecnica: il menu della striscia riscrive le misure', async ({ page }) => {
   await expect(stripW).toHaveValue('10');
   await expect(channelW).toHaveValue('10.4');
   await expect(density).toHaveValue('60');
-  await expect(strip.locator('option[value="ws2812b-60"]')).toContainText('non curva');
+  await expect(strip.locator('option[value="ws2812b-60"]')).toContainText('cut at bends');
 
-  // Su un corsivo la pagina spiega perché non va, invece di dire solo «ingrandisci».
-  await expect(page.locator('#preview-status')).toContainText('does not bend sideways', { timeout: 90_000 });
+  // Su un corsivo la striscia si taglia a ogni curva: il riepilogo conta i tagli e il tempo.
+  const status = page.locator('#preview-status');
+  await expect.poll(async () => Number(await status.getAttribute('data-cuts')), { timeout: 90_000 }).toBeGreaterThan(0);
+  const cuts = Number(await status.getAttribute('data-cuts'));
+  await page.locator('#open-request').click();
+  await expect(page.locator('#summary')).toContainText(`${cuts} strip cuts`);
+  await expect(page.locator('#summary')).toContainText('Assembly');
+  await page.locator('[data-tool="tech"]').click();
+
+  // La COB segue le curve: nessun taglio.
+  await strip.selectOption('cob-5mm');
+  await expect.poll(async () => Number(await status.getAttribute('data-cuts')), { timeout: 90_000 }).toBe(0);
 
   await page.locator('#tech-reset').click();
   await expect(strip).toHaveValue('ws2812b-60');

@@ -210,27 +210,37 @@ export const CHANNEL_CLEARANCE = 0.4;
 export const LED_AIR = 6;
 
 /**
+ * Sotto quest'angolo una striscia che non piega di lato resta intera: è la flessione che il circuito
+ * regge da sé. Oltre, fra un'unità di taglio e la successiva la striscia si taglia e si ricollega.
+ */
+export const CUT_BEND_MIN_DEG = 10;
+
+/** Minuti di montaggio per ogni taglio in curva: tagliare, orientare il pezzo, risaldare tre piazzole. */
+export const ASSEMBLY_MIN_PER_CUT = 10;
+
+/**
  * Famiglia WS2812B classica su circuito flessibile: 10 mm di larghezza, 2 mm di spessore, un LED
- * per unità di taglio. **Non piega di lato**: va bene per lettere a tratti dritti, o accettando un
- * taglio e una saldatura a ogni curva. Misure di catalogo (SK6812/WS2812B 5050, 10 mm), da
- * confermare col calibro.
+ * per unità di taglio. **Non piega di lato**, ma si taglia a ogni LED: in curva diventa una catena
+ * di pezzetti dritti lunghi un'unità di taglio, ricollegati fra loro. Non c'è quindi un limite di
+ * piega della striscia: ogni taglio costa tempo di montaggio (`ASSEMBLY_MIN_PER_CUT`). Misure di
+ * catalogo (SK6812/WS2812B 5050, 10 mm), da confermare col calibro.
  */
 function ws2812b(ledPerM: number, ip: 'IP20' | 'IP65', thickness: number): StripProfile {
   return {
     id: `ws2812b-${ledPerM}${ip === 'IP65' ? '-ip65' : ''}`,
-    name: `WS2812B ${ledPerM} LED/m ${ip === 'IP65' ? 'IP65 (siliconata)' : 'IP20 (nuda)'}`,
+    name: `WS2812B ${ledPerM} LED/m ${ip}`,
     STRIP_W: 10.0,
     STRIP_T: thickness,
     CHANNEL_W: 10.0 + CHANNEL_CLEARANCE,
-    // Senza piega di lato la cerniera non ha senso: resta il passo di taglio, con un angolo
-    // praticamente nullo. Il generatore ne ricava un'altezza minima enorme, che è la verità.
+    // La «cerniera» qui è il taglio: un pezzo dritto per unità di taglio, e fra due pezzi l'angolo
+    // che serve. 90° è il limite geometrico di due pezzi accostati nel canale, non della striscia.
     HINGE_PITCH: Math.round((1000 / ledPerM) * 100) / 100,
-    HINGE_MAX_DEG: 1,
+    HINGE_MAX_DEG: 90,
     CUT_PITCH: Math.round((1000 / ledPerM) * 100) / 100,
     LED_PER_M: ledPerM,
     sideBend: false,
     measured: false,
-    notes: 'Misure di catalogo. Non piega di lato: ogni curva va tagliata e risaldata.',
+    notes: 'Misure di catalogo. Non piega di lato: in curva si taglia a ogni LED e si ricollega.',
   };
 }
 
@@ -265,9 +275,8 @@ export const STRIP_PROFILES: readonly StripProfile[] = Object.freeze([
 ]);
 
 /**
- * La striscia più comune e più economica. **Non piega di lato**: un'insegna corsiva con questa va
- * tagliata e risaldata a ogni curva, e il generatore lo dice. Chi vuole seguire le curve sceglie la
- * COB dal menu Strip.
+ * La striscia più comune e più economica. **Non piega di lato**: in curva va tagliata e ricollegata,
+ * e la distinta conta i tagli e il tempo di montaggio. Chi vuole meno saldature sceglie la COB.
  */
 export const DEFAULT_STRIP: StripProfile = WS2812B_60;
 

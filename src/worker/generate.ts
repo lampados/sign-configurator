@@ -1,7 +1,7 @@
 // [A]–[I] nel worker: dall'ordine alle mesh, ai fori e alla distinta (SPEC §5, §6).
 import { buildPlate, plateBom, type PlateBom, type PlateModel } from '../geometry/plate';
 import type { Manifold, Mesh } from 'manifold-3d';
-import { resolveParams, stripFitWarnings, stripProfileOf } from '../config';
+import { ASSEMBLY_MIN_PER_CUT, CUT_BEND_MIN_DEG, resolveParams, stripFitWarnings, stripProfileOf } from '../config';
 import type { Bom } from '../export/bom';
 import type { FontBytesReader } from '../fonts/loadFont';
 import { buildGraph, type SkeletonGraph } from '../geometry/graph';
@@ -216,14 +216,17 @@ export async function generateSign(order: AnyOrder, read?: FontBytesReader): Pro
   });
   applyCoverage(strip, coverage);
   warnings.push(...strip.issues.map((issue) => issue.message));
-  // Una striscia che non piega di lato non segue le curve: l'avviso spiega perché l'altezza minima
-  // esce enorme, invece di lasciar credere che basti ingrandire l'insegna.
+  // Una striscia che non piega di lato si taglia a ogni curva: ogni cerniera piegata è un taglio,
+  // e ogni taglio è tempo di montaggio (SPEC §2). Le strisce che curvano non ne hanno.
   const profile = stripProfileOf(params.STRIP_ID);
-  if (!profile.sideBend && warnings.some((w) => w.includes('curva troppo stretta'))) {
-    warnings.push(
-      `Striscia «${profile.name}»: non piega di lato, quindi ogni curva va tagliata e risaldata. ` +
-        'Per seguire le curve serve una striscia con gli intagli sui bordi o a serpentina.',
-    );
+  if (!profile.sideBend) {
+    let cuts = 0;
+    for (const chain of strip.chains) {
+      if (chain.dot) continue;
+      for (const hinge of chain.hinges) if (hinge.angleDeg > CUT_BEND_MIN_DEG) cuts += 1;
+    }
+    strip.bom.assembly.bendCuts = cuts;
+    strip.bom.assembly.assemblyMin = cuts * ASSEMBLY_MIN_PER_CUT;
   }
 
   const wasm = await getManifold();

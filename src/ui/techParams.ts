@@ -46,7 +46,6 @@ export const TECH_GROUPS: readonly TechGroup[] = [
       { key: 'STRIP_W', label: 'Strip width', unit: 'mm', min: 1, max: 20, step: 0.1 },
       { key: 'STRIP_T', label: 'Strip thickness', unit: 'mm', min: 0.2, max: 6, step: 0.1 },
       { key: 'HINGE_PITCH', label: 'Hinge pitch', unit: 'mm', min: 1, max: 50, step: 0.1 },
-      // 1° vuol dire «non piega di lato»: è il valore delle strisce normali, non un errore.
       { key: 'HINGE_MAX_DEG', label: 'Max bend per hinge', unit: '°', min: 1, max: 90, step: 1 },
     ],
   },
@@ -118,7 +117,7 @@ export function voltageOptions(): { value: number; label: string; isDefault: boo
 export function stripOptions(): { value: string; label: string; isDefault: boolean }[] {
   return STRIP_PROFILES.map((strip) => ({
     value: strip.id,
-    label: `${strip.name} · ${strip.STRIP_W} × ${strip.STRIP_T} mm${strip.sideBend ? '' : ' · non curva'}`,
+    label: `${strip.name} · ${strip.STRIP_W} × ${strip.STRIP_T} mm${strip.sideBend ? '' : ' · cut at bends'}`,
     isDefault: strip.id === DEFAULT_PARAMS.STRIP_ID,
   }));
 }

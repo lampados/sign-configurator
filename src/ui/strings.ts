@@ -132,6 +132,15 @@ export const S = {
     printParts: (parts: number, bedW: number, bedH: number) => `${parts} parts for a ${bedW} × ${bedH} mm bed`,
     /** Un giunto cade su un canale: lì la striscia va tagliata e risaldata. */
     printJoins: (joins: number) => `${joins} join${joins === 1 ? '' : 's'} across a lit channel`,
+    assembly: 'Assembly',
+    /** Tagli in curva e tempo di montaggio: «31 strip cuts · 5 h 10 min». */
+    assemblyValue: (cuts: number, minutes: number) => {
+      const h = Math.floor(minutes / 60);
+      const m = minutes % 60;
+      const time = h > 0 ? (m > 0 ? `${h} h ${m} min` : `${h} h`) : `${m} min`;
+      return `${cuts} strip cut${cuts === 1 ? '' : 's'} · ${time}`;
+    },
+    assemblyNone: 'No strip cuts at bends',
     color: 'Color',
     effect: 'Effect',
     diffuser: 'Diffuser',
@@ -162,7 +171,6 @@ export function customerMessage(warning: string): string | null {
     [/^Sagome che si fondono/, () => 'Some strokes are too close together: make the sign bigger.'],
     [/bassa risoluzione/, () => 'Low-resolution image for this size: upload a larger one.'],
     [/^Canale largo/, () => 'The channel is narrower than the LED strip: widen it under Tech.'],
-    [/non piega di lato/, () => 'This LED strip does not bend sideways: pick a bendable one under Tech, or every curve needs a cut and a solder joint.'],
     [/^Canale profondo/, () => 'The channel is shallower than the LED strip: deepen it under Tech.'],
     [/tratto non uniforme/, () => 'Uneven stroke: try the Outline trace.'],
     [/^Puntino troppo piccolo|^Puntino non/, () => 'The dot is too small to light at this size.'],

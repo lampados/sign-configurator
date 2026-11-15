@@ -358,6 +358,8 @@ let lastSize: { w: number; h: number } | null = null;
 let lastParts = 1;
 /** Giunti che cadono su un canale acceso: lì la striscia va interrotta e risaldata. */
 let lastJoins = 0;
+/** Tagli in curva e minuti di montaggio dell'ultima insegna (strisce che non piegano di lato). */
+let lastAssembly = { cuts: 0, minutes: 0 };
 
 function overallLabel(size: { w: number; h: number }): string {
   return `${cmLabel(size.w).replace(' cm', '')} × ${cmLabel(size.h)}`;
@@ -592,6 +594,7 @@ function renderSummary(): void {
           ].join(' · ')
         : t.printOne,
     ],
+    [t.assembly, lastAssembly.cuts > 0 ? t.assemblyValue(lastAssembly.cuts, lastAssembly.minutes) : t.assemblyNone],
     [t.color, color.value],
     [t.effect, effect?.value === 'arcobaleno' ? S.color.rainbow : S.color.fixed],
     [t.diffuser, diffuserOn() ? t.yes : t.no],
@@ -1119,6 +1122,8 @@ async function showSign(): Promise<void> {
     scene.setColor(color.value);
     lastParts = result.split ? result.split.housing.length : 1;
     lastJoins = result.split ? result.split.onChannel : 0;
+    lastAssembly = { cuts: result.bom.assembly.bendCuts, minutes: result.bom.assembly.assemblyMin };
+    status.dataset.cuts = String(lastAssembly.cuts);
     showSize(result.plate ? { w: result.plate.widthMm, h: result.plate.heightMm } : outlineSize(result.outline));
     showSupply(result.bom);
     status.dataset.generation = String(Number(status.dataset.generation ?? '0') + 1);
@@ -1135,7 +1140,7 @@ async function showSign(): Promise<void> {
     const leds = result.lightPoints.length > 0 ? S.status.leds(result.lightPoints.length) : S.status.noLeds;
     // Al cliente solo gli avvisi che lo riguardano, tradotti; i bloccanti stanno in Richiedi.
     const shown = result.warnings.filter((warning) => {
-      if (/bassa risoluzione|tratto non uniforme|^Puntino troppo piccolo|^Puntino non|^Trattino fuori|^Canale |^Striscia «/.test(warning)) return true;
+      if (/bassa risoluzione|tratto non uniforme|^Puntino troppo piccolo|^Puntino non|^Trattino fuori|^Canale /.test(warning)) return true;
       return image && warning.startsWith('Sagome che si fondono');
     });
     const extra = customerMessages([...notes, ...shown]).join(' ');
