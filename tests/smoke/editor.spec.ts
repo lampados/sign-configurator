@@ -102,5 +102,22 @@ test('editor: trascina un nodo, una curva stretta blocca l\'invio, Ctrl+Z lo ria
   await page.keyboard.press('Control+z');
   await page.locator('#open-request').click();
   await expect(page.locator('#submit-order')).toBeEnabled();
+  // Uscita: il pulsante sopra il disegno chiude l'editor e le modifiche restano.
+  await page.locator('[data-tool="more"]').click();
+  const edit = page.locator('#edit-paths');
+  const done = page.locator('#editor-done');
+  await expect(edit).toHaveText('Done editing');
+  await expect(done).toBeVisible();
+  await done.click();
+  await expect(canvas).not.toHaveAttribute('data-open', 'true');
+  await expect(canvas).toBeHidden();
+  await expect(done).toBeHidden();
+  await expect(edit).toHaveText('Edit paths');
+  await expect(page.locator('#restore-paths')).toBeEnabled();
+  // Si rientra, e lo stesso pulsante del pannello richiude.
+  await edit.click();
+  await expect(canvas).toHaveAttribute('data-open', 'true');
+  await edit.click();
+  await expect(canvas).toBeHidden();
   expectClean(track.problems);
 });

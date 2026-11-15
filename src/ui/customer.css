@@ -991,3 +991,26 @@ input[type="color"] {
   font-size: 3px;
   font-family: ui-monospace, monospace;
 }
+
+/* Uscita dall'editor dei tracciati: sopra il disegno, dove si sta lavorando. */
+#editor-done {
+  position: absolute;
+  z-index: 4;
+  left: 50%;
+  bottom: calc(92px + env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  min-height: 44px;
+  padding: 0 20px;
+  border: 0;
+  border-radius: 999px;
+  background: #f6f1ea;
+  color: #12100e;
+  font-weight: 650;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.45);
+  cursor: pointer;
+}
+
+.shell:not([data-sheet="config"]) #editor-done,
+.shell:not(:has(.section[data-section="more"][open])) #editor-done {
+  display: none;
+}

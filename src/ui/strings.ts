@@ -74,6 +74,7 @@ export const S = {
   },
   more: {
     editPaths: 'Edit paths',
+    doneEditing: 'Done editing',
     restorePaths: 'Restore original',
     share: 'Save or share',
     downloadDesign: 'Download design (.json)',

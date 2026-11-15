@@ -162,6 +162,7 @@ app.innerHTML = `
     <div class="stage-wrap">
       <div id="stage"></div>
       <canvas id="path-editor" hidden></canvas>
+      <button type="button" id="editor-done" hidden>${S.more.doneEditing}</button>
       <div class="dims" id="dims" aria-hidden="true" hidden>
         <div class="dim dim-w"><i class="dim-line"></i><span id="dim-w"></span></div>
         <div class="dim dim-h"><i class="dim-line"></i><span id="dim-h"></span></div>
@@ -334,6 +335,7 @@ const downloadButton = document.querySelector<HTMLButtonElement>('#download-stl'
 const blockedReason = document.querySelector<HTMLElement>('#blocked-reason')!;
 const summary = document.querySelector<HTMLElement>('#summary')!;
 const editorCanvas = document.querySelector<HTMLCanvasElement>('#path-editor')!;
+const editorDone = document.querySelector<HTMLButtonElement>('#editor-done')!;
 const editorToolbar = document.querySelector<HTMLElement>('#path-toolbar')!;
 const textInput = document.querySelector<HTMLInputElement>('input[name="text"]')!;
 const fontInput = document.querySelector<HTMLSelectElement>('select[name="fontId"]')!;
@@ -866,6 +868,7 @@ function dropEdits(): void {
   edited = null;
   editor?.close();
   editor = null;
+  syncEditButton();
   liveBlocked = false;
   restoreButton.disabled = true;
   updateSubmit();
@@ -1433,7 +1436,11 @@ async function loadImage(file: File): Promise<void> {
   }
 }
 
-editButton.addEventListener('click', () => void openEditor());
+editButton.addEventListener('click', () => {
+  if (editor) closeEditor();
+  else void openEditor();
+});
+editorDone.addEventListener('click', () => closeEditor());
 restoreButton.addEventListener('click', () => {
   if (!edited) return;
   dropEdits();
@@ -1467,6 +1474,22 @@ window.addEventListener('keydown', (event) => {
 desktop.addEventListener('change', () => {
   if (isDesktop() && !shell.dataset.sheet) openSheet('text');
 });
+
+/** Il pulsante dice cosa fa adesso: apre l'editor o lo chiude tenendo le modifiche. */
+function syncEditButton(): void {
+  const open = editor !== null;
+  editButton.textContent = open ? S.more.doneEditing : S.more.editPaths;
+  editButton.setAttribute('aria-pressed', String(open));
+  editorDone.hidden = !open;
+}
+
+/** Esce dall'editor e torna all'anteprima. I tracciati modificati restano: li toglie solo Restore. */
+function closeEditor(): void {
+  if (!editor) return;
+  editor.close();
+  editor = null;
+  syncEditButton();
+}
 
 async function openEditor(): Promise<void> {
   if (sourceSegments.length === 0 && !edited) return;
@@ -1512,6 +1535,7 @@ async function openEditor(): Promise<void> {
   void showSign();
   } finally {
     editButton.disabled = sourceSegments.length === 0 && !edited;
+    syncEditButton();
   }
 }
 
@@ -1571,6 +1595,7 @@ function applyOrder(order: SignOrderV4): void {
   window.clearTimeout(timer);
   editor?.close();
   editor = null;
+  syncEditButton();
   liveBlocked = false;
   svgMarkup = null;
   raster = null;

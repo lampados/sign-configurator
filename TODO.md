@@ -44,6 +44,8 @@ Una voce si spunta quando `npm run check` passa.
       5 mm un pezzo può essere largo 340: verificare sulla macchina, altrimenti scendere a 325
 - [x] In Tech il modello di striscia è la prima voce di «LED strip», con sotto un disegno SVG in
       scala (LED, punti di taglio, larghezza e passo quotati, intagli per la COB)
+- [x] Editor dei tracciati: uscita esplicita. «Edit paths» diventa «Done editing» e lo stesso
+      pulsante compare sopra il disegno; le modifiche restano, le toglie solo «Restore original»
 - [x] Soglia di taglio `CUT_BEND_MIN_DEG` alzata da 1° a 10°: sotto, due pezzi restano uniti
 - [ ] «Ciao» a 12 cm con la WS2812B 60: 38 tagli su 42 LED anche con la soglia a 10° (erano 40),
       cioè 6 h 20 di montaggio. In un corsivo piccolo quasi ogni LED è in curva: proporre la COB
