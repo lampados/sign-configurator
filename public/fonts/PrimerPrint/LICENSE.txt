@@ -1,0 +1,9 @@
+Primer Print, by Ray Larabie (Typodermic Fonts), 2024.
+
+Released under the Creative Commons Zero v1.0 Universal licence (CC0): no rights reserved.
+https://creativecommons.org/publicdomain/zero/1.0/
+
+The font file states it in its own name table:
+"Released in 2024 under CC0 license. No rights reserved."
+
+The file here is the upstream OTF, unchanged, renamed without the space.

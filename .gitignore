@@ -7,3 +7,5 @@ playwright-report/
 blob-report/
 .dev.vars
 .wrangler/
+# Font in attesa di verifica della licenza: mai nel repo
+fonts-inbox/

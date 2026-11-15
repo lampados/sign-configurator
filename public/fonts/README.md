@@ -1,10 +1,27 @@
 # Fonts
 
-Every font here is under the SIL Open Font License 1.1; each folder carries its own `OFL.txt`.
+Every font here is under the SIL Open Font License 1.1 and carries its own `OFL.txt`, except
+`PrimerPrint` (CC0, see its `LICENSE.txt`) and `HersheyScriptSimplex` (see its `LICENSE.txt`).
+These files keep their own licence: they are not covered by the GPL of the code around them.
+
+A font enters this folder only with a licence that allows redistribution, stated by its author in
+the download or inside the font file. "Free for commercial use" on a download site is not enough.
 
 ## Latin
 
-`Sacramento`, `Neonderthaw`, `EMSAllure` and `HersheyScriptSimplex` are the upstream files, unchanged.
+All upstream files, unchanged.
+
+| Folder | Font | Author | Licence |
+|---|---|---|---|
+| `Sacramento` | Sacramento | Astigmatic | OFL |
+| `Neonderthaw` | Neonderthaw | Robert Leuschke | OFL |
+| `EMSAllure` | EMS Allure (single stroke) | Sheldon B. Michaels, Windell H. Oskay | OFL |
+| `HersheyScriptSimplex` | Hershey Script 1-stroke | A. V. Hershey; format by James Hurt | see `LICENSE.txt` |
+| `Beon` | Beon | NoirBlancRouge (Bastien Sozeau) | OFL |
+| `Pecita` | Pecita | Philippe Cochy | OFL, reserved name: no subset |
+| `Compagnon` | Compagnon Light Italic | Valentin Papon, EESAB Rennes | OFL |
+| `PrimerPrint` | Primer Print | Ray Larabie | CC0 |
+| `WireOne` | Wire One | Cyreal | OFL |
 
 ## CJK: subsets
 

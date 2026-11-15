@@ -46,6 +46,14 @@ Una voce si spunta quando `npm run check` passa.
       scala (LED, punti di taglio, larghezza e passo quotati, intagli per la COB)
 - [x] Editor dei tracciati: uscita esplicita. «Edit paths» diventa «Done editing» e lo stesso
       pulsante compare sopra il disegno; le modifiche restano, le toglie solo «Restore original»
+- [x] Cinque font latini nuovi: **Beon, Pecita, Compagnon Italic, Primer Print, Wire One** (OFL,
+      Primer Print CC0), file originali con la licenza accanto; le miniature usano il proprio font
+- [ ] Pecita: nell'anteprima le lettere non si legano (opentype.js non applica le legature di
+      contesto del font), mentre la miniatura sì. Serve un motore di composizione (harfbuzz)
+- [ ] Pecita pesa 860 KB e si precarica con la pagina: valutare il caricamento a richiesta
+- [ ] Font in `fonts-inbox` in attesa: con licenza a posto Asterisk Mono, Eightgon, VTF Gulax,
+      PT Root UI Light, Compagnon Light, League Script, Zorque; senza licenza dimostrata
+      PICOFONTICO, Manchineel Lands, Patung, zanjirbof
 - [x] Soglia di taglio `CUT_BEND_MIN_DEG` alzata da 1° a 10°: sotto, due pezzi restano uniti
 - [ ] «Ciao» a 12 cm con la WS2812B 60: 38 tagli su 42 LED anche con la soglia a 10° (erano 40),
       cioè 6 h 20 di montaggio. In un corsivo piccolo quasi ogni LED è in curva: proporre la COB

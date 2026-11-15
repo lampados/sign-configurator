@@ -72,7 +72,7 @@ const app = document.querySelector<HTMLElement>('#app')!;
 const fontOptions = FONTS.map((font) => `<option value="${font.id}">${font.name}</option>`).join('');
 const fontCards = FONTS.map((font, index) => `
   <button type="button" class="font-card" data-font="${font.id}"${font.sample ? ` data-sample="${font.sample}"` : ''} aria-pressed="${index === 0 ? 'true' : 'false'}">
-    <span class="font-sample">${font.sample ?? 'Ciao'}</span>
+    <span class="font-sample"${font.kind === 'outline' && !font.lazy ? ` style="font-family:'${font.id}',sans-serif"` : ''}>${font.sample ?? 'Ciao'}</span>
     <span class="font-name">${font.name}</span>
   </button>`).join('');
 const sizeChips = SIZES.map((size) => `
