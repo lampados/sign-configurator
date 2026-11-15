@@ -120,3 +120,12 @@ describe('strisce strette', () => {
   });
 });
 
+describe('piega senza taglio', () => {
+  it('30° per le WS2812B senza guaina a 60 e 30 LED/m, 10° per IP65 e 144 LED/m', async () => {
+    const { STRIP_PROFILES } = await import('../src/config');
+    const deg = (id: string) => STRIP_PROFILES.find((strip) => strip.id === id)!.cutBendDeg;
+    for (const id of ['ws2812b-60', 'ws2812b-30', 'ws2812b-60-8mm', 'ws2812b-60-5mm', 'ws2812b-60-4mm']) expect(deg(id), id).toBe(30);
+    for (const id of ['ws2812b-60-ip65', 'ws2812b-144', 'ws2812b-144-5mm']) expect(deg(id), id).toBe(10);
+  });
+});
+

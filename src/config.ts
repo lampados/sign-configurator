@@ -205,6 +205,12 @@ export interface StripProfile {
    * invece si accartoccia. Con `false` ogni curva va tagliata e risaldata.
    */
   sideBend: boolean;
+  /**
+   * Fin dove un giunto fra due unità di taglio piega di lato **senza tagliare**, in gradi. Oltre,
+   * lì la striscia si taglia e si ricollega. Per una striscia che segue le curve (`sideBend`) non
+   * si usa: non si taglia mai per piegare.
+   */
+  cutBendDeg: number;
   /** `false`: misure di catalogo, ancora da confermare col calibro. */
   measured: boolean;
   notes: string;
@@ -223,10 +229,18 @@ export const CHANNEL_CLEARANCE = 0.4;
 export const LED_AIR = 6;
 
 /**
- * Sotto quest'angolo una striscia che non piega di lato resta intera: è la flessione che il circuito
- * regge da sé. Oltre, fra un'unità di taglio e la successiva la striscia si taglia e si ricollega.
+ * Piega di lato di un giunto senza tagliare, per una striscia rigida o dal giunto corto: è la
+ * flessione che il circuito regge da sé. Vale per le strisce con guaina (IP65) e per le 144 LED/m,
+ * dove fra un LED e l'altro restano pochi millimetri.
  */
-export const CUT_BEND_MIN_DEG = 10;
+export const CUT_BEND_STIFF_DEG = 10;
+
+/**
+ * Piega di lato di un giunto della WS2812B senza guaina a 60 o 30 LED/m: il circuito si increspa
+ * sulle piazzole di rame e ruota. Provato da Davide il 15 novembre 2026 su una 60 LED/m da 10 mm:
+ * 90° in quattro giunti, sul tavolo. Da confermare dentro un canale stampato.
+ */
+export const CUT_BEND_FLEX_DEG = 30;
 
 /** Minuti di montaggio per ogni taglio in curva: tagliare, orientare il pezzo, risaldare tre piazzole. */
 export const ASSEMBLY_MIN_PER_CUT = 10;
@@ -257,8 +271,9 @@ function ws2812b(ledPerM: number, ip: 'IP20' | 'IP65', thickness: number, width 
     CUT_PITCH: Math.round((1000 / ledPerM) * 100) / 100,
     LED_PER_M: ledPerM,
     sideBend: false,
+    cutBendDeg: ip === 'IP20' && ledPerM <= 60 ? CUT_BEND_FLEX_DEG : CUT_BEND_STIFF_DEG,
     measured: false,
-    notes: 'Misure di catalogo. Non piega di lato: in curva si taglia a ogni LED e si ricollega.',
+    notes: 'Misure di catalogo. Piega di lato sulle piazzole fino a un certo angolo per giunto: oltre si taglia e si ricollega.',
   };
 }
 
@@ -286,6 +301,7 @@ export const COB_5MM: StripProfile = Object.freeze({
   LED_PER_M: 160,
   // Intagli sui bordi ogni ~1 cm: sul pezzo B del bend test segue fino a 45°, 40° è il margine.
   sideBend: true,
+  cutBendDeg: 0,
   measured: true,
   notes: 'Misurata sul campione stampato: segue le curve fino a 45°, al 90° va tagliata.',
 });

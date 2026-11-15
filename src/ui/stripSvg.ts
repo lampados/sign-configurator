@@ -88,7 +88,7 @@ export function stripSvg(strip: StripProfile): string {
     parts.push(`<text class="strip-label" x="${n((xa + xb) / 2)}" y="${n(yd - 1.5)}" text-anchor="middle">${n(strip.CUT_PITCH)}</text>`);
   }
   const caption = `${strip.LED_PER_M} LED/m · ${n(strip.STRIP_W)} × ${n(strip.STRIP_T)} mm · cut every ${n(strip.CUT_PITCH)} mm`;
-  parts.push(`<text class="strip-label" x="${n(x0)}" y="${n(y0 + w + 6.5)}">${strip.sideBend ? 'bends sideways' : 'rigid sideways: cut at bends'}</text>`);
+  parts.push(`<text class="strip-label" x="${n(x0)}" y="${n(y0 + w + 6.5)}">${strip.sideBend ? 'bends sideways' : `bends ${strip.cutBendDeg}° per LED, cut beyond`}</text>`);
 
   const width = PAD_LEFT + len + PAD_RIGHT;
   const height = PAD_TOP + w + PAD_BOTTOM;

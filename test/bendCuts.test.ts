@@ -31,7 +31,9 @@ describe('tagli in curva e tempo di montaggio', () => {
   it('la WS2812B predefinita su un corsivo si taglia: ogni taglio vale 10 minuti', async () => {
     const result = await generateSign(order({}), readPublic);
     const { bendCuts, assemblyMin } = result.bom.assembly;
-    expect(bendCuts).toBeGreaterThan(10);
+    // Soglia di 30° per giunto: restano i tagli nei riccioli stretti, non uno per LED.
+    expect(bendCuts).toBeGreaterThan(0);
+    expect(bendCuts).toBeLessThan(result.bom.assembly.totalLeds / 2);
     expect(ASSEMBLY_MIN_PER_CUT).toBe(10);
     expect(assemblyMin).toBe(bendCuts * 10);
     // Tagliare è permesso: la curva non è più un errore della striscia.

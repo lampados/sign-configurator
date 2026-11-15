@@ -1,7 +1,7 @@
 // [A]–[I] nel worker: dall'ordine alle mesh, ai fori e alla distinta (SPEC §5, §6).
 import { buildPlate, plateBom, type PlateBom, type PlateModel } from '../geometry/plate';
 import type { Manifold, Mesh } from 'manifold-3d';
-import { ASSEMBLY_MIN_PER_CUT, CUT_BEND_MIN_DEG, resolveParams, stripFitWarnings, stripProfileOf } from '../config';
+import { ASSEMBLY_MIN_PER_CUT, resolveParams, stripFitWarnings, stripProfileOf } from '../config';
 import type { Bom } from '../export/bom';
 import type { FontBytesReader } from '../fonts/loadFont';
 import { buildGraph, type SkeletonGraph } from '../geometry/graph';
@@ -223,7 +223,7 @@ export async function generateSign(order: AnyOrder, read?: FontBytesReader): Pro
     let cuts = 0;
     for (const chain of strip.chains) {
       if (chain.dot) continue;
-      for (const hinge of chain.hinges) if (hinge.angleDeg > CUT_BEND_MIN_DEG) cuts += 1;
+      for (const hinge of chain.hinges) if (hinge.angleDeg > profile.cutBendDeg) cuts += 1;
     }
     strip.bom.assembly.bendCuts = cuts;
     strip.bom.assembly.assemblyMin = cuts * ASSEMBLY_MIN_PER_CUT;

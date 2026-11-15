@@ -90,8 +90,8 @@ describe('modello di striscia', () => {
     // Le strisce che non seguono le curve lo dicono già nell'etichetta.
     expect(options[0]!.value).toBe(DEFAULT_PARAMS.STRIP_ID);
     const plain = options.find((o) => o.value === 'ws2812b-60')!;
-    expect(plain.label).toMatch(/cut at bends/);
-    expect(options.find((o) => o.value === 'cob-5mm')!.label).not.toMatch(/cut at bends/);
+    expect(plain.label).toMatch(/cut over 30°/);
+    expect(options.find((o) => o.value === 'cob-5mm')!.label).not.toMatch(/cut over/);
   });
 
   it("l'id della striscia finisce nell'ordine solo se diversa dalla predefinita", () => {

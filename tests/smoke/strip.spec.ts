@@ -21,7 +21,7 @@ test('Tecnica: il menu della striscia riscrive le misure', async ({ page }) => {
   const figure = page.locator('#strip-figure svg');
   await expect(figure).toBeVisible();
   await expect(figure.locator('[data-led]')).toHaveCount(4);
-  await expect(figure).toContainText('cut at bends');
+  await expect(figure).toContainText('bends 30° per LED, cut beyond');
 
   // La COB da 5 mm: misure più piccole, canale stretto, 160 LED/m fuori scala → resta il default.
   await strip.selectOption('cob-5mm');
@@ -37,7 +37,7 @@ test('Tecnica: il menu della striscia riscrive le misure', async ({ page }) => {
   await expect(stripW).toHaveValue('10');
   await expect(channelW).toHaveValue('10.4');
   await expect(density).toHaveValue('60');
-  await expect(strip.locator('option[value="ws2812b-60"]')).toContainText('cut at bends');
+  await expect(strip.locator('option[value="ws2812b-60"]')).toContainText('cut over 30°');
 
   // Su un corsivo la striscia si taglia a ogni curva: il riepilogo conta i tagli e il tempo.
   const status = page.locator('#preview-status');

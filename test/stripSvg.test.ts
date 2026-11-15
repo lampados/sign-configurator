@@ -30,7 +30,8 @@ describe('disegno della striscia', () => {
   });
 
   it('dice se la striscia piega di lato o si taglia', () => {
-    expect(stripSvg(WS2812B_60)).toContain('cut at bends');
+    expect(stripSvg(WS2812B_60)).toContain('bends 30° per LED, cut beyond');
+    expect(stripSvg(WS2812B_144)).toContain('bends 10° per LED, cut beyond');
     expect(stripSvg(COB_5MM)).toContain('bends sideways');
     expect(stripSvg(COB_5MM)).toContain('strip-notch');
     expect(stripSvg(WS2812B_60)).not.toContain('strip-notch');

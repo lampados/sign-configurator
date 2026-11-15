@@ -117,7 +117,7 @@ export function voltageOptions(): { value: number; label: string; isDefault: boo
 export function stripOptions(): { value: string; label: string; isDefault: boolean }[] {
   return STRIP_PROFILES.map((strip) => ({
     value: strip.id,
-    label: `${strip.name} · ${strip.STRIP_W} × ${strip.STRIP_T} mm${strip.sideBend ? '' : ' · cut at bends'}`,
+    label: `${strip.name} · ${strip.STRIP_W} × ${strip.STRIP_T} mm${strip.sideBend ? '' : ` · cut over ${strip.cutBendDeg}°`}`,
     isDefault: strip.id === DEFAULT_PARAMS.STRIP_ID,
   }));
 }
