@@ -1,6 +1,6 @@
 // Cliente: l'insegna a tutto schermo, gli strumenti in un foglio (SPEC §12.2).
 import './customer.css';
-import { CHANNEL_CLEARANCE, controllerOf, DEFAULT_STRIP, CUSTOMER_STL_DOWNLOAD, DEFAULT_PARAMS, GENERATOR_VERSION, LED_AIR, ORDER_SCHEMA_VERSION, resolveParams, stripProfileOf, type Params } from '../config';
+import { CHANNEL_CLEARANCE, controllerOf, shopCartUrl, DEFAULT_STRIP, CUSTOMER_STL_DOWNLOAD, DEFAULT_PARAMS, GENERATOR_VERSION, LED_AIR, ORDER_SCHEMA_VERSION, resolveParams, stripProfileOf, type Params } from '../config';
 import { PRICING_VERSION } from '../pricing';
 import { decodeShare, encodeShare } from '../order/share';
 import type { RasterImageSource, SvgImageSource } from '../order/schema';
@@ -294,6 +294,7 @@ app.innerHTML = `
         <div class="pane" data-pane="request" hidden>
           <dl id="summary"></dl>
           <p id="blocked-reason" hidden></p>
+          <p id="request-note" class="tech-note">${S.order.next}</p>
           <div class="request-actions">
             <button type="button" id="submit-order">${S.order.send}</button>
             ${CUSTOMER_STL_DOWNLOAD ? `<button type="button" id="download-stl" disabled>${S.generating}</button>` : ''}
@@ -581,7 +582,8 @@ function syncSizeChips(): void {
   }
 }
 
-function renderSummary(): void {
+/** Righe del riepilogo: le vede il cliente e, con «Send request», le riceve il negozio. */
+function summaryRows(): [string, string][] {
   const effect = document.querySelector<HTMLInputElement>('input[name="effect"]:checked');
   const rows: [string, string][] = [];
   const t = S.summary;
@@ -644,8 +646,12 @@ function renderSummary(): void {
   if (overrides.EDGE_PROFILE) {
     rows.push([t.profile, EDGE_PROFILES.find((p) => p.value === overrides.EDGE_PROFILE)?.label ?? overrides.EDGE_PROFILE]);
   }
+  return rows;
+}
+
+function renderSummary(): void {
   summary.replaceChildren();
-  for (const [term, detail] of rows) {
+  for (const [term, detail] of summaryRows()) {
     const dt = document.createElement('dt');
     dt.textContent = term;
     const dd = document.createElement('dd');
@@ -1446,9 +1452,35 @@ restoreButton.addEventListener('click', () => {
   dropEdits();
   void showSign();
 });
+const requestNote = document.querySelector<HTMLElement>('#request-note')!;
+let sending = false;
+// Richiedi: il design si salva (senza alcun dato personale) e il cliente passa al carrello del
+// negozio con il codice del design. Nome, email e indirizzo si inseriscono lì.
 submitButton.addEventListener('click', () => {
-  if (submitButton.disabled) return;
-  status.dataset.sent = 'true';
+  if (submitButton.disabled || sending || !lastOrder) return;
+  const order = lastOrder;
+  sending = true;
+  submitButton.textContent = S.order.sending;
+  requestNote.textContent = S.order.next;
+  delete requestNote.dataset.error;
+  void (async () => {
+    try {
+      const response = await fetch(`${import.meta.env.BASE_URL}api/design`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ order: JSON.parse(encodeShare(order).json) as unknown, summary: summaryRows() }),
+      });
+      const body = (await response.json()) as { code?: unknown };
+      if (!response.ok || typeof body.code !== 'string') throw new Error('design');
+      status.dataset.sent = body.code;
+      window.location.assign(shopCartUrl(body.code));
+    } catch {
+      requestNote.textContent = S.order.failed;
+      requestNote.dataset.error = 'true';
+      submitButton.textContent = S.order.send;
+      sending = false;
+    }
+  })();
 });
 backToText.addEventListener('click', () => {
   selectKind('text');
@@ -1768,6 +1800,28 @@ window.addEventListener('hashchange', () => {
   invalidateStl();
   void showSign();
 });
+
+// Design salvato per il negozio: ?d=<codice> lo riapre, anche quando è troppo grande per un link.
+const savedCode = new URLSearchParams(window.location.search).get('d');
+if (savedCode) {
+  void (async () => {
+    let ok = false;
+    try {
+      const response = await fetch(`${import.meta.env.BASE_URL}api/design/${encodeURIComponent(savedCode)}?full=1`);
+      const body = (await response.json()) as { order?: unknown };
+      ok = response.ok && typeof body.order === 'string' && openDesign(body.order);
+    } catch {
+      ok = false;
+    }
+    window.history.replaceState(null, '', window.location.pathname);
+    if (!ok) {
+      noteDesign(S.order.notFound);
+      return;
+    }
+    invalidateStl();
+    void showSign();
+  })();
+}
 
 // All'apertura: prima il link, poi l'ultimo design rimasto nel browser.
 if (window.location.hash.startsWith('#o=')) {

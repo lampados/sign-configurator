@@ -54,6 +54,18 @@ Una voce si spunta quando `npm run check` passa.
 - [ ] Font in `fonts-inbox` in attesa: con licenza a posto Asterisk Mono, Eightgon, VTF Gulax,
       PT Root UI Light, Compagnon Light, League Script, Zorque; senza licenza dimostrata
       PICOFONTICO, Manchineel Lands, Patung, zanjirbof
+- [x] «Send request»: il design si salva su Cloudflare (`/api/design`, senza dati personali) e
+      il cliente passa al carrello di officine.cc con il codice del design; `?d=<codice>` lo riapre
+- [ ] Cloudflare: collegare un KV al progetto Pages con il nome `DESIGNS`. Senza, «Send request»
+      risponde «Could not send the design»
+- [ ] WordPress: installare il plugin `lampados-sign-bridge` (zip consegnato in chat, non nel
+      repo) e fare un ordine di prova. Provato su WooCommerce 9.8.5, il negozio ha la 11.3
+- [ ] **«Ciao» in Sacramento con la WS2812B 60 non è inviabile a nessuna misura** (12, 18, 25 cm):
+      sagome che si fondono e curve strette. L'insegna di apertura ha l'invio bloccato. Decidere:
+      altro font o altra misura di partenza, canale più stretto, o regole meno severe
+- [ ] Il riepilogo che arriva al negozio è calcolato dal browser: va ricalcolato dal server
+      prima di usarlo per un prezzo automatico. Oggi lo rivede una persona (ordine in attesa)
+- [ ] Anti-spam (Turnstile) sul salvataggio del design
 - [x] Soglia di taglio `CUT_BEND_MIN_DEG` alzata da 1° a 10°: sotto, due pezzi restano uniti
 - [ ] «Ciao» a 12 cm con la WS2812B 60: 38 tagli su 42 LED anche con la soglia a 10° (erano 40),
       cioè 6 h 20 di montaggio. In un corsivo piccolo quasi ogni LED è in curva: proporre la COB

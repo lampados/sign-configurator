@@ -153,6 +153,19 @@ export function controllerOf(id: string | undefined): ControllerSpec {
 /** Pagina cliente: offre il download di housing.stl e, se attivo, diffuser.stl (SPEC §5). */
 export const CUSTOMER_STL_DOWNLOAD = true;
 
+/**
+ * Negozio che riceve le richieste: «Send request» salva il design e porta il cliente al carrello,
+ * dove inserisce i suoi dati. Il prodotto è quello generico a cui il negozio aggancia il design.
+ * Chi fa un fork cambia questi due valori, o mette SHOP_URL a '' per non avere un negozio.
+ */
+export const SHOP_URL = 'https://officine.cc';
+export const SHOP_PRODUCT_ID = 1637;
+
+/** Indirizzo del carrello con il design agganciato. */
+export function shopCartUrl(code: string): string {
+  return `${SHOP_URL}/?add-to-cart=${SHOP_PRODUCT_ID}&design=${encodeURIComponent(code)}`;
+}
+
 /** Lato lungo massimo di una bitmap caricata, prima della soglia (SPEC §4bis). */
 export const IMAGE_MAX_PX = 4096;
 

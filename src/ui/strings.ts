@@ -105,7 +105,12 @@ export const S = {
     value: (model: string, volts: number, amps: number, needA: number) => `${model} · ${volts} V ${amps} A (needs ${needA} A)`,
   },
   order: {
-    send: 'Send order',
+    send: 'Send request',
+    sending: 'Sending…',
+    /** Sotto il pulsante: che cosa succede dopo, e dove finiscono i dati. */
+    next: 'You will enter your contact and shipping details on our shop. We reply with the final price.',
+    failed: 'Could not send the design. Check your connection and try again.',
+    notFound: 'This design link has expired or is wrong.',
     download: 'Download STL',
     downloadParts: (parts: number) => `Download STL · ${parts} parts (.zip)`,
     blockedFallback: 'Fix the design before sending.',

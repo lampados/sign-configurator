@@ -1014,3 +1014,7 @@ input[type="color"] {
 .shell:not(:has(.section[data-section="more"][open])) #editor-done {
   display: none;
 }
+
+#request-note[data-error="true"] {
+  color: #b3261e;
+}
