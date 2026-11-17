@@ -1229,3 +1229,20 @@ sito e, sopra una soglia, si mostra ai clienti nel pannello Order.
   `/api/stats` e `/api/event` come un sito senza database.
 - Le chiamate sono relative alla pagina, mai a un indirizzo assoluto: un fork conta i suoi click nel
   suo database, non in quello di un altro sito.
+
+## 15. Negozio configurabile
+
+Il negozio a cui porta «Send request» non è scritto nel codice. Arriva da due variabili di build:
+`VITE_SHOP_URL` (indirizzo del negozio WooCommerce) e `VITE_SHOP_PRODUCT_ID` (prodotto generico a cui
+il negozio aggancia il design). `src/config.ts` le legge in `SHOP`; `shopCartUrl(codice)` costruisce
+`<negozio>/?add-to-cart=<prodotto>&design=<codice>`.
+
+- **Dove si impostano**: su Cloudflare Pages in Settings → Variables and secrets, per Production e
+  Preview (si leggono al build: dopo una modifica serve un nuovo deploy); in locale in `.env.local`
+  (modello in `.env.example`).
+- **Senza le variabili**, o con valori non validi, `SHOP` è `null`: «Send request» e la nota sui dati
+  di contatto non compaiono, resta «Download STL». Un fork non manda i suoi clienti nel negozio di un
+  altro.
+- **`npm run check`** compila con `--mode check` e legge `.env.check`: un negozio finto
+  (`shop.example.test`), così i test non dipendono da un negozio vero.
+

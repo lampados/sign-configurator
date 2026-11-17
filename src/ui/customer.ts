@@ -1,6 +1,6 @@
 // Cliente: l'insegna a tutto schermo, gli strumenti in un foglio (SPEC §12.2).
 import './customer.css';
-import { CHANNEL_CLEARANCE, controllerOf, shopCartUrl, DEFAULT_STRIP, CUSTOMER_STL_DOWNLOAD, DEFAULT_PARAMS, STATS_MIN_SHOWN, GENERATOR_VERSION, LED_AIR, ORDER_SCHEMA_VERSION, resolveParams, stripProfileOf, type Params } from '../config';
+import { CHANNEL_CLEARANCE, controllerOf, SHOP, shopCartUrl, DEFAULT_STRIP, CUSTOMER_STL_DOWNLOAD, DEFAULT_PARAMS, STATS_MIN_SHOWN, GENERATOR_VERSION, LED_AIR, ORDER_SCHEMA_VERSION, resolveParams, stripProfileOf, type Params } from '../config';
 import { statsLine } from '../api/statsStore';
 import { PRICING_VERSION } from '../pricing';
 import { decodeShare, encodeShare } from '../order/share';
@@ -308,9 +308,9 @@ app.innerHTML = `
         <div class="pane" data-pane="request" hidden>
           <dl id="summary"></dl>
           <p id="blocked-reason" hidden></p>
-          <p id="request-note" class="tech-note">${S.order.next}</p>
+          <p id="request-note" class="tech-note"${SHOP ? '' : ' hidden'}>${S.order.next}</p>
           <div class="request-actions">
-            <button type="button" id="submit-order">${S.order.send}</button>
+            <button type="button" id="submit-order"${SHOP ? '' : ' hidden'}>${S.order.send}</button>
             ${CUSTOMER_STL_DOWNLOAD ? `<button type="button" id="download-stl" disabled>${S.generating}</button>` : ''}
             <p id="request-stats" class="tech-note" hidden></p>
           </div>
@@ -1538,7 +1538,7 @@ let sending = false;
 // Richiedi: il design si salva (senza alcun dato personale) e il cliente passa al carrello del
 // negozio con il codice del design. Nome, email e indirizzo si inseriscono lì.
 submitButton.addEventListener('click', () => {
-  if (submitButton.disabled || sending || !lastOrder) return;
+  if (!SHOP || submitButton.disabled || sending || !lastOrder) return;
   const order = lastOrder;
   sending = true;
   submitButton.textContent = S.order.sending;
@@ -1553,8 +1553,10 @@ submitButton.addEventListener('click', () => {
       });
       const body = (await response.json()) as { code?: unknown };
       if (!response.ok || typeof body.code !== 'string') throw new Error('design');
+      const cart = shopCartUrl(body.code);
+      if (!cart) throw new Error('shop');
       status.dataset.sent = body.code;
-      window.location.assign(shopCartUrl(body.code));
+      window.location.assign(cart);
     } catch {
       requestNote.textContent = S.order.failed;
       requestNote.dataset.error = 'true';

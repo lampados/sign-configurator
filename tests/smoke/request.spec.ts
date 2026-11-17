@@ -22,7 +22,7 @@ test('Send request: salva il design senza dati personali e porta al carrello del
     posted = JSON.parse(route.request().postData() ?? '{}') as typeof posted;
     await route.fulfill({ status: 201, contentType: 'application/json', body: JSON.stringify({ code: 'K7F3-92QD' }) });
   });
-  await page.route('https://officine.cc/**', (route) =>
+  await page.route('https://shop.example.test/**', (route) =>
     route.fulfill({ status: 200, contentType: 'text/html', body: '<title>shop</title>' }),
   );
 
@@ -37,7 +37,7 @@ test('Send request: salva il design senza dati personali e porta al carrello del
   await expect(send).toBeEnabled();
   await send.click();
 
-  await page.waitForURL('https://officine.cc/?add-to-cart=1637&design=K7F3-92QD');
+  await page.waitForURL('https://shop.example.test/?add-to-cart=1637&design=K7F3-92QD');
   expect(posted!.order?.source?.text).toBe('Ciao');
   const labels = posted!.summary!.map(([label]) => label);
   expect(labels).toContain('Assembly');
@@ -59,7 +59,7 @@ test('Send request: se il salvataggio fallisce la pagina resta e lo dice', async
   await page.locator('#submit-order').click();
   await expect(page.locator('#request-note')).toContainText('Could not send the design');
   await expect(page.locator('#submit-order')).toHaveText('Send request');
-  expect(new URL(page.url()).hostname).not.toBe('officine.cc');
+  expect(new URL(page.url()).hostname).not.toBe('shop.example.test');
 });
 
 test('?d=<codice> riapre il design salvato', async ({ page }) => {

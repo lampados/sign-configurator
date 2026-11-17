@@ -7,6 +7,8 @@ import {
   minLetterH,
   resolveParams,
   rMin,
+  shopCartUrl,
+  shopOf,
   STRIP_PROFILES,
   stripFitWarnings,
   totalHeight,
@@ -127,5 +129,25 @@ describe('piega senza taglio', () => {
     for (const id of ['ws2812b-60', 'ws2812b-30', 'ws2812b-60-8mm', 'ws2812b-60-5mm', 'ws2812b-60-4mm', 'ws2812b-144', 'ws2812b-144-5mm']) expect(deg(id), id).toBe(30);
     for (const id of ['ws2812b-60-ip65']) expect(deg(id), id).toBe(10);
   });
-});
 
+  it('il negozio arriva dalle variabili di build; senza, niente carrello', () => {
+    expect(shopOf('https://shop.example.test/', '1637')).toEqual({ url: 'https://shop.example.test', productId: 1637 });
+    expect(shopOf(' https://example.test/negozio/ ', ' 12 ')).toEqual({ url: 'https://example.test/negozio', productId: 12 });
+    for (const [url, id] of [
+      [undefined, undefined],
+      ['', '1637'],
+      ['https://shop.example.test', undefined],
+      ['https://shop.example.test', '0'],
+      ['https://shop.example.test', '1.5'],
+      ['https://shop.example.test', 'abc'],
+      ['shop.example.test', '1637'],
+      ['javascript:alert(1)', '1637'],
+    ] as const) {
+      expect(shopOf(url, id)).toBeNull();
+    }
+    const shop = shopOf('https://shop.example.test', '1637');
+    expect(shopCartUrl('K7F3-92QD', shop)).toBe('https://shop.example.test/?add-to-cart=1637&design=K7F3-92QD');
+    expect(shopCartUrl('a b', shop)).toBe('https://shop.example.test/?add-to-cart=1637&design=a%20b');
+    expect(shopCartUrl('K7F3-92QD', null)).toBeNull();
+  });
+});

@@ -11,7 +11,7 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "check": "tsc --noEmit && vitest run && vite build && playwright test",
+    "check": "tsc --noEmit && vitest run && vite build --mode check && playwright test",
     "test:watch": "vitest"
   },
   "repository": {

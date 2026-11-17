@@ -23,5 +23,23 @@ from `STATS_MIN_SHOWN` (in `src/config.ts`, default 10) upwards. Endpoints: `POS
 SELECT substr(ts, 1, 10) AS day, type, COUNT(*) AS n FROM events GROUP BY day, type ORDER BY day DESC;
 ```
 
+## Your shop behind "Send request" (optional)
+
+"Send request" saves the design and takes the customer to the cart of a WooCommerce shop, where
+they enter their contact and shipping details. The shop is not written in the code: it comes from two
+build variables.
+
+| Variable | Example | Meaning |
+|---|---|---|
+| `VITE_SHOP_URL` | `https://shop.example.com` | Address of the shop |
+| `VITE_SHOP_PRODUCT_ID` | `123` | Generic product the design is attached to |
+
+- On Cloudflare Pages: Settings → Variables and secrets, for both Production and Preview, then
+  redeploy (they are read at build time).
+- Locally: copy `.env.example` to `.env.local`.
+
+Without them the "Send request" button does not appear and the page only offers "Download STL", so
+a fork never sends its visitors to someone else's shop.
+
 ## License
 GPL-3.0-or-later. Fonts in `public/fonts` keep their own licenses.

@@ -6,6 +6,8 @@ test-results/
 playwright-report/
 blob-report/
 .dev.vars
+.env.local
+.env.*.local
 .wrangler/
 # Font in attesa di verifica della licenza: mai nel repo
 fonts-inbox/

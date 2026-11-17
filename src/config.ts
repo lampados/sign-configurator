@@ -159,17 +159,41 @@ export const STATS_MIN_SHOWN = 10;
 /** Pagina cliente: offre il download di housing.stl e, se attivo, diffuser.stl (SPEC §5). */
 export const CUSTOMER_STL_DOWNLOAD = true;
 
-/**
- * Negozio che riceve le richieste: «Send request» salva il design e porta il cliente al carrello,
- * dove inserisce i suoi dati. Il prodotto è quello generico a cui il negozio aggancia il design.
- * Chi fa un fork cambia questi due valori, o mette SHOP_URL a '' per non avere un negozio.
- */
-export const SHOP_URL = 'https://officine.cc';
-export const SHOP_PRODUCT_ID = 1637;
+/** Negozio WooCommerce che riceve le richieste, e il prodotto generico a cui aggancia il design. */
+export interface Shop {
+  url: string;
+  productId: number;
+}
 
-/** Indirizzo del carrello con il design agganciato. */
-export function shopCartUrl(code: string): string {
-  return `${SHOP_URL}/?add-to-cart=${SHOP_PRODUCT_ID}&design=${encodeURIComponent(code)}`;
+/** Legge il negozio dalle due variabili: null se una manca o non è valida. */
+export function shopOf(url: string | undefined, productId: string | undefined): Shop | null {
+  const id = Number((productId ?? '').trim());
+  if (!Number.isInteger(id) || id <= 0) return null;
+  try {
+    const parsed = new URL((url ?? '').trim());
+    if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') return null;
+    return { url: `${parsed.origin}${parsed.pathname.replace(/\/+$/, '')}`, productId: id };
+  } catch {
+    return null;
+  }
+}
+
+// Fuori da Vite (Pages Functions) `import.meta.env` non esiste.
+const BUILD_ENV = (import.meta.env ?? {}) as Record<string, string | undefined>;
+
+/**
+ * Il negozio non è scritto nel codice: arriva dalle variabili di build VITE_SHOP_URL e
+ * VITE_SHOP_PRODUCT_ID (SPEC §15; su Cloudflare Pages: Settings → Variables and secrets; in locale:
+ * `.env.local`, vedi `.env.example`). «Send request» salva il design e porta il cliente al carrello
+ * di quel negozio, dove inserisce i suoi dati. Senza le variabili SHOP è null: il pulsante non
+ * compare e resta il download. Così un fork non manda i suoi clienti nel negozio di un altro.
+ */
+export const SHOP: Shop | null = shopOf(BUILD_ENV.VITE_SHOP_URL, BUILD_ENV.VITE_SHOP_PRODUCT_ID);
+
+/** Indirizzo del carrello con il design agganciato; null senza negozio. */
+export function shopCartUrl(code: string, shop: Shop | null = SHOP): string | null {
+  if (!shop) return null;
+  return `${shop.url}/?add-to-cart=${shop.productId}&design=${encodeURIComponent(code)}`;
 }
 
 /** Lato lungo massimo di una bitmap caricata, prima della soglia (SPEC §4bis). */
