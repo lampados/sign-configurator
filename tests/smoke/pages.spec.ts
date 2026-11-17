@@ -9,7 +9,7 @@ for (const file of PAGES) {
     await page.goto(file, { waitUntil: 'load' });
 
     if (file === 'index.html') {
-      await expect(page.locator('h1')).toHaveText('Ciao Configurator');
+      await expect(page.locator('h1')).toHaveText('Ciao, a WYSIWYG Sign Configurator');
     }
     if (file === 'spec.html') {
       await expect(page.locator('#spec h1').first()).toBeVisible();

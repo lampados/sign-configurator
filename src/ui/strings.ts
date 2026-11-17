@@ -4,10 +4,12 @@
 // poche frasi per il cliente e scarta tutto il resto.
 
 export const S = {
-  pageTitle: 'Ciao Configurator',
+  pageTitle: 'Ciao, a WYSIWYG Sign Configurator',
   /** In alto a sinistra sull'anteprima: nome, versione e autore, invito a contribuire. */
   brand: {
+    /** Nome corto: telefono. Nome lungo: desktop, scheda del browser, anteprime dei link. */
     name: 'Ciao Configurator',
+    longName: 'Ciao, a WYSIWYG Sign Configurator',
     byline: 'v 0.2 designed by Davide Gomba',
     contribute: 'Contribute to this project on GitHub',
     repo: 'https://github.com/lampados/sign-configurator',
@@ -35,6 +37,23 @@ export const S = {
   sheet: { configure: 'Configure', request: 'Order', done: 'Done', aria: 'Tools' },
   view: { aria: 'View', on: 'On', off: 'Off' },
   rotate: 'Rotate screen',
+  /** Giro guidato: parte alla prima visita e dal tasto «?». Il colore non c'è: è solo estetica. */
+  tour: {
+    help: 'Help',
+    aria: 'Guided tour',
+    skip: 'Skip',
+    back: 'Back',
+    next: 'Next',
+    done: 'Start',
+    welcome: {
+      title: 'Ciao!',
+      body: 'This tool makes 3D light signs. Design yours here, then print it yourself or order it online.',
+    },
+    text: { title: 'Write', body: 'Type your word. The sign updates as you write.' },
+    shape: { title: 'Font and size', body: 'Pick a handwriting and a letter height. The arrows on the preview show the real size.' },
+    view: { title: 'Look at it', body: 'Switch it off, or remove the diffuser: what you see is what gets printed.' },
+    order: { title: 'Get it', body: 'Send a request and we reply with the price within 24 hours, or download the STL files and print it yourself.' },
+  },
   diffuser: { aria: 'Diffuser', on: 'Diffuser', off: 'No diffuser' },
   frame: { label: 'Wall thickness' },
   request: 'Order',

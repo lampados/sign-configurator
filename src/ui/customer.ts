@@ -21,6 +21,7 @@ import {
 } from '../order/schema';
 import { importRaster, paintThresholdPreview, rebuildRaster } from '../sources/rasterImport';
 import { IMAGE_MAX_BYTES, importSvg } from '../sources/svgImport';
+import { startTour, tourSeen, type TourStep } from './tour';
 import { S, customerMessage, customerMessages } from './strings';
 import type { BomBox, BomSupply } from '../export/bom';
 import { BOXES } from '../parts/boxes';
@@ -172,11 +173,12 @@ app.innerHTML = `
       </div>
       <div class="hud">
         <p class="brand">
-          <strong>${S.brand.name}</strong>
+          <strong><span class="brand-short">${S.brand.name}</span><span class="brand-long">${S.brand.longName}</span></strong>
           <span>${S.brand.byline}</span>
           <a href="${S.brand.repo}" target="_blank" rel="noopener">${S.brand.contribute}</a>
         </p>
         <div class="hud-actions">
+          <button type="button" id="open-help" aria-label="${S.tour.help}" title="${S.tour.help}">?</button>
           <button type="button" id="rotate-screen" aria-label="${S.rotate}" title="${S.rotate}" hidden>${ROTATE_ICON}</button>
           <button type="button" id="open-request" aria-pressed="false">${S.request}</button>
         </div>
@@ -1530,6 +1532,22 @@ backToText.addEventListener('click', () => {
   openSheet('text');
 });
 sheetClose.addEventListener('click', () => closeSheet());
+
+// Giro guidato: benvenuto, testo, font e misura, acceso/spento e diffusore, ordine.
+const tool = (id: string): Element | null => document.querySelector(`[data-tool="${id}"]`);
+const TOUR_STEPS: TourStep[] = [
+  { ...S.tour.welcome },
+  { ...S.tour.text, before: () => openSheet('text'), targets: () => [textInput] },
+  { ...S.tour.shape, before: () => closeSheet(), targets: () => [tool('font'), tool('size')] },
+  { ...S.tour.view, before: () => closeSheet(), targets: () => [document.querySelector('.stage-controls')] },
+  { ...S.tour.order, before: () => closeSheet(), targets: () => [openRequest] },
+];
+const runTour = (): void => startTour(TOUR_STEPS, S.tour);
+document.querySelector<HTMLButtonElement>('#open-help')!.addEventListener('click', runTour);
+// Prima visita: parte da solo, ma non su un design aperto da link e non nei test automatici.
+if (!tourSeen() && !window.location.hash.startsWith('#o=') && !navigator.webdriver) {
+  window.setTimeout(runTour, 1200);
+}
 openRequest.addEventListener('click', () => toggleSheet('request'));
 for (const button of document.querySelectorAll<HTMLButtonElement>('[data-tool]')) {
   button.addEventListener('click', () => {
