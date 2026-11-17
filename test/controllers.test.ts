@@ -16,13 +16,13 @@ describe('controller', () => {
     }
     expect(Object.fromEntries(CONTROLLERS.map((c) => [c.id, c.priceEur]))).toEqual({
       'gl-c-309wl': 35,
-      'gl-c-015wl': 44,
+      'gl-c-616wl': 40,
       'quinled-dig-uno': 35,
       'xiao-led-driver': 18,
     });
-    expect(controllerOf('gl-c-015wl').model).toBe('GL-C-015WL');
+    expect(controllerOf('gl-c-616wl').model).toBe('GL-C-616WL');
     // Tolti dal catalogo: un design che li nomina torna allo standard.
-    for (const gone of ['gl-c-618wl', 'quinled-dig-next-2', 'quinled-dig-quad']) expect(controllerOf(gone)).toBe(CONTROLLER);
+    for (const gone of ['gl-c-618wl', 'gl-c-015wl', 'quinled-dig-next-2', 'quinled-dig-quad']) expect(controllerOf(gone)).toBe(CONTROLLER);
     expect(controllerOf('boh')).toBe(CONTROLLER);
   });
 

@@ -52,11 +52,11 @@ Altezza minima di lettera derivata: `MIN_LETTER_H = 2·R_MIN`, il diametro della
 
 Controller WLED su ESP32; la tensione d'ingresso è quella della striscia. Standard il GLEDOPTO
 ESP32 Ultra Mini (GL-C-309WL: 5–24 V, 10 A, 800 LED, 2 uscite). Opzionali, nel menu Tech
-`CONTROLLER_ID`: GLEDOPTO GL-C-015WL (5–24 V, 15 A totali, 10 A per uscita, 2 uscite, 800 LED,
-108 × 45 × 18 mm, solo Wi-Fi), QuinLED Dig-Uno v3.1 (5–24 V, 15 A, 2 uscite, 50 × 40 × 25 mm), Seeed
+`CONTROLLER_ID`: GLEDOPTO GL-C-616WL (5–24 V, 15 A totali, 10 A per uscita, 2 uscite, Wi-Fi ed
+Ethernet), QuinLED Dig-Uno v3.1 (5–24 V, 15 A, 2 uscite, 50 × 40 × 25 mm), Seeed
 Studio LED Driver Board for XIAO con una XIAO ESP32 (5–12 V, 3 A a 5 V e 2 A a 12 V, 1 uscita,
 63 × 30 × 14,4 mm con la XIAO montata; WLED va caricato). Ogni controller ha un prezzo (`priceEur`, un
-pezzo, IVA esclusa: 35, 44, 35 e 18 €) che entra nel prezzo dell'insegna (§12.5) e nella pagina parts.
+pezzo, IVA esclusa: 35, 40, 35 e 18 €) che entra nel prezzo dell'insegna (§12.5) e nella pagina parts.
 Se la striscia ha una tensione che il controller non accetta (24 V con la scheda Seeed) la distinta
 avvisa; il limite di corrente può dipendere dalla tensione (`ampsAt`). Dove il costruttore non dà un limite di LED: ~600 per uscita, la soglia che WLED
 suggerisce per un buon frame rate. Il controller cambia solo gli avvisi della distinta (corrente e LED),

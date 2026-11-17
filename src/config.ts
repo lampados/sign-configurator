@@ -69,7 +69,8 @@ export interface ControllerSpec {
  * Controller WLED disponibili. Il primo è quello standard, montato dietro l'insegna.
  * GLEDOPTO Ultra Mini: dalle schede dei rivenditori, 5–24 V, 10 A, 2 uscite, 800 IC (il dato
  * «10 A per canale» non torna con i 240 W dichiarati: per prudenza 10 A in totale).
- * GL-C-015WL: dal manuale GLEDOPTO, 15 A in totale, 10 A per uscita, 800 IC, 108 × 45 × 18 mm.
+ * GL-C-616WL: dalle schede dei rivenditori, 15 A in totale, 10 A per uscita, 2 uscite, Wi-Fi ed
+ * Ethernet; misure e limite di LED non pubblicati.
  * QuinLED: dalle pagine quinled.info. Seeed: dal wiki e dalle schede dei rivenditori, 3 A a 5 V e
  * 2 A a 12 V, misure con la XIAO montata.
  * Dove il costruttore non dà un limite di LED: circa 600 per uscita, la soglia che WLED
@@ -93,19 +94,19 @@ export const CONTROLLERS: readonly ControllerSpec[] = Object.freeze([
     note: 'Small enough to hide behind the sign.',
   },
   {
-    id: 'gl-c-015wl',
+    id: 'gl-c-616wl',
     brand: 'GLEDOPTO',
-    name: 'GLEDOPTO ESP32 WLED Controller',
-    model: 'GL-C-015WL',
+    name: 'GLEDOPTO ESP32 Ethernet',
+    model: 'GL-C-616WL',
     minV: 5,
     maxV: 24,
     maxA: 15,
-    maxIcs: 800,
+    maxIcs: 1200,
     outputs: 2,
-    sizeMm: [108, 45, 18],
-    priceEur: 44,
+    sizeMm: null,
+    priceEur: 40,
     url: 'https://www.gledopto.com/',
-    note: '10 A per output, 15 A total. Wi-Fi, screw terminals.',
+    note: '10 A per output, 15 A total. Wi-Fi and Ethernet.',
   },
   {
     id: 'quinled-dig-uno',
