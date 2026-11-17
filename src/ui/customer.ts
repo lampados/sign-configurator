@@ -1582,6 +1582,7 @@ const TOUR_STEPS: TourStep[] = [
   { ...S.tour.welcome },
   { ...S.tour.text, before: () => openSheet('text'), targets: () => [textInput] },
   { ...S.tour.shape, before: () => closeSheet(), targets: () => [tool('font'), tool('size')] },
+  { ...S.tour.backdrop, before: () => closeSheet(), targets: () => [tool('plate')] },
   { ...S.tour.view, before: () => closeSheet(), targets: () => [document.querySelector('.stage-controls')] },
   { ...S.tour.order, before: () => closeSheet(), targets: () => [openRequest] },
 ];

@@ -82,3 +82,21 @@ for (const viewport of [
     expectClean(track.problems);
   });
 }
+
+test('giro guidato: sei passi, il quarto illumina lo strumento Backdrop', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.goto('index.html', { waitUntil: 'load' });
+  await expect(page.locator('#preview-status')).toContainText('LED');
+  await page.locator('#open-help').click();
+  const card = page.locator('.tour-card');
+  await expect(card.locator('.tour-count')).toHaveText('1 / 6');
+  for (let i = 0; i < 3; i++) await card.locator('.tour-next').click();
+  await expect(card.locator('.tour-count')).toHaveText('4 / 6');
+  await expect(card.locator('.tour-title')).toHaveText('Backdrop');
+  // Il riquadro illuminato sta sopra il tasto Backdrop della barra.
+  const [hole, button] = await Promise.all([page.locator('.tour-hole').boundingBox(), page.locator('[data-tool="plate"]').boundingBox()]);
+  expect(hole!.x).toBeLessThanOrEqual(button!.x);
+  expect(hole!.y).toBeLessThanOrEqual(button!.y);
+  expect(hole!.x + hole!.width).toBeGreaterThanOrEqual(button!.x + button!.width);
+  expect(hole!.y + hole!.height).toBeGreaterThanOrEqual(button!.y + button!.height);
+});

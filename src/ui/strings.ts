@@ -59,6 +59,7 @@ export const S = {
     },
     text: { title: 'Write', body: 'Type your word. The sign updates as you write.' },
     shape: { title: 'Font and size', body: 'Pick a handwriting and a letter height. The arrows on the preview show the real size.' },
+    backdrop: { title: 'Backdrop', body: 'Add a plate behind the sign: clear or black acrylic, or wood. Or leave it bare.' },
     view: { title: 'Look at it', body: 'Switch it off, or remove the diffuser: what you see is what gets printed.' },
     order: { title: 'Get it', body: 'Send a request and we reply with the price within 24 hours, or download the STL files and print it yourself.' },
   },
