@@ -930,6 +930,18 @@ input[type="color"] {
   font-size: 0.78rem;
 }
 
+/* Invito a offrire un caffè: come la riga dei totali, sotto. */
+#support-note {
+  flex: 0 0 100%;
+  font-size: 0.78rem;
+}
+
+#support-note a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 /* Con la barra a destra l'anteprima è più stretta. */
 @media (max-width: 899px) {
   .hud { flex-wrap: nowrap; }

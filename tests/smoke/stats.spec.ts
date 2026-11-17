@@ -84,3 +84,22 @@ test('Download STL manda un solo evento, senza dati personali', async ({ page })
   await expect.poll(() => events.length).toBe(1);
   expect(JSON.parse(events[0]!)).toEqual({ type: 'stl' });
 });
+
+test('invito a offrire un caffè: sotto il nome e sotto «Download STL», solo link', async ({ page }) => {
+  const track = trackPage(page);
+  await openOrder(page);
+  const support = 'https://support.example.test/ciao';
+  const brand = page.locator('#support-brand');
+  await expect(brand).toHaveText('☕ Offer me a coffee');
+  await expect(brand).toHaveAttribute('href', support);
+  await expect(brand).toHaveAttribute('target', '_blank');
+  const note = page.locator('#support-note');
+  await expect(note).toHaveText('Printing it yourself? Offer me a coffee: espresso, doppio or corretto.');
+  await expect(note.locator('a')).toHaveAttribute('href', support);
+  await expect(note.locator('a')).toHaveAttribute('rel', 'noopener');
+  // Sta sotto i pulsanti e non li sposta.
+  const [button, line] = await Promise.all([page.locator('#download-stl').boundingBox(), note.boundingBox()]);
+  expect(line!.y).toBeGreaterThanOrEqual(button!.y + button!.height);
+  // Nessuna richiesta a terzi: la pagina delle offerte si apre solo con un clic.
+  expectClean(track.problems);
+});

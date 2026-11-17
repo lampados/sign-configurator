@@ -9,6 +9,7 @@ import {
   rMin,
   shopCartUrl,
   shopOf,
+  supportOf,
   STRIP_PROFILES,
   stripFitWarnings,
   totalHeight,
@@ -149,5 +150,13 @@ describe('piega senza taglio', () => {
     expect(shopCartUrl('K7F3-92QD', shop)).toBe('https://shop.example.test/?add-to-cart=1637&design=K7F3-92QD');
     expect(shopCartUrl('a b', shop)).toBe('https://shop.example.test/?add-to-cart=1637&design=a%20b');
     expect(shopCartUrl('K7F3-92QD', null)).toBeNull();
+  });
+
+  it('la pagina delle offerte arriva da una variabile di build; senza, nessun invito', () => {
+    expect(supportOf('https://ko-fi.com/vongomben')).toBe('https://ko-fi.com/vongomben');
+    expect(supportOf(' https://ko-fi.com/vongomben ')).toBe('https://ko-fi.com/vongomben');
+    for (const url of [undefined, '', 'ko-fi.com/vongomben', 'javascript:alert(1)', 'mailto:a@example.test']) {
+      expect(supportOf(url), String(url)).toBeNull();
+    }
   });
 });

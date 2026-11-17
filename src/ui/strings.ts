@@ -14,6 +14,14 @@ export const S = {
     contribute: 'Contribute to this project on GitHub',
     repo: 'https://github.com/lampados/sign-configurator',
   },
+  /** Invito a offrire un caffè: sotto il nome e, nel pannello Order, sotto «Download STL». */
+  support: {
+    brand: '☕ Offer me a coffee',
+    lead: 'Printing it yourself?',
+    link: 'Offer me a coffee',
+    /** I tre tagli si scelgono sulla pagina delle offerte: qui sono solo nominati. */
+    sizes: 'espresso, doppio or corretto.',
+  },
   tools: {
     text: 'Text',
     font: 'Font',

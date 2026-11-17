@@ -196,6 +196,24 @@ export function shopCartUrl(code: string, shop: Shop | null = SHOP): string | nu
   return `${shop.url}/?add-to-cart=${shop.productId}&design=${encodeURIComponent(code)}`;
 }
 
+/** Indirizzo della pagina per sostenere il progetto: solo http(s), altrimenti null. */
+export function supportOf(url: string | undefined): string | null {
+  try {
+    const parsed = new URL((url ?? '').trim());
+    if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') return null;
+    return parsed.href;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Pagina delle offerte (Ko-fi, Buy Me a Coffee, ...): arriva dalla variabile di build
+ * VITE_SUPPORT_URL, come il negozio (SPEC §16). Senza, i due inviti non compaiono: un fork non
+ * raccoglie offerte per qualcun altro.
+ */
+export const SUPPORT_URL: string | null = supportOf(BUILD_ENV.VITE_SUPPORT_URL);
+
 /** Lato lungo massimo di una bitmap caricata, prima della soglia (SPEC §4bis). */
 export const IMAGE_MAX_PX = 4096;
 

@@ -1246,3 +1246,22 @@ il negozio aggancia il design). `src/config.ts` le legge in `SHOP`; `shopCartUrl
 - **`npm run check`** compila con `--mode check` e legge `.env.check`: un negozio finto
   (`shop.example.test`), così i test non dipendono da un negozio vero.
 
+## 16. Invito a sostenere il progetto
+
+Chi scarica l'STL e si stampa l'insegna non compra niente: la pagina gli propone di offrire un caffè.
+L'indirizzo della pagina delle offerte (Ko-fi, Buy Me a Coffee o simili) non è scritto nel codice:
+arriva dalla variabile di build `VITE_SUPPORT_URL`, letta in `SUPPORT_URL` da `src/config.ts`, e si
+imposta come le variabili del negozio (§15).
+
+- **Dove compare**: una riga sotto il nome, dopo il link a GitHub («☕ Offer me a coffee»), e una
+  nel pannello Order sotto «Download STL» e la riga dei totali («Printing it yourself? Offer me a
+  coffee: espresso, doppio or corretto.»).
+- **Solo link**: si aprono in una nuova scheda. Nessuno script né widget di terzi nella pagina,
+  quindi nessun cookie in più e nessun dato del visitatore passa da qui.
+- **I tre tagli** (espresso, doppio, corretto) sono nominati nel testo e si scelgono sulla pagina
+  delle offerte: non contiamo su link che preimpostano l'importo.
+- **Senza la variabile**, o con un valore che non è un indirizzo http(s), `SUPPORT_URL` è `null` e
+  le due righe non compaiono. Un fork non raccoglie offerte per qualcun altro.
+- **Repository**: il pulsante Sponsor di GitHub è a parte, in `.github/FUNDING.yml`.
+- **`npm run check`** usa una pagina finta (`support.example.test`) da `.env.check`.
+

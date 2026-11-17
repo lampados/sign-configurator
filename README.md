@@ -41,5 +41,18 @@ build variables.
 Without them the "Send request" button does not appear and the page only offers "Download STL", so
 a fork never sends its visitors to someone else's shop.
 
+## A coffee for whoever runs the site (optional)
+
+The page can invite visitors to support the project: a line under the name, and one under
+"Download STL" for those who print the sign themselves. The link comes from one build variable,
+set like the shop's.
+
+| Variable | Example | Meaning |
+|---|---|---|
+| `VITE_SUPPORT_URL` | `https://ko-fi.com/yourname` | Your Ko-fi, Buy Me a Coffee or similar page |
+
+Without it neither line appears. The Sponsor button of the repository is separate: it is set in
+`.github/FUNDING.yml`.
+
 ## License
 GPL-3.0-or-later. Fonts in `public/fonts` keep their own licenses.

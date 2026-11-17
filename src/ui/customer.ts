@@ -1,6 +1,6 @@
 // Cliente: l'insegna a tutto schermo, gli strumenti in un foglio (SPEC §12.2).
 import './customer.css';
-import { CHANNEL_CLEARANCE, controllerOf, SHOP, shopCartUrl, DEFAULT_STRIP, CUSTOMER_STL_DOWNLOAD, DEFAULT_PARAMS, STATS_MIN_SHOWN, GENERATOR_VERSION, LED_AIR, ORDER_SCHEMA_VERSION, resolveParams, stripProfileOf, type Params } from '../config';
+import { CHANNEL_CLEARANCE, controllerOf, SHOP, SUPPORT_URL, shopCartUrl, DEFAULT_STRIP, CUSTOMER_STL_DOWNLOAD, DEFAULT_PARAMS, STATS_MIN_SHOWN, GENERATOR_VERSION, LED_AIR, ORDER_SCHEMA_VERSION, resolveParams, stripProfileOf, type Params } from '../config';
 import { statsLine } from '../api/statsStore';
 import { PRICING_VERSION } from '../pricing';
 import { decodeShare, encodeShare } from '../order/share';
@@ -177,6 +177,7 @@ app.innerHTML = `
           <strong><span class="brand-short">${S.brand.name}</span><span class="brand-long">${S.brand.longName}</span></strong>
           <span>${S.brand.byline}</span>
           <a href="${S.brand.repo}" target="_blank" rel="noopener">${S.brand.contribute}</a>
+          ${SUPPORT_URL ? `<a id="support-brand" href="${SUPPORT_URL}" target="_blank" rel="noopener">${S.support.brand}</a>` : ''}
         </p>
         <div class="hud-actions">
           <button type="button" id="open-help" aria-label="${S.tour.help}" title="${S.tour.help}">?</button>
@@ -313,6 +314,7 @@ app.innerHTML = `
             <button type="button" id="submit-order"${SHOP ? '' : ' hidden'}>${S.order.send}</button>
             ${CUSTOMER_STL_DOWNLOAD ? `<button type="button" id="download-stl" disabled>${S.generating}</button>` : ''}
             <p id="request-stats" class="tech-note" hidden></p>
+            ${SUPPORT_URL ? `<p id="support-note" class="tech-note">${S.support.lead} <a href="${SUPPORT_URL}" target="_blank" rel="noopener">${S.support.link}</a>: ${S.support.sizes}</p>` : ''}
           </div>
         </div>
       </div>
