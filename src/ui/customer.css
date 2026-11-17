@@ -924,6 +924,12 @@ input[type="color"] {
   border-top: 1px solid var(--line);
 }
 
+/* Totali di download e richieste: una riga intera sotto i pulsanti, che non li sposta. */
+#request-stats {
+  flex: 0 0 100%;
+  font-size: 0.78rem;
+}
+
 /* Con la barra a destra l'anteprima è più stretta. */
 @media (max-width: 899px) {
   .hud { flex-wrap: nowrap; }

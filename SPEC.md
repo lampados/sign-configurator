@@ -1201,3 +1201,31 @@ con raggio pari a metà del lato corto; sagomato in un pezzo solo e più piccolo
 di montaggio tolti con margine stretto; niente passaggi dei fili con `PLATE_WIRE_HOLES` falso; SVG in
 mm specchiato; BOM del fondale; il generatore produce il fondale solo se l'ordine lo chiede; il
 fondale passa per il link condiviso. Smoke: con il fondale il download dà quattro file.
+
+## 14. Contatore di download e richieste
+
+Quante volte è stato premuto «Download STL» e quante è partita una richiesta. Serve a chi gestisce il
+sito e, sopra una soglia, si mostra ai clienti nel pannello Order.
+
+- **Dati**: database D1 collegato a Pages con il nome `STATS`, tabella `events(id, type, ts)`
+  (`migrations/0001_events.sql`). `type` vale `stl` o `request`, `ts` è l'ora ISO. Nessun IP, nessun
+  cookie, nessun dato personale: il conteggio è anonimo.
+- **Binding opzionale**, come `DESIGNS`: senza `STATS` non si conta niente e tutto il resto funziona.
+- **`POST /api/event`**, corpo `{ "type": "stl" }`: lo manda la pagina a ogni click su «Download STL»
+  (`navigator.sendBeacon`, un evento per click anche con lo zip a più parti). Accetta solo `stl` e solo
+  se l'host di `Origin` (o, se manca, di `Referer`) è quello della richiesta: nessun dominio nel codice,
+  quindi vale su pages.dev, sulle anteprime e nei fork. Risposte: 204, 403 origine diversa, 400 tipo
+  non valido.
+- **Richieste**: le conta `POST /api/design` quando il design è salvato (201), dopo la risposta. Un
+  errore del contatore non cambia e non rallenta la risposta al cliente. Conta i passaggi al carrello,
+  non gli ordini conclusi: quelli stanno nel negozio.
+- **`GET /api/stats`**: `{ "downloads": n, "requests": n }`, in cache 5 minuti. Senza database risponde
+  200 con i due valori `null` (non 404, che lascerebbe un errore nella console del browser).
+- **Pagina cliente**: alla prima apertura del pannello Order chiede i totali e mostra una riga piccola
+  sotto i pulsanti, per esempio «123 downloads · 12 requests so far». Le etichette dei pulsanti non
+  cambiano. Ogni totale compare solo da `STATS_MIN_SHOWN` (`src/config.ts`, 10) in su; se nessuno ci
+  arriva, o se l'endpoint non risponde, la riga non compare e non lascia spazio vuoto.
+- **In locale** (`vite`, `vite preview`) le Functions non girano: `vite.config.ts` risponde a
+  `/api/stats` e `/api/event` come un sito senza database.
+- Le chiamate sono relative alla pagina, mai a un indirizzo assoluto: un fork conta i suoi click nel
+  suo database, non in quello di un altro sito.

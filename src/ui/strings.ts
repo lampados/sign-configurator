@@ -141,6 +141,12 @@ export const S = {
     download: 'Download STL',
     downloadParts: (parts: number) => `Download STL · ${parts} parts (.zip)`,
     blockedFallback: 'Fix the design before sending.',
+    /** Riga sotto i pulsanti: i totali di tutti, non quelli di chi guarda. */
+    stats: {
+      downloads: (n: number) => `${n} downloads`,
+      requests: (n: number) => `${n} requests`,
+      suffix: 'so far',
+    },
   },
   status: {
     leds: (n: number) => `${n} LED`,

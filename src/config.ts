@@ -150,6 +150,12 @@ export function controllerOf(id: string | undefined): ControllerSpec {
   return CONTROLLERS.find((c) => c.id === id) ?? CONTROLLER;
 }
 
+/**
+ * Contatore pubblico (SPEC §14): sotto i pulsanti del pannello Order un totale compare solo da qui
+ * in su. Sotto la soglia non si mostra niente.
+ */
+export const STATS_MIN_SHOWN = 10;
+
 /** Pagina cliente: offre il download di housing.stl e, se attivo, diffuser.stl (SPEC §5). */
 export const CUSTOMER_STL_DOWNLOAD = true;
 

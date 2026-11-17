@@ -1,6 +1,7 @@
 // Cliente: l'insegna a tutto schermo, gli strumenti in un foglio (SPEC §12.2).
 import './customer.css';
-import { CHANNEL_CLEARANCE, controllerOf, shopCartUrl, DEFAULT_STRIP, CUSTOMER_STL_DOWNLOAD, DEFAULT_PARAMS, GENERATOR_VERSION, LED_AIR, ORDER_SCHEMA_VERSION, resolveParams, stripProfileOf, type Params } from '../config';
+import { CHANNEL_CLEARANCE, controllerOf, shopCartUrl, DEFAULT_STRIP, CUSTOMER_STL_DOWNLOAD, DEFAULT_PARAMS, STATS_MIN_SHOWN, GENERATOR_VERSION, LED_AIR, ORDER_SCHEMA_VERSION, resolveParams, stripProfileOf, type Params } from '../config';
+import { statsLine } from '../api/statsStore';
 import { PRICING_VERSION } from '../pricing';
 import { decodeShare, encodeShare } from '../order/share';
 import type { RasterImageSource, SvgImageSource } from '../order/schema';
@@ -311,6 +312,7 @@ app.innerHTML = `
           <div class="request-actions">
             <button type="button" id="submit-order">${S.order.send}</button>
             ${CUSTOMER_STL_DOWNLOAD ? `<button type="button" id="download-stl" disabled>${S.generating}</button>` : ''}
+            <p id="request-stats" class="tech-note" hidden></p>
           </div>
         </div>
       </div>
@@ -776,6 +778,7 @@ function openSheet(pane: string): void {
     markTool(null);
     sheetBody.scrollTop = 0;
     renderSummary();
+    showStats();
     return;
   }
   const details = sections.get(pane);
@@ -785,6 +788,38 @@ function openSheet(pane: string): void {
   }
   lastTool = pane;
   markTool(pane);
+}
+
+const requestStats = document.querySelector<HTMLElement>('#request-stats')!;
+let statsAsked = false;
+/**
+ * Contatore (SPEC §14): i totali si chiedono una volta, alla prima apertura del pannello Order. Se
+ * l'endpoint non c'è, non risponde o i numeri sono sotto la soglia, la riga resta nascosta.
+ */
+function showStats(): void {
+  if (statsAsked) return;
+  statsAsked = true;
+  void (async () => {
+    try {
+      const response = await fetch(`${import.meta.env.BASE_URL}api/stats`);
+      if (!response.ok) return;
+      const line = statsLine((await response.json()) as { downloads?: unknown; requests?: unknown } | null, STATS_MIN_SHOWN, S.order.stats);
+      if (!line) return;
+      requestStats.textContent = line;
+      requestStats.hidden = false;
+    } catch {
+      // Nessun contatore: la riga non compare.
+    }
+  })();
+}
+
+/** Un evento per click su «Download STL», anche quando i file sono più d'uno. Mai un dato personale. */
+function countDownload(): void {
+  try {
+    navigator.sendBeacon(`${import.meta.env.BASE_URL}api/event`, new Blob([JSON.stringify({ type: 'stl' })], { type: 'application/json' }));
+  } catch {
+    // Il download non dipende dal contatore.
+  }
 }
 
 function closeSheet(): void {
@@ -1036,6 +1071,7 @@ function fileLabel(): string {
 downloadButton?.addEventListener('click', () => {
   const ready = readyStl;
   if (!ready || downloadButton?.disabled) return;
+  countDownload();
   if (ready.parts) {
     // Insegna divisa per il piatto: tutti i file in un solo archivio.
     const count = ready.parts.housing.length;
