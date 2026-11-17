@@ -14,6 +14,29 @@ export const S = {
     contribute: 'Contribute to this project on GitHub',
     repo: 'https://github.com/lampados/sign-configurator',
   },
+  /** Prezzo voce per voce nel pannello Order (SPEC §12.5): ogni voce è un `id` di `priceOrder`. */
+  price: {
+    title: 'Price',
+    lines: {
+      controller: 'Controller',
+      strip: (metres: string) => `LED strip · ${metres} m`,
+      print: '3D printing',
+      segments: (minutes: number) => `Assembly · ${minutes} min`,
+      joints: 'Soldering',
+      supply: 'Power supply',
+      box: 'Box',
+      plate: 'Backdrop',
+      margin: (percent: number) => `Margin ${percent} %`,
+      rounding: 'Rounding',
+      minimum: 'Minimum order',
+    },
+    total: 'Total, excl. VAT',
+    totalNoStrip: 'Total without the strip, excl. VAT',
+    shipping: 'Shipping (estimate)',
+    toQuote: 'to be quoted',
+    note: 'Indicative price. We confirm it, with shipping, within 24 hours of your request.',
+    eur: (amount: number) => `€${Number.isInteger(amount) ? amount : amount.toFixed(2)}`,
+  },
   /** Invito a offrire un caffè: sotto il nome e, nel pannello Order, sotto «Download STL». */
   support: {
     brand: '☕ Offer me a coffee',

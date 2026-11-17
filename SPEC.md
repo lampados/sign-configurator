@@ -1016,6 +1016,32 @@ Un vincolo bloccante disattiva «Invia richiesta» e mostra il motivo in `#block
 
 ### 12.5 Prezzo
 
+**Com'è oggi (17 novembre 2026).** Il pannello Order mostra il prezzo **voce per voce**, sotto il
+riepilogo, quando il negozio è configurato (§15). `src/order/quote.ts` (`quoteSign`) prende le misure
+dalla distinta e i prezzi dai cataloghi, poi chiama `priceOrder` di `src/pricing.ts`:
+
+| Voce | Da dove viene |
+|---|---|
+| Controller | `priceEur` del controller scelto (§2) |
+| LED strip · n m | somma dei `cutLengthMm` più il 20 % di sfrido, per `eurPerM` della striscia |
+| 3D printing | 7 € fino a 70 cm di larghezza, 14 € oltre |
+| Assembly · n min | 1 € al minuto: i minuti di tagli e ponticelli del riepilogo |
+| Power supply, Box | media della fascia di prezzo del modello scelto, dalla pagina parts |
+| Backdrop | laser 15 € più il materiale; assente senza fondale |
+| Margin 15 % | sul totale delle voci sopra |
+| Rounding, Minimum order | arrotondamento per eccesso ai 5 €, minimo 25 € |
+
+Le voci a zero non compaiono. Chiudono l'elenco il totale IVA esclusa e, a parte, la spedizione
+stimata (20 €). La somma delle voci è il totale. Le stesse righe partono con «Send request», con il
+prefisso «Price · », e arrivano al negozio insieme al riepilogo.
+
+Una striscia senza `eurPerM` (non ancora rilevato) ha la voce «to be quoted» e il totale si chiama
+«Total without the strip»: non si mostra un totale che sembra completo e non lo è. Hanno un prezzo
+la WS2812B 60 LED/m da 10 mm (5,20 €/m) e la COB da 5 mm (5,14 €/m).
+
+Quanto segue è il disegno originale, in parte superato: le formule su grammi e scaglioni non sono
+quelle in uso.
+
 Si calcola **dal 2D**, senza aspettare il solido, in `src/pricing.ts` (modulo puro, testato). Vale
 uguale con o senza `paths`.
 

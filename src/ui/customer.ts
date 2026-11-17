@@ -2,7 +2,8 @@
 import './customer.css';
 import { CHANNEL_CLEARANCE, controllerOf, SHOP, SUPPORT_URL, shopCartUrl, DEFAULT_STRIP, CUSTOMER_STL_DOWNLOAD, DEFAULT_PARAMS, STATS_MIN_SHOWN, GENERATOR_VERSION, LED_AIR, ORDER_SCHEMA_VERSION, resolveParams, stripProfileOf, type Params } from '../config';
 import { statsLine } from '../api/statsStore';
-import { PRICING_VERSION } from '../pricing';
+import { MARGIN, PRICING_VERSION } from '../pricing';
+import { quoteSign, type SignQuote } from '../order/quote';
 import { decodeShare, encodeShare } from '../order/share';
 import type { RasterImageSource, SvgImageSource } from '../order/schema';
 import { meshToStl } from '../export/stl';
@@ -308,6 +309,11 @@ app.innerHTML = `
         </div>
         <div class="pane" data-pane="request" hidden>
           <dl id="summary"></dl>
+          <section id="price" aria-labelledby="price-title" hidden>
+            <h3 id="price-title">${S.price.title}</h3>
+            <dl id="price-lines"></dl>
+            <p class="tech-note">${S.price.note}</p>
+          </section>
           <p id="blocked-reason" hidden></p>
           <p id="request-note" class="tech-note"${SHOP ? '' : ' hidden'}>${S.order.next}</p>
           <div class="request-actions">
@@ -384,6 +390,8 @@ const submitButton = document.querySelector<HTMLButtonElement>('#submit-order')!
 const downloadButton = document.querySelector<HTMLButtonElement>('#download-stl');
 const blockedReason = document.querySelector<HTMLElement>('#blocked-reason')!;
 const summary = document.querySelector<HTMLElement>('#summary')!;
+const priceBox = document.querySelector<HTMLElement>('#price')!;
+const priceLines = document.querySelector<HTMLElement>('#price-lines')!;
 const editorCanvas = document.querySelector<HTMLCanvasElement>('#path-editor')!;
 const editorDone = document.querySelector<HTMLButtonElement>('#editor-done')!;
 const editorToolbar = document.querySelector<HTMLElement>('#path-toolbar')!;
@@ -414,6 +422,8 @@ let lastParts = 1;
 let lastJoins = 0;
 /** Tagli in curva e minuti di montaggio dell'ultima insegna (strisce che non piegano di lato). */
 let lastAssembly = { cuts: 0, minutes: 0, jumpers: 0 };
+/** Prezzo voce per voce dell'ultima insegna generata; null finché non c'è, o senza LED. */
+let lastQuote: SignQuote | null = null;
 /** Tratti molto vicini: non blocca l'invio, ma il cliente lo legge nel riepilogo. */
 let closeNote = '';
 
@@ -635,7 +645,7 @@ function syncSizeChips(): void {
 }
 
 /** Righe del riepilogo: le vede il cliente e, con «Send request», le riceve il negozio. */
-function summaryRows(): [string, string][] {
+function detailRows(): [string, string][] {
   const effect = document.querySelector<HTMLInputElement>('input[name="effect"]:checked');
   const rows: [string, string][] = [];
   const t = S.summary;
@@ -702,15 +712,61 @@ function summaryRows(): [string, string][] {
   return rows;
 }
 
+/**
+ * Prezzo voce per voce (SPEC §12.5): le voci a zero non compaiono; il totale e la spedizione
+ * stimata chiudono l'elenco. Vuoto senza negozio: senza «Send request» non c'è niente da pagare.
+ */
+function priceRows(): { label: string; value: string; total?: boolean }[] {
+  const quote = lastQuote;
+  if (!SHOP || !quote) return [];
+  const t = S.price;
+  const rows: { label: string; value: string; total?: boolean }[] = [];
+  for (const line of quote.breakdown) {
+    const unpricedStrip = line.id === 'strip' && !quote.stripPriced;
+    if (line.amount === 0 && !unpricedStrip) continue;
+    const label =
+      line.id === 'strip'
+        ? t.lines.strip(quote.stripM.toFixed(2))
+        : line.id === 'segments'
+          ? t.lines.segments(quote.assemblyMin)
+          : line.id === 'margin'
+            ? t.lines.margin(Math.round((MARGIN - 1) * 100))
+            : (t.lines[line.id as 'controller' | 'print' | 'joints' | 'supply' | 'box' | 'plate' | 'rounding' | 'minimum'] ?? line.label);
+    rows.push({ label, value: unpricedStrip ? t.toQuote : t.eur(line.amount) });
+  }
+  rows.push({ label: quote.stripPriced ? t.total : t.totalNoStrip, value: t.eur(quote.total), total: true });
+  rows.push({ label: t.shipping, value: t.eur(quote.shipping) });
+  return rows;
+}
+
 function renderSummary(): void {
   summary.replaceChildren();
-  for (const [term, detail] of summaryRows()) {
+  for (const [term, detail] of detailRows()) {
     const dt = document.createElement('dt');
     dt.textContent = term;
     const dd = document.createElement('dd');
     dd.textContent = detail;
     summary.append(dt, dd);
   }
+  const lines = priceRows();
+  priceBox.hidden = lines.length === 0;
+  priceLines.replaceChildren();
+  for (const line of lines) {
+    const dt = document.createElement('dt');
+    dt.textContent = line.label;
+    const dd = document.createElement('dd');
+    dd.textContent = line.value;
+    if (line.total) {
+      dt.className = 'price-total';
+      dd.className = 'price-total';
+    }
+    priceLines.append(dt, dd);
+  }
+}
+
+/** Righe che il negozio riceve con «Send request»: il riepilogo e, in coda, il prezzo. */
+function summaryRows(): [string, string][] {
+  return [...detailRows(), ...priceRows().map((line): [string, string] => [`${S.price.title} · ${line.label}`, line.value])];
 }
 
 // Tutti gli strumenti stanno in un solo foglio, uno sotto l'altro, ciascuno in una sezione
@@ -1224,6 +1280,11 @@ async function showSign(): Promise<void> {
     lastParts = result.split ? result.split.housing.length : 1;
     lastJoins = result.split ? result.split.onChannel : 0;
     lastAssembly = { cuts: result.bom.assembly.bendCuts, minutes: result.bom.assembly.assemblyMin, jumpers: result.bom.assembly.jumpers };
+    const priced = resolveParams(order.params);
+    lastQuote =
+      result.lightPoints.length > 0
+        ? quoteSign({ bom: result.bom, widthMm: outlineSize(result.outline)?.w ?? 0, stripId: priced.STRIP_ID, controllerId: priced.CONTROLLER_ID })
+        : null;
     closeNote = customerMessage(result.warnings.find((warning) => warning.startsWith('Sagome che si fondono')) ?? '') ?? '';
     status.dataset.cuts = String(lastAssembly.cuts);
     showSize(result.plate ? { w: result.plate.widthMm, h: result.plate.heightMm } : outlineSize(result.outline));
@@ -1250,6 +1311,7 @@ async function showSign(): Promise<void> {
     // Il font non ha nessuna di queste lettere: non è un guasto, si dice di cambiarlo.
     const noLetters = err instanceof Error && err.message === NO_LETTERS;
     if (!noLetters) console.warn(err);
+    lastQuote = null;
     showSize(null);
     status.textContent = noLetters ? S.status.noLetters : S.status.failed;
   }

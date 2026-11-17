@@ -266,6 +266,8 @@ export interface StripProfile {
   cutBendDeg: number;
   /** `false`: misure di catalogo, ancora da confermare col calibro. */
   measured: boolean;
+  /** Prezzo al metro, €, IVA esclusa (rotolo da 5 m diviso 5). `null`: non ancora rilevato. */
+  eurPerM: number | null;
   notes: string;
 }
 
@@ -327,12 +329,14 @@ function ws2812b(ledPerM: number, ip: 'IP20' | 'IP65', thickness: number, width 
     // Senza guaina piega uguale a ogni densità: la 144 come la 60 adesiva (deciso da Davide il 17 novembre 2026).
     cutBendDeg: ip === 'IP20' ? CUT_BEND_FLEX_DEG : CUT_BEND_STIFF_DEG,
     measured: false,
+    eurPerM: null,
     notes: 'Misure di catalogo. Piega di lato sulle piazzole fino a un certo angolo per giunto: oltre si taglia e si ricollega.',
   };
 }
 
 export const WS2812B_30: StripProfile = Object.freeze(ws2812b(30, 'IP20', 2.0));
-export const WS2812B_60: StripProfile = Object.freeze(ws2812b(60, 'IP20', 2.0));
+// Rotolo da 5 m a 25,98 € IVA esclusa (16 novembre 2026).
+export const WS2812B_60: StripProfile = Object.freeze({ ...ws2812b(60, 'IP20', 2.0), eurPerM: 5.2 });
 export const WS2812B_144: StripProfile = Object.freeze(ws2812b(144, 'IP20', 2.0));
 export const WS2812B_60_IP65: StripProfile = Object.freeze(ws2812b(60, 'IP65', 2.2));
 /** Strisce strette, 60 LED/m: 8 e 5 mm con LED 5050, 4 mm con LED 3535 (più basso). */
@@ -357,6 +361,8 @@ export const COB_5MM: StripProfile = Object.freeze({
   sideBend: true,
   cutBendDeg: 0,
   measured: true,
+  // Rotolo da 5 m a 25,69 € IVA esclusa (16 novembre 2026).
+  eurPerM: 5.14,
   notes: 'Misurata sul campione stampato: segue le curve fino a 45°, al 90° va tagliata.',
 });
 

@@ -811,6 +811,41 @@ input[type="color"] {
   overflow-wrap: anywhere;
 }
 
+/* Prezzo voce per voce, sotto il riepilogo: gli importi in colonna a destra. */
+#price {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+#price h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+#price-lines {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 6px 14px;
+  margin: 0;
+}
+
+#price-lines dt { color: var(--muted); }
+#price-lines dd {
+  margin: 0;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+#price-lines .price-total {
+  padding-top: 6px;
+  border-top: 1px solid var(--line);
+  color: inherit;
+  font-weight: 600;
+}
+
 #blocked-reason {
   margin: 0;
   color: #9d1c1c;
