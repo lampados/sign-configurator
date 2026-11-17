@@ -34,7 +34,14 @@ export const S = {
     totalNoStrip: 'Total without the strip, excl. VAT',
     shipping: 'Shipping (estimate)',
     toQuote: 'to be quoted',
-    note: 'Indicative price. We confirm it, with shipping, within 24 hours of your request.',
+    note: 'This is only an estimate. We confirm the price, with shipping, within 24 hours of your request.',
+    /** Etichette senza quantità, per la stima che va al negozio: la quantità sta nel dettaglio. */
+    plain: { strip: 'LED strip', segments: 'Assembly', margin: 'Margin' },
+    detail: {
+      strip: (name: string, metres: string) => `${name} · ${metres} m`,
+      print: (parts: number) => (parts > 1 ? `${parts} parts` : 'One piece'),
+      margin: (percent: number) => `${percent} %`,
+    },
     eur: (amount: number) => `€${Number.isInteger(amount) ? amount : amount.toFixed(2)}`,
   },
   /** Invito a offrire un caffè: sotto il nome e, nel pannello Order, sotto «Download STL». */

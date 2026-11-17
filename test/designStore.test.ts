@@ -1,5 +1,15 @@
 import { describe, expect, it } from 'vitest';
-import { CODE_PATTERN, DESIGN_MAX_BYTES, createDesign, newCode, readDesign, type DesignKv } from '../src/api/designStore';
+import {
+  CODE_PATTERN,
+  DESIGN_MAX_BYTES,
+  IMAGE_MAX_BYTES,
+  createDesign,
+  newCode,
+  readDesign,
+  readDesignImage,
+  type DesignKv,
+  type StoredQuote,
+} from '../src/api/designStore';
 import { decodeShare } from '../src/order/share';
 import { DEFAULT_CUSTOMER, type SignOrderV4 } from '../src/order/schema';
 
@@ -98,5 +108,109 @@ describe('design salvati per il negozio', () => {
     const again = await createDesign(JSON.stringify({ order: ORDER, summary: [] }), kv, NOW, counter(5));
     expect(again.status).toBe(503);
     expect(kv.data.get(`design:${String(first.body.code)}`)).toBe(before);
+  });
+});
+
+const QUOTE: StoredQuote = {
+  pricingVersion: '2026-11-17',
+  complete: true,
+  lines: [
+    { id: 'controller', label: 'Controller', detail: 'GLEDOPTO ESP32 Ultra Mini (GL-C-309WL)', amount: 35 },
+    { id: 'strip', label: 'LED strip', detail: 'WS2812B 144 LED/m IP20 · 0.82 m', amount: 16.49 },
+    { id: 'margin', label: 'Margin', detail: '15 %', amount: 33.22 },
+  ],
+  total: 255,
+  shipping: 20,
+};
+// Un JPEG finto: comincia come uno vero (FF D8 FF), poi byte qualunque.
+const jpeg = (bytes: number): string => `data:image/jpeg;base64,${Buffer.from(Uint8Array.from({ length: bytes }, (_, i) => [0xff, 0xd8, 0xff, 0xe0][i] ?? i % 251)).toString('base64')}`;
+
+describe('stima e foto per il negozio (SPEC §12.7)', () => {
+  it('la stima e la foto si salvano e il negozio le rilegge', async () => {
+    const kv = memoryKv();
+    const made = await createDesign(JSON.stringify({ order: ORDER, summary: SUMMARY, quote: QUOTE, image: jpeg(3000) }), kv, NOW, counter(3));
+    expect(made.status).toBe(201);
+    const code = String(made.body.code);
+    expect(kv.ttl.get(`image:${code}`)).toBe(180 * 24 * 60 * 60);
+
+    const shop = await readDesign(code, kv, 'https://example.test', false);
+    expect(shop.body.quote).toEqual(QUOTE);
+    expect(shop.body.imageUrl).toBe(`https://example.test/api/design/${code}/image`);
+
+    const image = await readDesignImage(code.toLowerCase(), kv);
+    expect(image.status).toBe(200);
+    expect(image.bytes).toHaveLength(3000);
+    expect([...image.bytes!.slice(0, 3)]).toEqual([0xff, 0xd8, 0xff]);
+  });
+
+  it('senza stima e senza foto tutto resta com\'era', async () => {
+    const kv = memoryKv();
+    const made = await createDesign(JSON.stringify({ order: ORDER, summary: SUMMARY }), kv, NOW, counter(3));
+    const code = String(made.body.code);
+    const shop = await readDesign(code, kv, 'https://example.test', false);
+    expect(shop.body.quote).toBeUndefined();
+    expect(shop.body.imageUrl).toBeUndefined();
+    expect((await readDesignImage(code, kv)).status).toBe(404);
+    expect((await readDesignImage('nope', kv)).status).toBe(400);
+    expect((await readDesignImage(code, undefined)).status).toBe(503);
+  });
+
+  it('una voce senza prezzo resta senza prezzo, e la stima dice che è incompleta', async () => {
+    const kv = memoryKv();
+    const partial: StoredQuote = { ...QUOTE, complete: false, lines: [{ id: 'strip', label: 'LED strip', detail: 'WS2812B 30 LED/m IP20 · 0.80 m', amount: null }] };
+    const made = await createDesign(JSON.stringify({ order: ORDER, summary: SUMMARY, quote: partial }), kv, NOW, counter(3));
+    const shop = await readDesign(String(made.body.code), kv, 'https://example.test', false);
+    expect(shop.body.quote).toEqual(partial);
+  });
+
+  it('una stima malformata o gonfiata non entra, e nel KV non resta niente', async () => {
+    const post = async (quote: unknown) => {
+      const kv = memoryKv();
+      const result = await createDesign(JSON.stringify({ order: ORDER, summary: SUMMARY, quote }), kv, NOW, counter(3));
+      return { error: result.body.error, saved: kv.data.size };
+    };
+    for (const bad of [
+      null,
+      'cheap',
+      { ...QUOTE, total: -1 },
+      { ...QUOTE, total: 1e9 },
+      { ...QUOTE, total: '255' },
+      { ...QUOTE, complete: 'yes' },
+      { ...QUOTE, pricingVersion: '<script>' },
+      { ...QUOTE, lines: [] },
+      { ...QUOTE, lines: Array.from({ length: 21 }, () => QUOTE.lines[0]) },
+      { ...QUOTE, lines: [{ ...QUOTE.lines[0], id: 'Controller!' }] },
+      { ...QUOTE, lines: [{ ...QUOTE.lines[0], amount: 'free' }] },
+      { ...QUOTE, lines: [{ ...QUOTE.lines[0], amount: -5 }] },
+      { ...QUOTE, lines: [{ ...QUOTE.lines[0], detail: 'x'.repeat(241) }] },
+    ]) {
+      expect(await post(bad), JSON.stringify(bad).slice(0, 60)).toEqual({ error: 'bad_quote', saved: 0 });
+    }
+    // Campi in più non passano nel KV.
+    const kv = memoryKv();
+    const made = await createDesign(JSON.stringify({ order: ORDER, summary: SUMMARY, quote: { ...QUOTE, email: 'a@example.test' } }), kv, NOW, counter(3));
+    expect(kv.data.get(`design:${String(made.body.code)}`)).not.toContain('example.test');
+  });
+
+  it('la foto è solo un JPEG entro il peso massimo', async () => {
+    const post = async (image: unknown) => {
+      const kv = memoryKv();
+      const result = await createDesign(JSON.stringify({ order: ORDER, summary: SUMMARY, image }), kv, NOW, counter(3));
+      return { status: result.status, error: result.body.error, saved: kv.data.size };
+    };
+    expect(await post(jpeg(IMAGE_MAX_BYTES))).toEqual({ status: 201, error: undefined, saved: 2 });
+    for (const bad of [
+      jpeg(IMAGE_MAX_BYTES + 3),
+      'data:image/png;base64,iVBORw0KGgo=',
+      'data:image/svg+xml;base64,PHN2Zz48L3N2Zz4=',
+      'data:image/jpeg;base64,',
+      'data:image/jpeg;base64,/9j/not base64!',
+      // Dichiarato JPEG, ma i byte dicono HTML.
+      `data:image/jpeg;base64,${Buffer.from('<html><script>alert(1)</script></html>').toString('base64')}`,
+      'https://example.test/sign.jpg',
+      42,
+    ]) {
+      expect(await post(bad), String(bad).slice(0, 40)).toEqual({ status: 400, error: 'bad_image', saved: 0 });
+    }
   });
 });

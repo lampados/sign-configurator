@@ -1094,6 +1094,31 @@ con `maxA` ≥ `supplyA`. Effetto e bozza restano a 0: gli effetti sono di serie
 
 ### 12.7 Richiesta
 
+**Com'è oggi (17 novembre 2026).** «Send request» manda a `POST /api/design` quattro cose, nessuna
+personale: l'ordine, il riepilogo (righe di testo), la **stima** e una **foto**. Risponde un codice, e
+il cliente passa al carrello del negozio (§15), dove inserisce i suoi dati.
+
+- **Stima** (`quote`): le voci del pannello Order (§12.5), ognuna con `id`, etichetta, dettaglio
+  (modello del controller, striscia e metri, alimentatore, scatola, tagli e minuti) e importo; poi
+  totale IVA esclusa, spedizione stimata, `pricingVersion` e `complete` (falso se una voce è senza
+  prezzo). **La calcola il browser del cliente**: è una stima, il negozio la mostra come tale e non
+  la usa per far pagare. Chi rivede l'ordine riapre il design e il configuratore ricalcola.
+- **Foto** (`image`): `scene.snapshot()`, un JPEG 1000 × 750 in vista standard: di fronte, accesa,
+  con il diffusore, senza i tagli per il piatto di stampa. Non dipende da come il cliente ha girato
+  o spento l'anteprima.
+- **Controlli sul server** (`src/api/designStore.ts`): la stima si ricopia campo per campo (al più 20
+  voci, importi fra 0 e 100 000 €, testi corti); la foto deve essere un data URL JPEG, base64
+  valido, entro 400 kB, e cominciare come un JPEG. Se una delle due è presente ma non valida la
+  richiesta è rifiutata (`bad_quote`, `bad_image`) e nel KV non resta niente. Tutte e due sono
+  facoltative.
+- **Dove stanno**: la stima dentro `design:<codice>`, la foto a parte in `image:<codice>`, con la
+  stessa scadenza di 180 giorni.
+- **Come le legge il negozio**: `GET /api/design/<codice>` aggiunge `quote` e `imageUrl`;
+  `GET /api/design/<codice>/image` dà i byte, sempre `image/jpeg` con `nosniff`. Il plugin
+  WordPress ne tiene una copia nell'ordine, perché qui la foto scade.
+
+Quanto segue è il disegno originale (modulo e `mailto:`), superato dal negozio.
+
 Nessun pagamento (§9): il foglio Richiedi invia una **richiesta**.
 
 - Campi: nome, email, telefono (facoltativo), CAP e città, data entro cui serve (facoltativa), note,

@@ -4,6 +4,7 @@ import { CHANNEL_CLEARANCE, controllerOf, SHOP, SUPPORT_URL, shopCartUrl, DEFAUL
 import { statsLine } from '../api/statsStore';
 import { MARGIN, PRICING_VERSION } from '../pricing';
 import { quoteSign, type SignQuote } from '../order/quote';
+import type { StoredQuote } from '../api/designStore';
 import { decodeShare, encodeShare } from '../order/share';
 import type { RasterImageSource, SvgImageSource } from '../order/schema';
 import { meshToStl } from '../export/stl';
@@ -764,9 +765,56 @@ function renderSummary(): void {
   }
 }
 
-/** Righe che il negozio riceve con «Send request»: il riepilogo e, in coda, il prezzo. */
+/** Righe che il negozio riceve con «Send request»: il riepilogo, com'è a schermo. */
 function summaryRows(): [string, string][] {
-  return [...detailRows(), ...priceRows().map((line): [string, string] => [`${S.price.title} · ${line.label}`, line.value])];
+  return detailRows();
+}
+
+/**
+ * La stima per il negozio (SPEC §12.7): le stesse voci del pannello, ognuna con il dettaglio di che
+ * cosa è (modello, metri, minuti). null senza negozio o senza un'insegna con LED.
+ */
+function quotePayload(): StoredQuote | null {
+  const quote = lastQuote;
+  if (!SHOP || !quote) return null;
+  const params = resolveParams(orderParams());
+  const controller = controllerOf(params.CONTROLLER_ID);
+  const t = S.price;
+  const supply = lastPower?.supply;
+  const box = lastPower?.box;
+  const plate = plateChoice();
+  const details: Record<string, string> = {
+    controller: `${controller.name} (${controller.model})`,
+    strip: t.detail.strip(stripProfileOf(params.STRIP_ID).name, quote.stripM.toFixed(2)),
+    print: t.detail.print(lastParts),
+    segments: S.summary.assemblyValue(lastAssembly.cuts, lastAssembly.minutes, lastAssembly.jumpers),
+    supply: supply ? supply.model : '',
+    box: box ? `${box.brand} ${box.model}` : '',
+    plate: plate ? `${PLATE_MATERIALS[plate.material].label}${lastSize ? ` · ${overallLabel(lastSize)}` : ''}` : '',
+    margin: t.detail.margin(Math.round((MARGIN - 1) * 100)),
+  };
+  const labels: Record<string, string> = {
+    controller: t.lines.controller,
+    strip: t.plain.strip,
+    print: t.lines.print,
+    segments: t.plain.segments,
+    joints: t.lines.joints,
+    supply: t.lines.supply,
+    box: t.lines.box,
+    plate: t.lines.plate,
+    margin: t.plain.margin,
+    rounding: t.lines.rounding,
+    minimum: t.lines.minimum,
+  };
+  const lines = quote.breakdown
+    .filter((line) => line.amount !== 0 || (line.id === 'strip' && !quote.stripPriced))
+    .map((line) => ({
+      id: line.id,
+      label: labels[line.id] ?? line.label,
+      detail: details[line.id] ?? '',
+      amount: line.id === 'strip' && !quote.stripPriced ? null : line.amount,
+    }));
+  return { pricingVersion: PRICING_VERSION, complete: quote.stripPriced, lines, total: quote.total, shipping: quote.shipping };
 }
 
 // Tutti gli strumenti stanno in un solo foglio, uno sotto l'altro, ciascuno in una sezione
@@ -1611,12 +1659,21 @@ submitButton.addEventListener('click', () => {
   submitButton.textContent = S.order.sending;
   requestNote.textContent = S.order.next;
   delete requestNote.dataset.error;
+  const quote = quotePayload();
+  // Foto in vista standard: di fronte, accesa, con il diffusore, comunque il cliente stia guardando.
+  const image = scene.snapshot();
   void (async () => {
     try {
       const response = await fetch(`${import.meta.env.BASE_URL}api/design`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ order: JSON.parse(encodeShare(order).json) as unknown, summary: summaryRows() }),
+        body: JSON.stringify({
+          order: JSON.parse(encodeShare(order).json) as unknown,
+          summary: summaryRows(),
+          // Stima e foto sono un di più: se mancano, la richiesta parte lo stesso.
+          ...(quote ? { quote } : {}),
+          ...(image ? { image } : {}),
+        }),
       });
       const body = (await response.json()) as { code?: unknown };
       if (!response.ok || typeof body.code !== 'string') throw new Error('design');

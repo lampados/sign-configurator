@@ -17,7 +17,12 @@ async function sendable(page: Page): Promise<void> {
 
 test('Send request: salva il design senza dati personali e porta al carrello del negozio', async ({ page }) => {
   const track = trackPage(page);
-  let posted: { order?: { source?: { text?: string } }; summary?: [string, string][] } | null = null;
+  let posted: {
+    order?: { source?: { text?: string } };
+    summary?: [string, string][];
+    quote?: { complete: boolean; total: number; shipping: number; lines: { id: string; label: string; detail: string; amount: number | null }[] };
+    image?: string;
+  } | null = null;
   await page.route('**/api/design', async (route) => {
     posted = JSON.parse(route.request().postData() ?? '{}') as typeof posted;
     await route.fulfill({ status: 201, contentType: 'application/json', body: JSON.stringify({ code: 'K7F3-92QD' }) });
@@ -41,8 +46,29 @@ test('Send request: salva il design senza dati personali e porta al carrello del
   expect(posted!.order?.source?.text).toBe('Ciao');
   const labels = posted!.summary!.map(([label]) => label);
   expect(labels).toContain('Assembly');
-  // Solo ordine e riepilogo: nessun campo di contatto parte dal configuratore.
-  expect(Object.keys(posted!).sort()).toEqual(['order', 'summary']);
+  // Il riepilogo resta corto: i prezzi non sono righe di testo, viaggiano nella stima.
+  expect(labels.some((label) => label.startsWith('Price'))).toBe(false);
+  const quote = posted!.quote!;
+  expect(quote.lines[0]).toMatchObject({ id: 'controller', label: 'Controller', amount: 35 });
+  expect(quote.lines[0]!.detail).toContain('GL-C-309WL');
+  expect(quote.lines.find((line) => line.id === 'strip')?.detail).toMatch(/LED\/m.* · \d+\.\d\d m$/);
+  expect(quote.complete).toBe(true);
+  expect(quote.shipping).toBe(20);
+  const sum = quote.lines.reduce((total, line) => total + (line.amount ?? 0), 0);
+  expect(Math.abs(sum - quote.total)).toBeLessThan(0.02);
+  // La foto: un JPEG 4:3 in vista standard, leggero.
+  expect(posted!.image).toMatch(/^data:image\/jpeg;base64,\/9j\//);
+  expect(posted!.image!.length).toBeGreaterThan(8_000);
+  expect(posted!.image!.length).toBeLessThan(500_000);
+  const size = await page.evaluate(async (url) => {
+    const image = new Image();
+    image.src = url;
+    await image.decode();
+    return [image.naturalWidth, image.naturalHeight];
+  }, posted!.image!);
+  expect(size).toEqual([1000, 750]);
+  // Nessun campo di contatto parte dal configuratore.
+  expect(Object.keys(posted!).sort()).toEqual(['image', 'order', 'quote', 'summary']);
   expectClean(track.problems);
 });
 

@@ -71,6 +71,12 @@ export interface SignScene {
   setExposure(value: number): void;
   /** Raggio dell'alone. La soglia del bloom non scende. */
   setHalo(radius: number): void;
+  /**
+   * Foto dell'insegna in vista standard (di fronte, accesa, con il diffusore, 4:3), come data URL
+   * JPEG. Non dipende da come il cliente ha girato o spento l'anteprima, che resta com'era.
+   * `null` senza un'insegna o se il browser non restituisce l'immagine.
+   */
+  snapshot(): string | null;
   dispose(): void;
 }
 
@@ -108,6 +114,10 @@ function geometryOf(mesh: StlMesh): BufferGeometry {
 
 /** Aria attorno all'insegna nell'inquadratura. */
 const FIT_MARGIN = 1.28;
+/** Foto per il negozio (SPEC §12.7): 4:3, abbastanza per una scheda prodotto, leggera da salvare. */
+const SNAPSHOT_W = 1000;
+const SNAPSHOT_H = 750;
+const SNAPSHOT_QUALITY = 0.86;
 /** Sotto questa altezza l'anteprima è «bassa» e l'insegna lascia libere testata e controlli. */
 const SHORT_STAGE_PX = 520;
 /** Altezza coperta da testata (sopra) e controlli (sotto) sull'anteprima. */
@@ -536,6 +546,52 @@ export function mountSignScene(host: HTMLElement, options?: { background?: numbe
     setHalo(radius: number): void {
       haloRadius = Math.min(0.6, Math.max(0, radius));
       applyMode();
+    },
+    snapshot(): string | null {
+      if (!viewBox || !diffuserMesh) return null;
+      const savedMode = mode;
+      const savedPosition = camera.position.clone();
+      const savedTarget = controls.target.clone();
+      const savedRatio = renderer.getPixelRatio();
+      const savedCuts = cutLines?.visible ?? false;
+      try {
+        mode = 'accesa';
+        applyMode();
+        // I tagli per il piatto di stampa sono un aiuto a chi stampa, non fanno parte del prodotto.
+        if (cutLines) cutLines.visible = false;
+        renderer.setPixelRatio(1);
+        renderer.setSize(SNAPSHOT_W, SNAPSHOT_H, false);
+        composer.setSize(SNAPSHOT_W, SNAPSHOT_H);
+        bloom.setSize(SNAPSHOT_W, SNAPSHOT_H);
+        camera.aspect = SNAPSHOT_W / SNAPSHOT_H;
+        // Di fronte, con lo stesso margine dell'anteprima: l'insegna riempie il fotogramma.
+        const center = viewBox.getCenter(new Vector3());
+        const size = viewBox.getSize(new Vector3());
+        const tan = Math.tan((camera.fov * Math.PI) / 360);
+        const distance = Math.max(size.y / 2 / tan, size.x / 2 / (tan * camera.aspect), 40) * FIT_MARGIN;
+        camera.position.set(center.x, center.y, center.z + distance);
+        camera.lookAt(center);
+        camera.updateProjectionMatrix();
+        paintColors(0);
+        renderGlow();
+        composer.render();
+        // Subito dopo il render: il contenuto del canvas vale fino alla prossima composizione.
+        const url = renderer.domElement.toDataURL('image/jpeg', SNAPSHOT_QUALITY);
+        return url.startsWith('data:image/jpeg;base64,') ? url : null;
+      } catch {
+        return null;
+      } finally {
+        if (cutLines) cutLines.visible = savedCuts;
+        mode = savedMode;
+        applyMode();
+        renderer.setPixelRatio(savedRatio);
+        resize();
+        camera.position.copy(savedPosition);
+        controls.target.copy(savedTarget);
+        camera.updateProjectionMatrix();
+        controls.update();
+        if (mode === 'accesa') renderGlow();
+      }
     },
     dispose(): void {
       disposed = true;
