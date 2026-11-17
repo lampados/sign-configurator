@@ -13,6 +13,7 @@ describe('testi della pagina cliente', () => {
     expect(S.summary.assemblyValue(1, 10)).toBe('1 strip cut · 10 min');
     expect(customerMessage('Spezzone 4: luce 2.2 mm, sotto il passo di taglio 10.0 mm.')).toMatch(/more LEDs per metre\.$/);
     expect(customerMessage('Alimentatore da 18 A a 5 V: oltre i 10 A del controller GLEDOPTO.')).toMatch(/10 A/);
+    expect(customerMessage('Striscia a 24 V: il controller Seeed Studio XIAO LED Driver Board (LED Driver Board for XIAO + XIAO ESP32) accetta 5–12 V. Serve un altro controller.')).toBe('This controller takes 5–12 V strips: pick another one under Tech.');
     expect(customerMessage('Spezzone 1: 1 fori di ancoraggio su 2 richiesti, in (36.0, 6.3).')).toBeNull();
     expect(customerMessage('Canale largo 6 mm: la striscia da 10 mm non ci entra.')).toMatch(/narrower than the LED strip/);
     expect(customerMessage('Canale profondo 3 mm: la striscia è spessa 6 mm.')).toMatch(/shallower than the LED strip/);

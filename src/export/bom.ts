@@ -4,7 +4,7 @@
 // ANCHOR_MIN_PER_SEGMENT se ci stanno.
 // Due asole DIN/DOUT vicine diventano una tasca: il filo fra gli spezzoni è 0 mm. Modulo puro.
 
-import { controllerOf, STRIP_VOLTAGES } from '../config';
+import { controllerAmps, controllerOf, STRIP_VOLTAGES } from '../config';
 import { DOT_LED_COUNT } from '../geometry/lights';
 import { BOX_AUTO, boxesThatFit, CONTROLLER_FALLBACK_MM, pickBox, type BoxItem } from '../parts/boxes';
 import { pickSupply, SUPPLIES } from '../parts/supplies';
@@ -486,9 +486,13 @@ export function bomAssembly(
   const controllerWarnings: string[] = [];
   const spec = controllerOf(controllerId);
   const controller = `${spec.name} (${spec.model})`;
-  if (supplyA > spec.maxA) {
+  if (volts < spec.minV || volts > spec.maxV) {
+    controllerWarnings.push(`Striscia a ${volts} V: il controller ${controller} accetta ${spec.minV}–${spec.maxV} V. Serve un altro controller.`);
+  }
+  const maxA = controllerAmps(spec, volts);
+  if (supplyA > maxA) {
     controllerWarnings.push(
-      `Alimentatore da ${supplyA} A a ${volts} V: oltre i ${spec.maxA} A del controller ${controller}. ` +
+      `Alimentatore da ${supplyA} A a ${volts} V: oltre i ${maxA} A del controller ${controller}. ` +
         'Serve iniettare corrente lungo la striscia o un secondo controller.',
     );
   }

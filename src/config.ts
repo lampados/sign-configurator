@@ -51,11 +51,15 @@ export interface ControllerSpec {
   maxV: number;
   /** Corrente totale continua attraverso la scheda, A. */
   maxA: number;
+  /** Corrente massima a una tensione precisa, quando è più bassa di `maxA` (V → A). */
+  ampsAt?: Readonly<Record<number, number>>;
   /** LED (IC) gestibili con un frame rate decente. */
   maxIcs: number;
   outputs: number;
   /** L × W × H, mm; null se il costruttore non la dà. */
   sizeMm: [number, number, number] | null;
+  /** Prezzo di un pezzo, €, IVA esclusa: entra nel prezzo dell'insegna (SPEC §12.5). */
+  priceEur: number;
   url: string;
   /** Nota per la pagina parts. */
   note?: string;
@@ -65,9 +69,12 @@ export interface ControllerSpec {
  * Controller WLED disponibili. Il primo è quello standard, montato dietro l'insegna.
  * GLEDOPTO Ultra Mini: dalle schede dei rivenditori, 5–24 V, 10 A, 2 uscite, 800 IC (il dato
  * «10 A per canale» non torna con i 240 W dichiarati: per prudenza 10 A in totale).
- * GL-C-618WL: 15 A in totale, 10 A per uscita, 4 uscite. QuinLED: dalle pagine quinled.info.
+ * GL-C-015WL: dal manuale GLEDOPTO, 15 A in totale, 10 A per uscita, 800 IC, 108 × 45 × 18 mm.
+ * QuinLED: dalle pagine quinled.info. Seeed: dal wiki e dalle schede dei rivenditori, 3 A a 5 V e
+ * 2 A a 12 V, misure con la XIAO montata.
  * Dove il costruttore non dà un limite di LED: circa 600 per uscita, la soglia che WLED
  * suggerisce per un buon frame rate. Gli IC si contano come i LED.
+ * Prezzi: un pezzo, IVA esclusa, novembre 2026.
  */
 export const CONTROLLERS: readonly ControllerSpec[] = Object.freeze([
   {
@@ -81,22 +88,24 @@ export const CONTROLLERS: readonly ControllerSpec[] = Object.freeze([
     maxIcs: 800,
     outputs: 2,
     sizeMm: null,
+    priceEur: 35,
     url: 'https://www.gledopto.com/',
     note: 'Small enough to hide behind the sign.',
   },
   {
-    id: 'gl-c-618wl',
+    id: 'gl-c-015wl',
     brand: 'GLEDOPTO',
-    name: 'GLEDOPTO ESP32 Ethernet',
-    model: 'GL-C-618WL',
+    name: 'GLEDOPTO ESP32 WLED Controller',
+    model: 'GL-C-015WL',
     minV: 5,
     maxV: 24,
     maxA: 15,
-    maxIcs: 2400,
-    outputs: 4,
-    sizeMm: null,
+    maxIcs: 800,
+    outputs: 2,
+    sizeMm: [108, 45, 18],
+    priceEur: 44,
     url: 'https://www.gledopto.com/',
-    note: '10 A per output, 15 A total. Wi-Fi and Ethernet, microphone.',
+    note: '10 A per output, 15 A total. Wi-Fi, screw terminals.',
   },
   {
     id: 'quinled-dig-uno',
@@ -109,41 +118,35 @@ export const CONTROLLERS: readonly ControllerSpec[] = Object.freeze([
     maxIcs: 1200,
     outputs: 2,
     sizeMm: [50, 40, 25],
+    priceEur: 35,
     url: 'https://quinled.info/quinled-dig-uno-pre-assembled-v3-1-specifications/',
     note: 'Onboard fuse, screw terminals.',
   },
   {
-    id: 'quinled-dig-next-2',
-    brand: 'QuinLED',
-    name: 'QuinLED Dig-Next-2',
-    model: 'Dig-Next-2',
+    id: 'xiao-led-driver',
+    brand: 'Seeed Studio',
+    name: 'Seeed Studio XIAO LED Driver Board',
+    model: 'LED Driver Board for XIAO + XIAO ESP32',
     minV: 5,
-    maxV: 48,
-    maxA: 20,
-    maxIcs: 1200,
-    outputs: 2,
-    sizeMm: null,
-    url: 'https://quinled.info/dig-next-2-specifications/',
-    note: 'Plastic case. Power outputs 2 × 5 A + 10 A, each fused.',
-  },
-  {
-    id: 'quinled-dig-quad',
-    brand: 'QuinLED',
-    name: 'QuinLED Dig-Quad',
-    model: 'Dig-Quad v4',
-    minV: 5,
-    maxV: 24,
-    maxA: 30,
-    maxIcs: 2400,
-    outputs: 4,
-    sizeMm: [100, 50, 25],
-    url: 'https://quinled.info/quinled-dig-quad-pre-assembled-v4-specifications/',
-    note: '30 A continuous, fused outputs for power injection.',
+    maxV: 12,
+    maxA: 3,
+    ampsAt: { 12: 2 },
+    maxIcs: 600,
+    outputs: 1,
+    sizeMm: [63, 30, 14.4],
+    priceEur: 18,
+    url: 'https://wiki.seeedstudio.com/led_driver_board/',
+    note: 'Two boards: the driver and the XIAO ESP32 that plugs into it; you flash WLED. 3 A at 5 V, 2 A at 12 V. For small signs.',
   },
 ]);
 
 /** Il controller standard. */
 export const CONTROLLER: ControllerSpec = CONTROLLERS[0]!;
+
+/** Corrente che il controller regge alla tensione della striscia, A. */
+export function controllerAmps(c: ControllerSpec, volts: number): number {
+  return c.ampsAt?.[volts] ?? c.maxA;
+}
 
 /** Controller dall'id; quello standard se l'id è sconosciuto. */
 export function controllerOf(id: string | undefined): ControllerSpec {

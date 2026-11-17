@@ -1,10 +1,8 @@
 // Prezzo cliente, IVA esclusa (SPEC §12.5). Modulo puro: le voci dei componenti vengono dal
 // chiamante (striscia dal profilo, alimentatore e scatola dalla media di parts). Spedizione a parte.
 
-export const PRICING_VERSION = '2026-11-16';
+export const PRICING_VERSION = '2026-11-17';
 
-// Controller GLEDOPTO, € (voce "Base")
-export const CONTROLLER_EUR = 35;
 // Lunghezza di striscia da acquistare rispetto al tracciato, +20%
 export const STRIP_WASTE_FACTOR = 1.2;
 // Stampa 3D a pezzo: flat, in base alla larghezza dell'insegna (mm)
@@ -39,6 +37,8 @@ export interface PriceMeasure {
   /** Numero di tagli di striscia (un taglio = un segmento di manodopera). */
   segments: number;
   solderJoints: number;
+  /** Controller scelto: `priceEur` di `CONTROLLERS` (35 € lo standard). */
+  controllerEur: number;
   /** Alimentatore: media dei prezzi di parts (min+max)/2 del modello scelto. */
   supplyEur: number;
   /** Scatola: media dei prezzi di parts del modello scelto; 0 se nessuna. */
@@ -104,7 +104,7 @@ export function priceOrder(measure: PriceMeasure): PriceQuote {
   const stripM = (Math.max(0, measure.stripMm) / 1000) * STRIP_WASTE_FACTOR;
 
   const lines: PriceLine[] = [
-    { id: 'controller', label: 'Controller', amount: cents(CONTROLLER_EUR) },
+    { id: 'controller', label: 'Controller', amount: cents(Math.max(0, measure.controllerEur)) },
     { id: 'strip', label: 'Striscia', amount: cents(stripM * measure.stripEurPerM) },
     { id: 'print', label: 'Stampa', amount: cents(printEur) },
     { id: 'segments', label: 'Montaggio', amount: cents(Math.max(0, measure.segments) * EUR_PER_SEGMENT) },

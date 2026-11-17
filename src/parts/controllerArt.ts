@@ -17,9 +17,9 @@ const VIEW_H = 72;
 const f = (n: number): string => n.toFixed(1);
 const pts = (list: [number, number][]): string => list.map(([x, y]) => `${f(x)},${f(y)}`).join(' ');
 
-/** Scheda nuda (QuinLED Dig-Uno, Dig-Quad) o scheda in custodia (GLEDOPTO, Dig-Next-2). */
+/** Scheda nuda (QuinLED Dig-Uno, Seeed XIAO) o scheda in custodia (GLEDOPTO). */
 function isBareBoard(c: ControllerSpec): boolean {
-  return c.id === 'quinled-dig-uno' || c.id === 'quinled-dig-quad';
+  return c.id === 'quinled-dig-uno' || c.id === 'xiao-led-driver';
 }
 
 export function controllerArt(c: ControllerSpec): string {

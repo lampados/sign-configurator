@@ -10,6 +10,7 @@ function atHeight(heightMm: number): PriceMeasure {
     stripEurPerM: 5.2,
     segments: 3,
     solderJoints: 2,
+    controllerEur: 35,
     supplyEur: 16,
     boxEur: 9,
   };
@@ -33,5 +34,12 @@ describe('prezzo', () => {
     expect(narrow.breakdown.find((l) => l.id === 'print')?.amount).toBe(7);
     expect(wide.breakdown.find((l) => l.id === 'print')?.amount).toBe(14);
     expect(narrow.shipping).toBe(20);
+  });
+
+  it('il controller entra con il suo prezzo: la scheda Seeed da 18 € costa meno dello standard da 35 €', () => {
+    const line = (eur: number) => priceOrder({ ...atHeight(100), controllerEur: eur }).breakdown.find((l) => l.id === 'controller')?.amount;
+    expect(line(35)).toBe(35);
+    expect(line(18)).toBe(18);
+    expect(priceOrder({ ...atHeight(200), controllerEur: 18 }).total).toBeLessThan(priceOrder({ ...atHeight(200), controllerEur: 44 }).total);
   });
 });

@@ -229,6 +229,7 @@ export function customerMessage(warning: string): string | null {
     [/^Trattino fuori/, () => 'The dash does not fit inside the dot.'],
     [/^Scatola (\S+) troppo piccola/, (m) => `The ${m[1]} box is too small for the power supply and controller.`],
     [/^Nessuna scatola del catalogo/, () => 'No listed box fits the power supply and controller.'],
+    [/il controller .* accetta (\d+)–(\d+) V/, (m) => `This controller takes ${m[1]}–${m[2]} V strips: pick another one under Tech.`],
     [/oltre i (\d+) A del controller/, (m) => `Over the controller's ${m[1]} A: needs power injection or a second controller.`],
     [/oltre (?:gli|il limite di) (\d+) IC del controller/, (m) => `Over the controller's ${m[1]} LEDs: needs a second controller.`],
   ];

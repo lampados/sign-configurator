@@ -52,10 +52,13 @@ Altezza minima di lettera derivata: `MIN_LETTER_H = 2·R_MIN`, il diametro della
 
 Controller WLED su ESP32; la tensione d'ingresso è quella della striscia. Standard il GLEDOPTO
 ESP32 Ultra Mini (GL-C-309WL: 5–24 V, 10 A, 800 LED, 2 uscite). Opzionali, nel menu Tech
-`CONTROLLER_ID`: GLEDOPTO GL-C-618WL (5–24 V, 15 A totali, 10 A per uscita, 4 uscite, Ethernet),
-QuinLED Dig-Uno v3.1 (5–24 V, 15 A, 2 uscite, 50 × 40 × 25 mm), QuinLED Dig-Next-2 (5–48 V, uscite di
-potenza 2 × 5 A + 10 A, 2 uscite dati, ~1200 LED), QuinLED Dig-Quad v4 (5–24 V, 30 A continui, 4 uscite,
-100 × 50 × 25 mm). Dove il costruttore non dà un limite di LED: ~600 per uscita, la soglia che WLED
+`CONTROLLER_ID`: GLEDOPTO GL-C-015WL (5–24 V, 15 A totali, 10 A per uscita, 2 uscite, 800 LED,
+108 × 45 × 18 mm, solo Wi-Fi), QuinLED Dig-Uno v3.1 (5–24 V, 15 A, 2 uscite, 50 × 40 × 25 mm), Seeed
+Studio LED Driver Board for XIAO con una XIAO ESP32 (5–12 V, 3 A a 5 V e 2 A a 12 V, 1 uscita,
+63 × 30 × 14,4 mm con la XIAO montata; WLED va caricato). Ogni controller ha un prezzo (`priceEur`, un
+pezzo, IVA esclusa: 35, 44, 35 e 18 €) che entra nel prezzo dell'insegna (§12.5) e nella pagina parts.
+Se la striscia ha una tensione che il controller non accetta (24 V con la scheda Seeed) la distinta
+avvisa; il limite di corrente può dipendere dalla tensione (`ampsAt`). Dove il costruttore non dà un limite di LED: ~600 per uscita, la soglia che WLED
 suggerisce per un buon frame rate. Il controller cambia solo gli avvisi della distinta (corrente e LED),
 non la geometria; va nell'ordine (`params.CONTROLLER_ID`) solo se diverso dallo standard, e un id
 sconosciuto nel link torna allo standard con un avviso.
@@ -898,7 +901,7 @@ copre. All'apertura nessun foglio è aperto.
   cavo (GST60A), corpo stagno con due cavi (LPV). Disegni e non foto: Mean Well pubblica foto solo per
   serie e quelle dei rivenditori non sono nostre. Anche i controller hanno il loro disegno
   (`src/parts/controllerArt.ts`, 1,2 px/mm, stessa scala fra loro): scheda nuda con morsettiere verdi
-  (Dig-Uno, Dig-Quad) o scheda in custodia (GLEDOPTO bianchi, Dig-Next-2 nero). Senza misure del
+  (Dig-Uno, Seeed XIAO) o scheda in custodia (GLEDOPTO bianchi). Senza misure del
   costruttore la sagoma è tratteggiata, di misura indicativa (60 × 35 × 20 mm), con «size not published».
   La sezione Boxes elenca le scatole con disegno in scala (`src/parts/boxArt.ts`, 0,4 px/mm), misure
   interne ed esterne e prezzo. Ogni sezione (alimentatori, controller, scatole, strisce) ha un pulsante **+ Add one** che apre il modulo issue

@@ -86,7 +86,7 @@ const controllers = CONTROLLERS.map((c) => {
   const size = c.sizeMm ? `${num(c.sizeMm[0])} × ${num(c.sizeMm[1])} × ${num(c.sizeMm[2])} mm` : '—';
   return `<tr id="${c.id}"><td class="art">${controllerArt(c)}</td><th scope="row"><a href="${esc(c.url)}" target="_blank" rel="noopener">${esc(c.name)}</a>
     <small>${esc(c.model)}${c.id === CONTROLLER.id ? ' · standard' : ''}${c.note ? `. ${esc(c.note)}` : ''}</small></th>
-    <td>${c.minV}–${c.maxV} V</td><td>${c.maxA} A</td><td>${c.maxIcs}</td><td>${c.outputs}</td><td>${size}</td></tr>`;
+    <td>${c.minV}–${c.maxV} V</td><td>${c.maxA} A</td><td>${c.maxIcs}</td><td>${c.outputs}</td><td>${size}</td><td data-label="Price">€${num(c.priceEur)}</td></tr>`;
 }).join('');
 
 document.querySelector('#parts')!.innerHTML = `
@@ -114,16 +114,17 @@ document.querySelector('#parts')!.innerHTML = `
   <section id="controllers">
     <div class="section-head"><h2>Controllers</h2>${addOne('Controller')}</div>
     <p class="lead">ESP32 boards running WLED. Input voltage = strip voltage. The ${esc(CONTROLLER.name)} is
-      standard; the others are options in Tech, for longer signs or more power.</p>
+      standard; the others are options in Tech.</p>
     <div class="scroll"><table>
       <thead><tr><th scope="col"><span class="sr-only">Drawing</span></th><th scope="col">Model</th><th scope="col">Input</th><th scope="col">Max current</th>
-        <th scope="col">Max LEDs</th><th scope="col">Outputs</th><th scope="col">Size (L × W × H)</th></tr></thead>
+        <th scope="col">Max LEDs</th><th scope="col">Outputs</th><th scope="col">Size (L × W × H)</th><th scope="col">Price</th></tr></thead>
       <tbody>${controllers}</tbody>
     </table></div>
     <p class="fine">Above the max current the power supply still fits, but the strip needs power injection
       or a bigger controller. Max LEDs: the maker's figure, or about 600 per output, which WLED suggests for a
       smooth frame rate. Check the maker's page (click a model) before ordering.
-      Drawings are not photos; a dashed outline means the maker does not publish the size.</p>
+      Drawings are not photos; a dashed outline means the maker does not publish the size.
+      Prices: one piece, excluding VAT, November 2026.</p>
   </section>
 
   <section id="boxes">
