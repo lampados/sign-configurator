@@ -60,9 +60,18 @@ test('Order: una striscia senza prezzo al metro lo dice, e il totale non la comp
   const track = trackPage(page);
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('index.html', { waitUntil: 'load' });
-  await expect(page.locator('#preview-status')).toContainText('LED');
+  const status = page.locator('#preview-status');
+  await expect(status).toContainText('LED');
+  // Con la striscia standard il totale è completo.
   await page.locator('#open-request').click();
   await expect(page.locator('#price')).toBeVisible();
+  expect((await priceOf(page)).has('Total, excl. VAT')).toBe(true);
+  await page.locator('[data-tool="tech"]').click();
+  const before = await status.getAttribute('data-generation');
+  await page.locator('select[name="tech-STRIP_ID"]').selectOption('ws2812b-30');
+  await expect.poll(async () => status.getAttribute('data-generation'), { timeout: 60_000 }).not.toBe(before);
+  await page.locator('#open-request').click();
+  await expect.poll(async () => (await priceOf(page)).has('Total without the strip, excl. VAT')).toBe(true);
   const price = await priceOf(page);
   const strip = [...price.keys()].find((label) => label.startsWith('LED strip · '));
   expect(price.get(strip!)).toBe('to be quoted');

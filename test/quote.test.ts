@@ -70,6 +70,9 @@ describe('prezzo voce per voce dell\'insegna (SPEC §12.5)', () => {
     const unpriced = STRIP_PROFILES.find((profile) => profile.eurPerM === null)!;
     expect(stripProfileOf('ws2812b-60').eurPerM).toBe(5.2);
     expect(stripProfileOf('cob-5mm').eurPerM).toBe(5.14);
+    // La striscia standard ha il suo prezzo: chi apre il sito vede un totale completo.
+    expect(stripProfileOf(undefined).id).toBe('ws2812b-144');
+    expect(stripProfileOf(undefined).eurPerM).toBe(20);
     const result = await generateSign(order({ STRIP_ID: unpriced.id }), readPublic);
     const quote = quoteSign({ bom: result.bom, widthMm: 400, stripId: unpriced.id });
     expect(quote.stripPriced).toBe(false);

@@ -337,7 +337,8 @@ function ws2812b(ledPerM: number, ip: 'IP20' | 'IP65', thickness: number, width 
 export const WS2812B_30: StripProfile = Object.freeze(ws2812b(30, 'IP20', 2.0));
 // Rotolo da 5 m a 25,98 € IVA esclusa (16 novembre 2026).
 export const WS2812B_60: StripProfile = Object.freeze({ ...ws2812b(60, 'IP20', 2.0), eurPerM: 5.2 });
-export const WS2812B_144: StripProfile = Object.freeze(ws2812b(144, 'IP20', 2.0));
+// 20 € al metro, IVA esclusa (17 novembre 2026).
+export const WS2812B_144: StripProfile = Object.freeze({ ...ws2812b(144, 'IP20', 2.0), eurPerM: 20 });
 export const WS2812B_60_IP65: StripProfile = Object.freeze(ws2812b(60, 'IP65', 2.2));
 /** Strisce strette, 60 LED/m: 8 e 5 mm con LED 5050, 4 mm con LED 3535 (più basso). */
 export const WS2812B_60_8MM: StripProfile = Object.freeze(ws2812b(60, 'IP20', 2.0, 8.0));

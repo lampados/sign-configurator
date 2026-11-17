@@ -1037,7 +1037,8 @@ prefisso «Price · », e arrivano al negozio insieme al riepilogo.
 
 Una striscia senza `eurPerM` (non ancora rilevato) ha la voce «to be quoted» e il totale si chiama
 «Total without the strip»: non si mostra un totale che sembra completo e non lo è. Hanno un prezzo
-la WS2812B 60 LED/m da 10 mm (5,20 €/m) e la COB da 5 mm (5,14 €/m).
+la WS2812B 144 LED/m da 10 mm, quella standard (20 €/m), la WS2812B 60 LED/m da 10 mm (5,20 €/m)
+e la COB da 5 mm (5,14 €/m).
 
 Quanto segue è il disegno originale, in parte superato: le formule su grammi e scaglioni non sono
 quelle in uso.
