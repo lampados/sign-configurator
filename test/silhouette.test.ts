@@ -17,7 +17,8 @@ const readPublic: FontBytesReader = async (file) => {
   return b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength) as ArrayBuffer;
 };
 
-const P = resolveParams();
+// Passo lungo (60 LED/m): è quello che dà una freccia misurabile sugli archi di prova.
+const P = resolveParams({ STRIP_ID: 'ws2812b-60' });
 const OUTER = P.CHANNEL_W / 2 + P.WALL;
 
 function signedArea(poly: readonly Vec2[]): number {

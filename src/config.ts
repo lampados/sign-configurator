@@ -230,13 +230,13 @@ export const LED_AIR = 6;
 
 /**
  * Piega di lato di un giunto senza tagliare, per una striscia rigida o dal giunto corto: è la
- * flessione che il circuito regge da sé. Vale per le strisce con guaina (IP65) e per le 144 LED/m,
- * dove fra un LED e l'altro restano pochi millimetri.
+ * flessione che il circuito regge da sé. Vale per le strisce con guaina (IP65).
  */
 export const CUT_BEND_STIFF_DEG = 10;
 
 /**
- * Piega di lato di un giunto della WS2812B senza guaina a 60 o 30 LED/m: il circuito si increspa
+ * Piega di lato di un giunto della WS2812B senza guaina, a ogni densità (144 compresa, per
+ * scelta di Davide: non ancora provata): il circuito si increspa
  * sulle piazzole di rame e ruota. Provato da Davide il 15 novembre 2026 su una 60 LED/m da 10 mm:
  * 90° in quattro giunti, sul tavolo. Da confermare dentro un canale stampato.
  */
@@ -271,7 +271,8 @@ function ws2812b(ledPerM: number, ip: 'IP20' | 'IP65', thickness: number, width 
     CUT_PITCH: Math.round((1000 / ledPerM) * 100) / 100,
     LED_PER_M: ledPerM,
     sideBend: false,
-    cutBendDeg: ip === 'IP20' && ledPerM <= 60 ? CUT_BEND_FLEX_DEG : CUT_BEND_STIFF_DEG,
+    // Senza guaina piega uguale a ogni densità: la 144 come la 60 adesiva (deciso da Davide il 17 novembre 2026).
+    cutBendDeg: ip === 'IP20' ? CUT_BEND_FLEX_DEG : CUT_BEND_STIFF_DEG,
     measured: false,
     notes: 'Misure di catalogo. Piega di lato sulle piazzole fino a un certo angolo per giunto: oltre si taglia e si ricollega.',
   };
@@ -307,22 +308,23 @@ export const COB_5MM: StripProfile = Object.freeze({
 });
 
 export const STRIP_PROFILES: readonly StripProfile[] = Object.freeze([
+  WS2812B_144,
+  WS2812B_144_5MM,
   WS2812B_60,
   WS2812B_60_8MM,
   WS2812B_60_5MM,
   WS2812B_60_4MM,
-  WS2812B_144_5MM,
   WS2812B_30,
-  WS2812B_144,
   WS2812B_60_IP65,
   COB_5MM,
 ]);
 
 /**
- * La striscia più comune e più economica. **Non piega di lato**: in curva va tagliata e ricollegata,
- * e la distinta conta i tagli e il tempo di montaggio. Chi vuole meno saldature sceglie la COB.
+ * La striscia che Davide usa e offre di preferenza: WS2812B 144 LED/m, larga 10 mm (scelta del
+ * 17 novembre 2026). **Non piega di lato**: in curva va tagliata e ricollegata, e la distinta conta
+ * i tagli e il tempo di montaggio. Chi vuole meno saldature sceglie la COB.
  */
-export const DEFAULT_STRIP: StripProfile = WS2812B_60;
+export const DEFAULT_STRIP: StripProfile = WS2812B_144;
 
 export function stripProfileOf(id: string | undefined): StripProfile {
   return STRIP_PROFILES.find((profile) => profile.id === id) ?? DEFAULT_STRIP;

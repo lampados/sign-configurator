@@ -23,7 +23,7 @@ function orderOf(paths: OrderPath[], crossings: SignOrder['crossings'] = []): Si
     source: { kind: 'text', text: 'x', fontId: 'sacramento' },
     heightMm: 120,
     color: '#ff2fd6',
-    params: {},
+    params: { STRIP_ID: 'ws2812b-60' },
     paths,
     crossings,
   };

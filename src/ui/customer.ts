@@ -57,6 +57,9 @@ function icon(path: string): string {
   return `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="${path}"/></svg>`;
 }
 
+/** Telefono con freccia: gira lo schermo tra verticale e orizzontale. */
+const ROTATE_ICON = icon('M9 3h6a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1M4 13a8 8 0 0 0 8 8M12 21l-2.5-2.5M12 21l-2.5 2');
+
 const ICONS: Record<string, string> = {
   text: icon('M5 6h14M5 12h14M5 18h9'),
   font: icon('M6 19 L12 5 L18 19M8.5 14h7'),
@@ -168,20 +171,28 @@ app.innerHTML = `
         <div class="dim dim-h"><i class="dim-line"></i><span id="dim-h"></span></div>
       </div>
       <div class="hud">
-        <div class="hud-view">
+        <p class="brand">
+          <strong>${S.brand.name}</strong>
+          <span>${S.brand.byline}</span>
+          <a href="${S.brand.repo}" target="_blank" rel="noopener">${S.brand.contribute}</a>
+        </p>
+        <div class="hud-actions">
+          <button type="button" id="rotate-screen" aria-label="${S.rotate}" title="${S.rotate}" hidden>${ROTATE_ICON}</button>
+          <button type="button" id="open-request" aria-pressed="false">${S.request}</button>
+        </div>
+      </div>
+      <div class="stage-meta">
+        <div class="stage-controls">
+          <p id="preview-status" data-generation="0">${S.generating}</p>
           <div class="mode-switch" role="radiogroup" aria-label="${S.view.aria}">
             <label><input type="radio" name="mode" value="accesa" checked><span>${S.view.on}</span></label>
             <label><input type="radio" name="mode" value="spenta"><span>${S.view.off}</span></label>
           </div>
-          <div class="mode-switch diffuser-switch" role="radiogroup" aria-label="${S.diffuser.aria}">
+          <div class="mode-switch" role="radiogroup" aria-label="${S.diffuser.aria}">
             <label><input type="radio" name="diffuser" value="on" checked><span>${S.diffuser.on}</span></label>
             <label><input type="radio" name="diffuser" value="off"><span>${S.diffuser.off}</span></label>
           </div>
         </div>
-        <button type="button" id="open-request" aria-pressed="false">${S.request}</button>
-      </div>
-      <div class="stage-meta">
-        <p id="preview-status" data-generation="0">${S.generating}</p>
         <div class="stage-power">
           <label class="plug-pill" title="${S.plug.title(PLUGS[0]!.label)}">
             <span class="plug-icon">${PLUGS[0]!.icon}</span>
@@ -315,6 +326,38 @@ const openRequest = document.querySelector<HTMLButtonElement>('#open-request')!;
 const stage = document.querySelector<HTMLElement>('#stage')!;
 const status = document.querySelector<HTMLElement>('#preview-status')!;
 const supply = document.querySelector<HTMLAnchorElement>('#preview-supply')!;
+// Gira lo schermo del telefono. Il blocco dell'orientamento esiste solo dove il browser lo concede
+// (Chrome su Android, a schermo intero): altrove, iPhone compreso, il tasto non si mostra.
+const rotateButton = document.querySelector<HTMLButtonElement>('#rotate-screen')!;
+type LockableOrientation = ScreenOrientation & { lock?: (orientation: 'portrait' | 'landscape') => Promise<void> };
+const orientation = (typeof screen !== 'undefined' ? screen.orientation : undefined) as LockableOrientation | undefined;
+if (orientation && typeof orientation.lock === 'function' && typeof document.documentElement.requestFullscreen === 'function') {
+  rotateButton.hidden = false;
+  let rotated = false;
+  const release = (): void => {
+    rotated = false;
+    orientation.unlock();
+    if (document.fullscreenElement) void document.exitFullscreen();
+  };
+  rotateButton.addEventListener('click', () => {
+    if (rotated) return release();
+    const target = orientation.type.startsWith('landscape') ? 'portrait' : 'landscape';
+    void (async () => {
+      try {
+        if (!document.fullscreenElement) await document.documentElement.requestFullscreen();
+        await orientation.lock!(target);
+        rotated = true;
+      } catch {
+        // Il browser rifiuta il blocco: si torna com'era e il tasto sparisce.
+        if (document.fullscreenElement) void document.exitFullscreen();
+        rotateButton.hidden = true;
+      }
+    })();
+  });
+  document.addEventListener('fullscreenchange', () => {
+    if (!document.fullscreenElement && rotated) release();
+  });
+}
 const plugInput = document.querySelector<HTMLSelectElement>('select[name="plug"]')!;
 const plugPill = document.querySelector<HTMLElement>('.plug-pill')!;
 const plugIcon = document.querySelector<HTMLElement>('.plug-icon')!;

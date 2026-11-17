@@ -7,6 +7,8 @@
   --line: rgba(28, 25, 22, 0.12);
   --dock: #161311;
   --stage: #5c5c62;
+  /* Un solo raggio per tutti i pulsanti: anteprima, barra degli strumenti e pannello. */
+  --radius: 12px;
   color: var(--ink);
   font-family: system-ui, sans-serif;
   background: var(--stage);
@@ -159,31 +161,95 @@ select {
 .dim-h .dim-line::after { bottom: -1px; left: -4px; border-bottom: 0; border-top: 9px solid currentColor; }
 .dim-h span { writing-mode: vertical-rl; }
 
-.hud-view {
-  position: relative;
-  flex: 0 0 auto;
+/* Nome, autore e invito a contribuire in alto a sinistra; «Order» in alto a destra. */
+.brand {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  margin: 2px 0 0;
+  color: #f6f1ea;
+  font-size: 0.72rem;
+  line-height: 1.3;
+  text-shadow: 0 1px 2px rgb(0 0 0 / 0.6);
 }
 
-.diffuser-switch {
-  position: absolute;
-  top: calc(100% + 6px);
-  left: 0;
-  width: max-content;
-  font-size: 0.78rem;
+.brand strong { font-size: 0.95rem; }
+
+.brand a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
+
+/* Gira lo schermo: solo su telefono, accanto a «Order». */
+.hud-actions {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+}
+
+#rotate-screen {
+  display: none;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius);
+  background: rgba(18, 16, 14, 0.78);
+  color: #f6f1ea;
+  cursor: pointer;
+}
+
+#rotate-screen svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+@media (pointer: coarse) and (max-width: 480px), (pointer: coarse) and (max-height: 480px) {
+  #rotate-screen:not([hidden]) { display: flex; }
+}
+
+/* In basso a sinistra: numero di LED, acceso/spento, diffusore. */
+.stage-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  pointer-events: auto;
+}
+
+.stage-controls .mode-switch { font-size: 0.85rem; }
+.stage-controls .mode-switch label { min-height: 28px; padding: 0 10px; }
+.stage-controls .mode-switch span { min-height: 24px; }
 
 @media (max-width: 480px) {
   .hud { gap: 6px; }
-  .mode-switch { font-size: 0.82rem; }
-  .mode-switch label { padding: 0 8px; }
-  .diffuser-switch { font-size: 0.72rem; }
+  .brand { font-size: 0.68rem; }
+  #rotate-screen { width: 36px; height: 36px; }
+  /* LED, acceso/spento e diffusore su una riga sola anche su telefono. */
+  .stage-controls { gap: 4px; }
+  .stage-controls .mode-switch { font-size: 0.72rem; }
+  .stage-controls .mode-switch label { padding: 0 6px; }
+  .stage-controls #preview-status { padding: 7px 8px; font-size: 0.78rem; }
   #open-request { min-height: 40px; padding: 0 12px; font-size: 0.85rem; }
 }
 
 .mode-switch {
   display: flex;
   padding: 3px;
-  border-radius: 999px;
+  border-radius: var(--radius);
   background: rgba(18, 16, 14, 0.78);
   color: #f6f1ea;
 }
@@ -195,7 +261,7 @@ select {
   align-items: center;
   min-height: 36px;
   padding: 0 14px;
-  border-radius: 999px;
+  border-radius: var(--radius);
   cursor: pointer;
   white-space: nowrap;
 }
@@ -217,7 +283,7 @@ select {
   align-items: center;
   min-height: 32px;
   padding: 0 2px;
-  border-radius: 999px;
+  border-radius: var(--radius);
 }
 
 .mode-switch input:focus-visible + span {
@@ -228,7 +294,7 @@ select {
 #open-request {
   flex: none;
   border: 0;
-  border-radius: 999px;
+  border-radius: var(--radius);
   min-height: 44px;
   padding: 0 18px;
   background: var(--neon);
@@ -252,6 +318,7 @@ select {
   right: 12px;
   bottom: 12px;
   display: flex;
+  flex-wrap: wrap-reverse;
   justify-content: space-between;
   align-items: flex-end;
   gap: 8px;
@@ -263,7 +330,7 @@ select {
   margin: 0;
   max-width: calc(100% - 24px);
   padding: 7px 12px;
-  border-radius: 999px;
+  border-radius: var(--radius);
   background: #1c1916;
   color: #f6f1ea;
   font-size: 0.85rem;
@@ -303,7 +370,7 @@ select {
   align-items: center;
   gap: 4px;
   padding: 4px 8px 4px 9px;
-  border-radius: 999px;
+  border-radius: var(--radius);
   background: #1c1916;
   color: #f6f1ea;
   font-size: 0.85rem;
@@ -441,7 +508,7 @@ select {
 #submit-order,
 #back-to-text {
   border: 0;
-  border-radius: 999px;
+  border-radius: var(--radius);
   min-height: 44px;
   padding: 0 16px;
   background: var(--neon);
@@ -460,7 +527,7 @@ button:disabled {
 input[name="text"] {
   width: 100%;
   border: 0;
-  border-radius: 14px;
+  border-radius: var(--radius);
   padding: 14px 16px;
   background: #fff;
   font-size: 1.7rem;
@@ -484,7 +551,7 @@ input[name="text"] {
   min-height: 76px;
   padding: 8px 10px;
   border: 0;
-  border-radius: 16px;
+  border-radius: var(--radius);
   background: #fff;
   text-align: center;
   box-shadow: inset 0 0 0 1px var(--line);
@@ -521,7 +588,7 @@ input[name="text"] {
   flex: 1;
   min-height: 64px;
   border: 0;
-  border-radius: 14px;
+  border-radius: var(--radius);
   background: #fff;
   box-shadow: inset 0 0 0 1px var(--line);
   cursor: pointer;
@@ -626,7 +693,7 @@ input[type="color"] {
   align-items: center;
   justify-content: center;
   min-height: 44px;
-  border-radius: 999px;
+  border-radius: var(--radius);
   background: #fff;
   box-shadow: inset 0 0 0 1px var(--line);
   cursor: pointer;
@@ -655,7 +722,7 @@ input[type="color"] {
   gap: 10px;
   min-height: 148px;
   padding: 16px;
-  border-radius: 16px;
+  border-radius: var(--radius);
   background: #fff;
   text-align: center;
   font-size: 1.15rem;
@@ -694,7 +761,7 @@ input[type="color"] {
   min-height: 44px;
   padding: 0 14px;
   border: 0;
-  border-radius: 999px;
+  border-radius: var(--radius);
   background: #fff;
   box-shadow: inset 0 0 0 1px var(--line);
   cursor: pointer;
@@ -805,7 +872,7 @@ input[type="color"] {
 .tech-field select {
   min-height: 40px;
   border: 1px solid var(--line);
-  border-radius: 10px;
+  border-radius: var(--radius);
   background: var(--sheet);
   color: var(--ink);
   padding: 0 8px;
@@ -840,7 +907,21 @@ input[type="color"] {
 @media (max-width: 899px) {
   .hud { flex-wrap: nowrap; }
 
-  #open-request { margin-left: auto; }
+  /* Due righe in basso: le quote salgono per non finirci sotto. */
+  .dim-w { bottom: 96px; }
+  .dim-h { bottom: 128px; }
+}
+
+/* Telefoni stretti: niente spina e alimentatore sull'anteprima (restano nel riepilogo dell'ordine). */
+@media (max-width: 380px) {
+  .stage-power { display: none; }
+}
+
+/* Telefono in orizzontale: lo schermo è basso, in basso resta una riga sola. */
+@media (max-height: 480px) {
+  .stage-power { display: none; }
+  .dim-w { bottom: 54px; }
+  .dim-h { bottom: 86px; }
 }
 
 /* Barra verticale sul bordo destro, alta quanto lo schermo. */
@@ -931,7 +1012,7 @@ input[type="color"] {
 /* Disegno della striscia scelta, sotto il menu: in scala, vista dall'alto. */
 .strip-figure {
   padding: 6px 8px;
-  border-radius: 10px;
+  border-radius: var(--radius);
   background: var(--sheet);
 }
 
@@ -1002,7 +1083,7 @@ input[type="color"] {
   min-height: 44px;
   padding: 0 20px;
   border: 0;
-  border-radius: 999px;
+  border-radius: var(--radius);
   background: #f6f1ea;
   color: #12100e;
   font-weight: 650;

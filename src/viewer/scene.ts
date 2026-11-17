@@ -106,6 +106,13 @@ function geometryOf(mesh: StlMesh): BufferGeometry {
   return creased;
 }
 
+/** Aria attorno all'insegna nell'inquadratura. */
+const FIT_MARGIN = 1.28;
+/** Sotto questa altezza l'anteprima è «bassa» e l'insegna lascia libere testata e controlli. */
+const SHORT_STAGE_PX = 520;
+/** Altezza coperta da testata (sopra) e controlli (sotto) sull'anteprima. */
+const STAGE_CHROME_PX = 65;
+
 export function mountSignScene(host: HTMLElement, options?: { background?: number }): SignScene {
   const mobile = coarsePointer();
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -245,7 +252,13 @@ export function mountSignScene(host: HTMLElement, options?: { background?: numbe
     const aspect = Math.max(camera.aspect, 0.2);
     const distForHeight = Math.max(size.y, 1) / 2 / tan;
     const distForWidth = Math.max(size.x, 1) / 2 / (tan * aspect);
-    return Math.max(distForHeight, distForWidth, 40) * 1.28;
+    // Anteprima bassa (telefono in orizzontale, o pannello aperto): testata e controlli coprono
+    // circa 65 px sopra e sotto, e l'insegna si rimpicciolisce per restarne fuori.
+    const hostH = host.clientHeight;
+    const heightMargin = hostH > 0 && hostH < SHORT_STAGE_PX
+      ? Math.max(FIT_MARGIN, (hostH / Math.max(hostH - 2 * STAGE_CHROME_PX, hostH * 0.4)) * 1.1)
+      : FIT_MARGIN;
+    return Math.max(distForHeight * heightMargin, distForWidth * FIT_MARGIN, 40 * FIT_MARGIN);
   };
 
   const aimCamera = (box: Box3, resetAngle: boolean): void => {

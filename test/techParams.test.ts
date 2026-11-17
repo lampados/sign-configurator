@@ -61,10 +61,10 @@ describe('parametri tecnici della pagina cliente', () => {
     expect(options.filter((o) => o.isDefault).map((o) => o.value)).toEqual([DEFAULT_LED_DENSITY]);
     // La densità predefinita è quella della striscia predefinita.
     expect(DEFAULT_LED_DENSITY).toBe(DEFAULT_PARAMS.LED_PER_M);
-    expect(DEFAULT_LED_DENSITY).toBe(60);
-    expect(techParams({ numbers: {}, edgeProfile: 'square', ledPerM: '144' })).toEqual({ LED_PER_M: 144 });
-    // 60 è la densità della striscia predefinita: uguale al default, non va nell'ordine.
-    expect(techParams({ numbers: {}, edgeProfile: 'square', ledPerM: '60' })).toEqual({});
+    expect(DEFAULT_LED_DENSITY).toBe(144);
+    expect(techParams({ numbers: {}, edgeProfile: 'square', ledPerM: '60' })).toEqual({ LED_PER_M: 60 });
+    // 144 è la densità della striscia predefinita: uguale al default, non va nell'ordine.
+    expect(techParams({ numbers: {}, edgeProfile: 'square', ledPerM: '144' })).toEqual({});
     // Un valore fuori scala torna alla predefinita.
     expect(techParams({ numbers: {}, edgeProfile: 'square', ledPerM: '160' })).toEqual({});
     expect(techParams({ numbers: {}, edgeProfile: 'square' })).toEqual({});

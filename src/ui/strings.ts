@@ -4,7 +4,14 @@
 // poche frasi per il cliente e scarta tutto il resto.
 
 export const S = {
-  pageTitle: 'Neon sign configurator',
+  pageTitle: 'Ciao Configurator',
+  /** In alto a sinistra sull'anteprima: nome, versione e autore, invito a contribuire. */
+  brand: {
+    name: 'Ciao Configurator',
+    byline: 'v 0.2 designed by Davide Gomba',
+    contribute: 'Contribute to this project on GitHub',
+    repo: 'https://github.com/lampados/sign-configurator',
+  },
   tools: {
     text: 'Text',
     font: 'Font',
@@ -27,6 +34,7 @@ export const S = {
   },
   sheet: { configure: 'Configure', request: 'Order', done: 'Done', aria: 'Tools' },
   view: { aria: 'View', on: 'On', off: 'Off' },
+  rotate: 'Rotate screen',
   diffuser: { aria: 'Diffuser', on: 'Diffuser', off: 'No diffuser' },
   frame: { label: 'Wall thickness' },
   request: 'Order',

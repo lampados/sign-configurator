@@ -28,8 +28,8 @@ function order(params: SignOrderV4['params'], fontId = 'sacramento', text = 'Cia
 }
 
 describe('tagli in curva e tempo di montaggio', () => {
-  it('la WS2812B predefinita su un corsivo si taglia: ogni taglio vale 10 minuti', async () => {
-    const result = await generateSign(order({}), readPublic);
+  it('la WS2812B 60 LED/m su un corsivo si taglia: ogni taglio vale 10 minuti', async () => {
+    const result = await generateSign(order({ STRIP_ID: 'ws2812b-60' }), readPublic);
     const { bendCuts, assemblyMin } = result.bom.assembly;
     // Soglia di 30° per giunto: restano i tagli nei riccioli stretti, non uno per LED.
     expect(bendCuts).toBeGreaterThan(0);

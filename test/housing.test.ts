@@ -21,7 +21,8 @@ const readPublic: FontBytesReader = async (file) => {
 
 // Gli spigoli con tasca valgono per una striscia che segue le curve: la COB.
 const BENDABLE = resolveParams({ STRIP_ID: 'cob-5mm' });
-const P = resolveParams();
+// Passo lungo (60 LED/m): è quello che dà una freccia misurabile sugli archi di prova.
+const P = resolveParams({ STRIP_ID: 'ws2812b-60' });
 
 function line(length: number, id: number, origin: Vec2 = [0, 0]): HousingPath {
   return {

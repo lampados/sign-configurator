@@ -39,12 +39,12 @@ describe('config', () => {
     expect(DEFAULT_PARAMS.SLOT_LIP_CHAMFER).toBe(1);
   });
 
-  it('la striscia standard è la WS2812B 60 LED/m, e MIN_LETTER_H è il doppio di R_MIN', () => {
-    expect(DEFAULT_STRIP.id).toBe('ws2812b-60');
+  it('la striscia standard è la WS2812B 144 LED/m, e MIN_LETTER_H è il doppio di R_MIN', () => {
+    expect(DEFAULT_STRIP.id).toBe('ws2812b-144');
     expect(DEFAULT_PARAMS.STRIP_W).toBe(10);
     expect(DEFAULT_PARAMS.STRIP_T).toBe(2);
     expect(DEFAULT_PARAMS.CHANNEL_W).toBe(10.4);
-    expect(DEFAULT_PARAMS.LED_PER_M).toBe(60);
+    expect(DEFAULT_PARAMS.LED_PER_M).toBe(144);
     // Fra i LED e il diffusore resta LED_AIR.
     expect(DEFAULT_PARAMS.CHANNEL_DEPTH - DEFAULT_PARAMS.STRIP_T).toBe(LED_AIR);
     expect(DEFAULT_PARAMS.STRIP_W).toBe(DEFAULT_STRIP.STRIP_W);
@@ -59,8 +59,8 @@ describe('config', () => {
     const wider = resolveParams({ HINGE_PITCH: 20 });
     expect(wider.MIN_LETTER_H).toBeCloseTo(2 * rMin(wider));
     expect(wider.HINGE_PITCH).toBe(20);
-    // Una cerniera per LED: 1000 / 60.
-    expect(DEFAULT_PARAMS.HINGE_PITCH).toBeCloseTo(16.67, 2);
+    // Una cerniera per LED: 1000 / 144.
+    expect(DEFAULT_PARAMS.HINGE_PITCH).toBeCloseTo(6.94, 2);
     expect(DEFAULT_PARAMS.CUT_PITCH).toBe(DEFAULT_PARAMS.HINGE_PITCH);
   });
 
@@ -121,11 +121,11 @@ describe('strisce strette', () => {
 });
 
 describe('piega senza taglio', () => {
-  it('30° per le WS2812B senza guaina a 60 e 30 LED/m, 10° per IP65 e 144 LED/m', async () => {
+  it('30° per le WS2812B senza guaina a ogni densità, 10° per IP65', async () => {
     const { STRIP_PROFILES } = await import('../src/config');
     const deg = (id: string) => STRIP_PROFILES.find((strip) => strip.id === id)!.cutBendDeg;
-    for (const id of ['ws2812b-60', 'ws2812b-30', 'ws2812b-60-8mm', 'ws2812b-60-5mm', 'ws2812b-60-4mm']) expect(deg(id), id).toBe(30);
-    for (const id of ['ws2812b-60-ip65', 'ws2812b-144', 'ws2812b-144-5mm']) expect(deg(id), id).toBe(10);
+    for (const id of ['ws2812b-60', 'ws2812b-30', 'ws2812b-60-8mm', 'ws2812b-60-5mm', 'ws2812b-60-4mm', 'ws2812b-144', 'ws2812b-144-5mm']) expect(deg(id), id).toBe(30);
+    for (const id of ['ws2812b-60-ip65']) expect(deg(id), id).toBe(10);
   });
 });
 
