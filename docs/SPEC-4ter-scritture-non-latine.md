@@ -4,7 +4,8 @@ Bozza, da incollare in `SPEC.md` dopo §4bis. Sostituisce, per queste quattro sc
 «alfabeti non latini» di §12.8 (preventivo su misura): cinese, giapponese, arabo ed ebraico entrano
 nel configuratore.
 
-**Stato**: cinese e giapponese sono **misurati e integrati** (14 novembre 2026).
+**Stato**: cinese e giapponese sono **misurati e integrati** (14 novembre 2026). Il **cirillico** è
+integrato dal 17 novembre 2026: vedi «Cirillico» più sotto.
 
 **Arabo ed ebraico sono rimandati.** Non bastano i font: l'arabo cambia la forma di ogni lettera
 secondo la posizione nella parola, e in entrambe le scritture l'ordine visivo va calcolato
@@ -19,6 +20,7 @@ Fase 0, variazione della larghezza del tratto sullo scheletro (limite 25 %):
 | M PLUS Rounded 1c Light | 7–10 % | adottato per il giapponese |
 | Noto Sans SC Light | 6–9 % | adottato per il cinese |
 | LXGW WenKai Light | 30–37 % | **scartato**: il pennello modula troppo il tratto |
+| Comfortaa Light | 6–11 % | adottato per il cirillico |
 
 I file sono sottoinsiemi (GB 2312 e Shift-JIS) di circa 2,5 MB l'uno, invece di 18 e 27 MB: vedi
 `public/fonts/README.md`. Devono essere **istanze statiche**: opentype.js ignora gli assi dei font
@@ -32,6 +34,7 @@ Un font per scrittura, tutti SIL OFL, tutti `kind: "outline"`, `stripMode: "cent
 | Scrittura | `id` | Font | Perché | Ripiego |
 |---|---|---|---|---|
 | Cinese (semplificato) | `noto-sans-sc` | **Noto Sans SC** Light | tratto uniforme, copre tutto il cinese quotidiano, si abbina a M PLUS Rounded | — |
+| Cirillico | `comfortaa` | **Comfortaa** Light | geometrico, terminali tondi, tratto costante; ha anche il latino | Neucha (a mano) |
 | Giapponese (kana + kanji) | `mplus-rounded` | **M PLUS Rounded 1c** Light | terminali tondi e tratto costante: è già la forma di un tubo | Klee One (a penna) |
 | Arabo | `playpen-arabic` | **Playpen Sans Arabic** Light | scrittura a mano, monolinea, ha anche il latino | Lemonada |
 | Ebraico | `playpen-hebrew` | **Playpen Sans Hebrew** Light | corsivo a mano, stessa famiglia dell'arabo | Varela Round |
@@ -52,11 +55,27 @@ Campi nuovi, con default che lasciano invariati i quattro font latini:
 
 | Campo | Default | Significato |
 |---|---|---|
-| `script` | `"latin"` | `"latin"` \| `"han"` \| `"japanese"` \| `"arabic"` \| `"hebrew"` |
+| `script` | `"latin"` | `"latin"` \| `"han"` \| `"japanese"` \| `"cyrillic"` \| `"arabic"` \| `"hebrew"` |
 | `direction` | `"ltr"` | `"ltr"` \| `"rtl"` |
 | `shaper` | `"opentype"` | `"opentype"` (com'è oggi) \| `"harfbuzz"` |
 | `heightGlyph` | `"H"` | glifo che definisce l'altezza chiesta dal cliente |
 | `lazy` | `false` | `true`: il file si scarica solo quando il font viene scelto |
+
+### Cirillico
+
+Non chiede niente di nuovo alla pipeline: si scrive da sinistra a destra, le lettere a stampa non si
+legano, un glifo per carattere. Basta un font che abbia i glifi.
+
+- **Font**: Comfortaa Light, file statico originale (125 KB, nome riservato: nessun sottoinsieme).
+  Copre russo, ucraino, bielorusso, bulgaro, serbo e macedone, più tutto il latino: «Ciao Привет»
+  è una sola insegna in un solo font.
+- **Altezza**: resta la «H». Le maiuscole cirilliche (П) hanno la stessa sommità, verificata nei test.
+- **Caricamento**: non è `lazy`. Il file è piccolo, si precarica con i latini e la sua miniatura è
+  disegnata nel font stesso, con il campione «Привет».
+- **Già coperto altrove**: M PLUS Rounded 1c, Noto Sans SC e Pecita hanno i glifi russi e li
+  disegnano, ma sono scelti per altre scritture; gli altri font latini non li hanno.
+- **Fuori**: il corsivo russo legato (lettere unite come a mano) aspetta il motore di composizione,
+  come l'arabo.
 
 ### Composizione del testo
 
@@ -164,5 +183,5 @@ sale; nessuna migrazione di schema.
 
 - Peso di harfbuzzjs e dei font CJK sul primo caricamento da mobile: va misurato.
 - Cinese: serve distinguere semplificato e tradizionale nel menu, o basta un font che li copre entrambi?
-- Coreano, cirillico, greco, devanagari, thai: fuori da questa sezione. Playpen Sans copre già greco,
-  cirillico, devanagari e thai con lo stesso disegno, se servissero.
+- Coreano, greco, devanagari, thai: fuori da questa sezione. Playpen Sans copre già greco,
+  devanagari e thai con lo stesso disegno, se servissero. Comfortaa ha anche il greco: non è provato.

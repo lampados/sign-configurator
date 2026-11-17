@@ -21,7 +21,8 @@ Last updated: November 2026.
   Portuguese and Chinese first. An issue form will let anyone translate the interface without
   using git.
 - **Arabic and Hebrew.** These need a text-shaping engine (joining letters, right-to-left).
-  The same engine will fix joined scripts such as Pecita, whose letters do not connect today.
+  The same engine will fix joined scripts such as Pecita, whose letters do not connect today,
+  and allow joined Russian handwriting.
 - **More fonts.** Seven more are checked and waiting. A font enters only with a licence that
   allows redistribution, stated by its author.
 - **Assembly time you can trust.** Strips that do not bend sideways are cut at every bend, ten
@@ -43,6 +44,7 @@ Last updated: November 2026.
 
 - Cutting the sign into parts that fit your printer's plate, set in Technical settings.
 - A menu of LED strips that fills in the measurements, with a scale drawing of each strip.
+- A Cyrillic font (Comfortaa), which also takes Latin: "Ciao Привет" is one sign.
 - Chinese and Japanese fonts; five more Latin fonts.
 - Saving, sharing and reopening a design; editing the paths by hand.
 

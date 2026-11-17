@@ -11,7 +11,7 @@ import { planSplit, SPLIT_CLEARANCE, type SplitPiece } from '../geometry/split';
 import { rasterize, type GlyphInfo, type RasterizeInput, type TextRaster } from '../geometry/rasterize';
 import { layoutStroke } from '../geometry/strokeLayout';
 import { ledToDiffuserMm, lightPointsFromChains, type LightPoint } from '../geometry/lights';
-import { getFont } from '../fonts/registry';
+import { getFont, NO_LETTERS } from '../fonts/registry';
 import { applyCoverage, coverSign } from '../geometry/coverage';
 import { buildStrip, buildStripFromPieces, type StripModel } from '../geometry/strip';
 import { dotSegment, flattenPaths, type EditSegment } from '../editor/paths';
@@ -185,6 +185,10 @@ export async function generateSign(order: AnyOrder, read?: FontBytesReader): Pro
       if (!entry) throw new Error(`Font sconosciuto: "${current.source.fontId}"`);
       const laid = entry.kind === 'stroke' ? await layoutStroke(entry, input, read) : null;
       raster = laid ? laid.raster : await rasterize(input, read);
+      // Nessuna lettera del testo è nel font (cirillico in Sacramento): un grafo vuoto farebbe
+      // fallire i passi successivi con un errore che non dice niente. La pagina cliente lo riconosce.
+      const lost = new Set(raster.missing);
+      if (lost.size > 0 && [...input.text].every((ch) => /\s/.test(ch) || lost.has(ch))) throw new Error(NO_LETTERS);
       graph = laid ? laid.graph : buildGraph(raster);
     } else if (current.source.format === 'svg') {
       const laid = layoutSvg(current.source, current.heightMm);

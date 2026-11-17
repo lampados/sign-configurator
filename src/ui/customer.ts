@@ -9,7 +9,7 @@ import { meshToStl } from '../export/stl';
 import type { EditSegment } from '../editor/paths';
 import { scalePaths } from '../editor/paths';
 import type { PathEditor } from '../editor/editor';
-import { FONTS } from '../fonts/registry';
+import { FONTS, NO_LETTERS } from '../fonts/registry';
 import {
   DEFAULT_CUSTOMER,
   type LightEffect,
@@ -617,7 +617,8 @@ function syncFontSamples(): void {
   const sample = textInput.value.trim() || 'Ciao';
   for (const card of document.querySelectorAll<HTMLButtonElement>('.font-card')) {
     // I font CJK non si scaricano finché non si scelgono: la loro miniatura resta il nome della
-    // scrittura, non il testo digitato, che uscirebbe nel font di sistema.
+    // scrittura, non il testo digitato, che uscirebbe nel font di sistema. Anche il cirillico tiene
+    // il suo campione: è la miniatura a dire che quel font ha quelle lettere.
     const el = card.querySelector<HTMLElement>('.font-sample');
     if (el) el.textContent = card.dataset.sample ?? sample;
     card.setAttribute('aria-pressed', card.dataset.font === fontInput.value ? 'true' : 'false');
@@ -1237,16 +1238,18 @@ async function showSign(): Promise<void> {
     const leds = result.lightPoints.length > 0 ? S.status.leds(result.lightPoints.length) : S.status.noLeds;
     // Al cliente solo gli avvisi che lo riguardano, tradotti; i bloccanti stanno in Richiedi.
     const shown = result.warnings.filter((warning) => {
-      if (/bassa risoluzione|tratto non uniforme|^Puntino troppo piccolo|^Puntino non|^Trattino fuori|^Canale /.test(warning)) return true;
+      if (/bassa risoluzione|tratto non uniforme|^Puntino troppo piccolo|^Puntino non|^Trattino fuori|^Canale |^Carattere /.test(warning)) return true;
       return image && warning.startsWith('Sagome che si fondono');
     });
     const extra = customerMessages([...notes, ...shown]).join(' ');
     status.textContent = extra ? `${leds} ${extra}` : leds;
   } catch (err) {
     if (id !== request) return;
-    console.warn(err);
+    // Il font non ha nessuna di queste lettere: non è un guasto, si dice di cambiarlo.
+    const noLetters = err instanceof Error && err.message === NO_LETTERS;
+    if (!noLetters) console.warn(err);
     showSize(null);
-    status.textContent = S.status.failed;
+    status.textContent = noLetters ? S.status.noLetters : S.status.failed;
   }
 }
 

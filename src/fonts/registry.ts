@@ -21,7 +21,7 @@ export type StripMode = 'centerline' | 'walls';
 export type FontKind = 'outline' | 'stroke';
 
 /** Scrittura del font (SPEC §4ter): decide il glifo che dà l'altezza chiesta dal cliente. */
-export type FontScript = 'latin' | 'han' | 'japanese';
+export type FontScript = 'latin' | 'han' | 'japanese' | 'cyrillic';
 
 export interface FontEntry {
   id: string;
@@ -177,6 +177,24 @@ export const FONTS: readonly FontEntry[] = [
     notes: 'SIL OFL, Cyreal. Stretto e alto, tratto costante entro l\'8 %. Le lettere sono vicine: a misure piccole i canali si toccano.',
   },
   {
+    id: 'comfortaa',
+    name: 'Comfortaa',
+    kind: 'outline',
+    file: 'fonts/Comfortaa/Comfortaa-Light.ttf',
+    defaultTracking: 0,
+    capHeightMeasured: 781,
+    xHeightMeasured: 547,
+    hollowTubes: false,
+    stripMode: 'centerline',
+    script: 'cyrillic',
+    sample: 'Привет',
+    notes:
+      'SIL OFL, Johan Aakerlund. Cirillico (russo, ucraino e gli altri alfabeti slavi) e latino con lo ' +
+      'stesso disegno: geometrico, terminali tondi, peso Light, tratto costante entro il 12 %. Le ' +
+      'maiuscole cirilliche sono alte quanto la "H", quindi l\'altezza si misura lì. File statico ' +
+      'originale: il nome è riservato, niente sottoinsieme né istanza ricavata dal variabile.',
+  },
+  {
     id: 'noto-sans-sc',
     name: 'Noto Sans SC',
     kind: 'outline',
@@ -214,6 +232,12 @@ export const FONTS: readonly FontEntry[] = [
       'la forma di un tubo. Sottoinsieme Shift-JIS, vedi public/fonts/README.md.',
   },
 ];
+
+/**
+ * Errore del generatore quando nessuna lettera del testo è nel font scelto. La pagina cliente lo
+ * riconosce da questo messaggio e dice di cambiare font.
+ */
+export const NO_LETTERS = 'Nessuna lettera del testo è presente nel font.';
 
 export function getFont(id: string): FontEntry | undefined {
   return FONTS.find((f) => f.id === id);

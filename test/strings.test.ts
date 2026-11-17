@@ -16,6 +16,7 @@ describe('testi della pagina cliente', () => {
     expect(customerMessage('Spezzone 1: 1 fori di ancoraggio su 2 richiesti, in (36.0, 6.3).')).toBeNull();
     expect(customerMessage('Canale largo 6 mm: la striscia da 10 mm non ci entra.')).toMatch(/narrower than the LED strip/);
     expect(customerMessage('Canale profondo 3 mm: la striscia è spessa 6 mm.')).toMatch(/shallower than the LED strip/);
+    expect(customerMessage('Carattere "П" (U+041F) non presente in Sacramento: ignorato.')).toMatch(/lacks some of these letters.*under Font\.$/);
   });
 
   it('niente doppioni e niente italiano: quello che non riguarda il cliente sparisce', () => {

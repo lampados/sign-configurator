@@ -23,6 +23,20 @@ All upstream files, unchanged.
 | `PrimerPrint` | Primer Print | Ray Larabie | CC0 |
 | `WireOne` | Wire One | Cyreal | OFL |
 
+## Cyrillic
+
+One upstream file, unchanged. Comfortaa carries Latin and Cyrillic in the same design, so a sign
+can mix them.
+
+| Folder | Font | Author | Licence |
+|---|---|---|---|
+| `Comfortaa` | Comfortaa Light | Johan Aakerlund | OFL, reserved name: no subset |
+
+It is the static `Comfortaa-Light.ttf` (version 3.103) from
+[alexeiva/comfortaa](https://github.com/alexeiva/comfortaa), `fonts/TTF`. The Google Fonts release
+is a variable file whose default master is Regular: because the name is reserved we cannot ship an
+instance cut from it, and `opentype.js` would read the wrong weight (see below).
+
 ## CJK: subsets
 
 The Chinese and Japanese fonts are **subsets** of the upstream releases, cut down to the everyday
