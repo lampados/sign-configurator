@@ -68,7 +68,8 @@ export interface ControllerSpec {
 /**
  * Controller WLED disponibili. Il primo è quello standard, montato dietro l'insegna.
  * GLEDOPTO Ultra Mini: dalle schede dei rivenditori, 5–24 V, 10 A, 2 uscite, 800 IC (il dato
- * «10 A per canale» non torna con i 240 W dichiarati: per prudenza 10 A in totale).
+ * «10 A per canale» non torna con i 240 W dichiarati: per prudenza 10 A in totale); misure
+ * 40 × 40 × 20 mm.
  * GL-C-616WL: dalle schede dei rivenditori, 15 A in totale, 10 A per uscita, 2 uscite, Wi-Fi ed
  * Ethernet; misure e limite di LED non pubblicati.
  * QuinLED: dalle pagine quinled.info. Seeed: dal wiki e dalle schede dei rivenditori, 3 A a 5 V e
@@ -88,7 +89,7 @@ export const CONTROLLERS: readonly ControllerSpec[] = Object.freeze([
     maxA: 10,
     maxIcs: 800,
     outputs: 2,
-    sizeMm: null,
+    sizeMm: [40, 40, 20],
     priceEur: 35,
     url: 'https://www.gledopto.com/',
     note: 'Small enough to hide behind the sign.',

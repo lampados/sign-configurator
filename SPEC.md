@@ -40,7 +40,7 @@ bend test.
 Montaggio: striscia **piatta sul fondo del canale, LED verso chi guarda**, piegata di lato sfruttando le cerniere.
 
 Controller (`CONTROLLER` in `src/config.ts`): **GLEDOPTO ESP32 Ultra Mini, GL-C-309WL**, firmware WLED,
-dietro l'insegna. Dalle schede dei rivenditori: ingresso 5–24 V DC, 10 A, 2 uscite dati, fino a 800 IC.
+dietro l'insegna, 40 × 40 × 20 mm. Dalle schede dei rivenditori: ingresso 5–24 V DC, 10 A, 2 uscite dati, fino a 800 IC.
 Un rivenditore dice «10 A per canale» e 240 W, che non tornano fra loro: si usa 10 A in totale finché
 non si verifica sul manuale. Gli IC si contano come i LED (una striscia a 12 o 24 V con un IC ogni
 3 LED ne usa meno).
