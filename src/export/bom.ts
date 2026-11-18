@@ -404,7 +404,7 @@ function boxOf(
   const contents = items.map((i) => i.label);
   if (!pick.box) {
     const warnings = pick.auto && items.length > 0
-      ? [`Nessuna scatola del catalogo contiene ${contents.join(' + ')}.`]
+      ? [`No box in the catalogue holds ${contents.join(' + ')}.`]
       : [];
     return { box: null, boxWarnings: warnings, boxesThatFit: fitting };
   }
@@ -417,7 +417,7 @@ function boxOf(
     auto: pick.auto,
     contents,
   };
-  const warnings = pick.fits ? [] : [`Scatola ${pick.box.model} troppo piccola per ${contents.join(' + ')}.`];
+  const warnings = pick.fits ? [] : [`Box ${pick.box.model} too small for ${contents.join(' + ')}.`];
   return { box, boxWarnings: warnings, boxesThatFit: fitting };
 }
 
@@ -487,18 +487,18 @@ export function bomAssembly(
   const spec = controllerOf(controllerId);
   const controller = `${spec.name} (${spec.model})`;
   if (volts < spec.minV || volts > spec.maxV) {
-    controllerWarnings.push(`Striscia a ${volts} V: il controller ${controller} accetta ${spec.minV}–${spec.maxV} V. Serve un altro controller.`);
+    controllerWarnings.push(`${volts} V strip: the ${controller} controller takes ${spec.minV}–${spec.maxV} V. Another controller is needed.`);
   }
   const maxA = controllerAmps(spec, volts);
   if (supplyA > maxA) {
     controllerWarnings.push(
-      `Alimentatore da ${supplyA} A a ${volts} V: oltre i ${maxA} A del controller ${controller}. ` +
-        'Serve iniettare corrente lungo la striscia o un secondo controller.',
+      `${supplyA} A power supply at ${volts} V: over the ${maxA} A of the ${controller} controller. ` +
+        'Power must be injected along the strip, or a second controller added.',
     );
   }
   if (totalLeds > spec.maxIcs) {
     controllerWarnings.push(
-      `${totalLeds} LED: oltre il limite di ${spec.maxIcs} IC del controller ${controller}. Serve un secondo controller.`,
+      `${totalLeds} LEDs: over the limit of ${spec.maxIcs} ICs of the ${controller} controller. A second controller is needed.`,
     );
   }
   const supply = supplyOf(volts, supplyA);

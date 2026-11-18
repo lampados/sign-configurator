@@ -674,17 +674,17 @@ function compute(source: SegmentSource, params: Params, heightMm: number): Compu
       radiusMm: loop.radiusMm,
       x: loop.x,
       y: loop.y,
-      message: `Puntino più piccolo della pillola del LED: sporge di ${item.overhangMm.toFixed(1)} mm dal disegno, in (${loop.x.toFixed(1)}, ${loop.y.toFixed(1)}).`,
+      message: `Dot smaller than the LED pill: it sticks out ${item.overhangMm.toFixed(1)} mm from the drawing, at (${loop.x.toFixed(1)}, ${loop.y.toFixed(1)}).`,
     });
   }
   for (const item of dots.fallback) {
     const loop = item.loop;
-    const where = `in (${loop.x.toFixed(1)}, ${loop.y.toFixed(1)})`;
-    const height = item.heightMm === null ? '' : ` Altezza minima ${item.heightMm.toFixed(0)} mm.`;
+    const where = `at (${loop.x.toFixed(1)}, ${loop.y.toFixed(1)})`;
+    const height = item.heightMm === null ? '' : ` Minimum height ${item.heightMm.toFixed(0)} mm.`;
     const message =
       params.I_DOT_MODE === 'dot'
-        ? `Puntino troppo piccolo per la striscia, rilievo senza striscia, ${where}.${height}`
-        : `Trattino fuori dal puntino, rilievo senza striscia, ${where}.`;
+        ? `Dot too small for the strip, raised shape with no strip, ${where}.${height}`
+        : `Dash outside the dot, raised shape with no strip, ${where}.`;
     issues.push({
       level: 'warning',
       bend: null,
@@ -807,7 +807,7 @@ function finishModel(model: Computed, source: SegmentSource, params: Params, hei
       radiusMm: null,
       x: clash.x,
       y: clash.y,
-      message: `Sagome che si fondono: distanza ${clash.distance.toFixed(1)} mm, minimo ${clash.limit.toFixed(1)} mm, in (${clash.x.toFixed(1)}, ${clash.y.toFixed(1)}). Altezza minima ${clearanceH.toFixed(0)} mm. Ponticelli: ${clash.overlaps}.`,
+      message: `Outlines merging: distance ${clash.distance.toFixed(1)} mm, minimum ${clash.limit.toFixed(1)} mm, at (${clash.x.toFixed(1)}, ${clash.y.toFixed(1)}). Minimum height ${clearanceH.toFixed(0)} mm. Jumpers: ${clash.overlaps}.`,
     });
     // Dove due strisce non stanno affiancate, una si taglia e si scavalca: è lavoro, non un blocco.
     model.bom.assembly.jumpers = clash.overlaps;

@@ -143,7 +143,7 @@ describe('pairTubes (synthetic tubes, axes 6 mm apart)', () => {
     expect(p.pairs).toHaveLength(0);
     expect(p.dubious).toHaveLength(1);
     expect(p.dubious[0]!.reason).toBe('short');
-    expect(p.warnings[0]).toContain('parallele solo per');
+    expect(p.warnings[0]).toContain('parallel for only');
   });
 
   it('distance out of tolerance: doubtful pair, with the position', () => {
@@ -154,7 +154,7 @@ describe('pairTubes (synthetic tubes, axes 6 mm apart)', () => {
       expect.objectContaining({ reason: 'distance', a: 0, b: 1 }),
     ]);
     expect(p.dubious[0]!.distanceMm).toBeCloseTo(11, 0);
-    expect(p.warnings[0]).toContain('fuori tolleranza');
+    expect(p.warnings[0]).toContain('out of tolerance');
   });
 
   it('single line: stays single, without warnings', () => {

@@ -18,7 +18,7 @@ test('debug: an uploaded SVG produces the STL', async ({ page }) => {
 
   const [download] = await Promise.all([page.waitForEvent('download'), page.locator('#download-housing').click()]);
   const path = await download.path();
-  expect(path, 'STL senza file').toBeTruthy();
+  expect(path, 'STL without a file').toBeTruthy();
   const bytes = readFileSync(path!);
   expect(bytes.length).toBeGreaterThan(84);
   const triangles = bytes.readUInt32LE(80);

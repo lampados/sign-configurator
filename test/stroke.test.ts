@@ -115,7 +115,7 @@ describe('Ciao in the single-stroke fonts', () => {
         height = next!;
         laid = await layoutStroke(entry, { text: 'Ciao', heightMm: height }, readPublic);
       }
-      throw new Error(`${fontId}: copertura sotto ${DEFAULT_PARAMS.COVERAGE_MIN} anche all'altezza consigliata`);
+      throw new Error(`${fontId}: coverage under ${DEFAULT_PARAMS.COVERAGE_MIN} even at the recommended height`);
     }, 30000);
   }
 });

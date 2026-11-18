@@ -190,7 +190,7 @@ export function resolveCrossings(hits: readonly PathIntersection[], choices: rea
     }
     if (best < 0) {
       warnings.push(
-        `Scelta di incrocio senza incrocio corrispondente, in (${choice.at[0].toFixed(1)}, ${choice.at[1].toFixed(1)}).`,
+        `Crossing choice without a matching crossing, at (${choice.at[0].toFixed(1)}, ${choice.at[1].toFixed(1)}).`,
       );
       continue;
     }

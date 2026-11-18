@@ -47,12 +47,12 @@ const SKIP = new Set([
 ]);
 
 const WARNING: Record<string, string> = {
-  text: 'Testo SVG ignorato (`text`).',
-  image: 'Immagine SVG ignorata (`image`).',
-  use: 'Riferimento esterno (`use`) ignorato.',
-  mask: 'Maschere SVG ignorate.',
-  filter: 'Filtri SVG ignorati.',
-  empty: 'Elemento senza tratto né riempimento ignorato.',
+  text: 'SVG text ignored (`text`).',
+  image: 'SVG image ignored (`image`).',
+  use: 'External reference (`use`) ignored.',
+  mask: 'SVG masks ignored.',
+  filter: 'SVG filters ignored.',
+  empty: 'Element without stroke or fill ignored.',
 };
 
 interface Rule {
@@ -90,10 +90,10 @@ const PAINT_ATTRS = ['fill', 'stroke', 'fill-rule', 'fill-opacity', 'stroke-opac
 
 /** SVG → sorgente dell'ordine. I tratti sono `stroke`, le aree `fill` con `fillRule`. */
 export function importSvg(svgText: string, options: SvgImportOptions): SvgImportResult {
-  if (!(options.heightMm > 0)) throw new Error("Altezza dell'immagine non valida.");
+  if (!(options.heightMm > 0)) throw new Error('Invalid image height.');
   const doc = new DOMParser().parseFromString(svgText.replace(/^\uFEFF/, ''), 'image/svg+xml');
   const root = doc.documentElement;
-  if (!root || local(root) !== 'svg') throw new Error('SVG non valido.');
+  if (!root || local(root) !== 'svg') throw new Error('Invalid SVG.');
 
   const rules = collectRules(doc);
   const shapes: RawShape[] = [];
@@ -171,7 +171,7 @@ export function importSvg(svgText: string, options: SvgImportOptions): SvgImport
   walk(root, IDENTITY, INITIAL_PAINT, new Set());
   if (shapes.length === 0) {
     const extra = warnings.length ? ` ${warnings.join(' ')}` : '';
-    throw new Error(`L'SVG non contiene tratti né aree.${extra}`);
+    throw new Error(`The SVG contains no strokes or areas.${extra}`);
   }
   return {
     source: {

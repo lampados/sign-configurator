@@ -170,7 +170,7 @@ export function planSplit(input: SplitInput): SplitPlan {
   const usableW = input.bedW - 2 * BED_MARGIN;
   const usableH = input.bedH - 2 * BED_MARGIN;
   if (!(usableW > MIN_PIECE) || !(usableH > MIN_PIECE)) {
-    warnings.push(`Piatto di stampa ${input.bedW} × ${input.bedH} mm troppo piccolo: nessuna suddivisione.`);
+    warnings.push(`Print bed ${input.bedW} × ${input.bedH} mm too small: no split.`);
     return plan;
   }
   const width = bounds.maxX - bounds.minX;
@@ -184,7 +184,7 @@ export function planSplit(input: SplitInput): SplitPlan {
   if (height > usableH + 1e-9 && height <= usableW + 1e-9) maxPiece = usableH;
   else if (height > Math.max(usableW, usableH) + 1e-9) {
     warnings.push(
-      `Insegna alta ${height.toFixed(0)} mm: oltre il piatto di stampa (${Math.max(usableW, usableH).toFixed(0)} mm utili). I tagli orizzontali non sono previsti.`,
+      `Sign ${height.toFixed(0)} mm tall: beyond the print bed (${Math.max(usableW, usableH).toFixed(0)} mm usable). Horizontal cuts are not supported.`,
     );
     maxPiece = Math.min(usableW, usableH);
   }
@@ -247,11 +247,11 @@ export function planSplit(input: SplitInput): SplitPlan {
     plan.onChannel = chosen.filter((x) => onChannel[Math.round((x - bounds.minX) / STEP) - 1]).length;
     if (plan.onChannel > 0) {
       warnings.push(
-        `Suddivisione per il piatto: ${plan.onChannel} giunt${plan.onChannel === 1 ? 'o attraversa un canale acceso' : 'i attraversano un canale acceso'}: lì la striscia va interrotta e ricollegata.`,
+        `Print-bed split: ${plan.onChannel} joint${plan.onChannel === 1 ? ' crosses a lit channel' : 's cross a lit channel'}: there the strip must be cut and reconnected.`,
       );
     }
     return plan;
   }
-  warnings.push('Suddivisione per il piatto non riuscita: nessuna posizione di taglio valida.');
+  warnings.push('Print-bed split failed: no valid cut position.');
   return plan;
 }

@@ -38,6 +38,6 @@ describe('power supply plug', () => {
     }
     const read = decodeShare(encodeShare(order('XX')).hash ?? '');
     expect(read.order?.customer.plug).toBe('EU');
-    expect(read.warnings.join(' ')).toContain('Spina sconosciuta');
+    expect(read.warnings.join(' ')).toContain('Unknown plug');
   });
 });

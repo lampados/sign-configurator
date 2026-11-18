@@ -26,7 +26,7 @@ describe('solid colour on the diffuser', () => {
     ['rosso', [1, 0, 0] as const, 0],
     ['verde', [0, 1, 0] as const, 120],
     ['blu', [0, 0, 1] as const, 240],
-  ])('%s: il centro del tratto ha la tinta e non è bianco', (_name, rgb, hue) => {
+  ])('%s: the centre of the stroke has the hue and is not white', (_name, rgb, hue) => {
     const sample = diffuserRgb(
       0,
       0,

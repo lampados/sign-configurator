@@ -263,7 +263,7 @@ export const FONTS: readonly FontEntry[] = [
  * Errore del generatore quando nessuna lettera del testo è nel font scelto. La pagina cliente lo
  * riconosce da questo messaggio e dice di cambiare font.
  */
-export const NO_LETTERS = 'Nessuna lettera del testo è presente nel font.';
+export const NO_LETTERS = 'None of the letters in the text is in the font.';
 
 export function getFont(id: string): FontEntry | undefined {
   return FONTS.find((f) => f.id === id);

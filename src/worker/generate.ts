@@ -184,7 +184,7 @@ export async function generateSign(order: AnyOrder, read?: FontBytesReader): Pro
         heightMm: current.heightMm,
       };
       const entry = getFont(current.source.fontId);
-      if (!entry) throw new Error(`Font sconosciuto: "${current.source.fontId}"`);
+      if (!entry) throw new Error(`Unknown font: "${current.source.fontId}"`);
       const laid = entry.kind === 'stroke' ? await layoutStroke(entry, input, read) : null;
       raster = laid ? laid.raster : await rasterize(input, read);
       // Nessuna lettera del testo è nel font (cirillico in Sacramento): un grafo vuoto farebbe
@@ -255,7 +255,7 @@ export async function generateSign(order: AnyOrder, read?: FontBytesReader): Pro
       if (built) {
         try {
           plateMesh = copyMesh(built.solid.getMesh());
-          if (built.solid.status() !== 'NoError') warnings.push(`Fondale non manifold (${built.solid.status()}).`);
+          if (built.solid.status() !== 'NoError') warnings.push(`Backdrop not manifold (${built.solid.status()}).`);
         } finally {
           built.solid.delete();
         }
@@ -291,11 +291,11 @@ export async function generateSign(order: AnyOrder, read?: FontBytesReader): Pro
         diffuser: cutSolid(housing.diffuser, plan.pieces),
       };
       split.housing.forEach((mesh, i) => {
-        if (mesh.triVerts.length === 0) warnings.push(`Suddivisione per il piatto: il pezzo ${i + 1} è vuoto.`);
+        if (mesh.triVerts.length === 0) warnings.push(`Print-bed split: piece ${i + 1} is empty.`);
       });
     }
-    if (housing.solid.status() !== 'NoError') warnings.push(`Housing non manifold (${housing.solid.status()}).`);
-    if (housing.diffuser.status() !== 'NoError') warnings.push(`Diffusore non manifold (${housing.diffuser.status()}).`);
+    if (housing.solid.status() !== 'NoError') warnings.push(`Housing not manifold (${housing.solid.status()}).`);
+    if (housing.diffuser.status() !== 'NoError') warnings.push(`Diffuser not manifold (${housing.diffuser.status()}).`);
     return {
       housingMesh,
       diffuserMesh,

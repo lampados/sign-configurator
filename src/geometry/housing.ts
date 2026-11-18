@@ -207,7 +207,7 @@ function innerWidening(
   for (const hinge of path.hinges) {
     if (hinge.sagittaMm > budget + 0.05) {
       warnings.push(
-        `Parete interna sotto ${wallMin.toFixed(1)} mm: freccia ${hinge.sagittaMm.toFixed(2)} mm, in (${hinge.x.toFixed(1)}, ${hinge.y.toFixed(1)}).`,
+        `Inner wall under ${wallMin.toFixed(1)} mm: sagitta ${hinge.sagittaMm.toFixed(2)} mm, at (${hinge.x.toFixed(1)}, ${hinge.y.toFixed(1)}).`,
       );
     }
     const extra = Math.min(hinge.sagittaMm, budget);
@@ -417,7 +417,7 @@ export function buildHousing(wasm: ManifoldToplevel, request: HousingRequest): H
   warnings.push(...chamfer.warnings);
   if (p.ANCHOR_HOLE_DEPTH >= p.FLOOR && !p.ANCHOR_BOSS) {
     warnings.push(
-      `ANCHOR_HOLE_DEPTH ${p.ANCHOR_HOLE_DEPTH.toFixed(1)} mm raggiunge il canale: il foro resta cieco nel fondo.`,
+      `ANCHOR_HOLE_DEPTH ${p.ANCHOR_HOLE_DEPTH.toFixed(1)} mm reaches the channel: the hole stays blind in the floor.`,
     );
   }
 

@@ -1025,7 +1025,7 @@ const sourceMemory = {
 function blocksSubmit(warnings: readonly string[]): boolean {
   return warnings.some(
     (warning) =>
-      warning.includes('curva troppo stretta') || warning.includes('sotto il passo di taglio'),
+      warning.includes('curve too tight') || warning.includes('under the cut pitch'),
   );
 }
 
@@ -1333,14 +1333,14 @@ async function showSign(): Promise<void> {
       result.lightPoints.length > 0
         ? quoteSign({ bom: result.bom, widthMm: outlineSize(result.outline)?.w ?? 0, stripId: priced.STRIP_ID, controllerId: priced.CONTROLLER_ID })
         : null;
-    closeNote = customerMessage(result.warnings.find((warning) => warning.startsWith('Sagome che si fondono')) ?? '') ?? '';
+    closeNote = customerMessage(result.warnings.find((warning) => warning.startsWith('Outlines merging')) ?? '') ?? '';
     status.dataset.cuts = String(lastAssembly.cuts);
     showSize(result.plate ? { w: result.plate.widthMm, h: result.plate.heightMm } : outlineSize(result.outline));
     showSupply(result.bom);
     status.dataset.generation = String(Number(status.dataset.generation ?? '0') + 1);
     const blocking = result.warnings.find(
       (warning) =>
-        warning.includes('curva troppo stretta') || warning.includes('sotto il passo di taglio'),
+        warning.includes('curve too tight') || warning.includes('under the cut pitch'),
     );
     blockReason = blocking ? (customerMessage(blocking) ?? '') : '';
     workerBlocked = blocksSubmit(result.warnings);
@@ -1349,8 +1349,8 @@ async function showSign(): Promise<void> {
     const leds = result.lightPoints.length > 0 ? S.status.leds(result.lightPoints.length) : S.status.noLeds;
     // Al cliente solo gli avvisi che lo riguardano, tradotti; i bloccanti stanno in Richiedi.
     const shown = result.warnings.filter((warning) => {
-      if (/bassa risoluzione|tratto non uniforme|^Puntino troppo piccolo|^Puntino non|^Trattino fuori|^Canale |^Carattere /.test(warning)) return true;
-      return image && warning.startsWith('Sagome che si fondono');
+      if (/^Low-resolution image|uneven stroke|^Dot too small|^Dot not lit|^Dash outside|^Channel |^Character /.test(warning)) return true;
+      return image && warning.startsWith('Outlines merging');
     });
     const extra = customerMessages([...notes, ...shown]).join(' ');
     status.textContent = extra ? `${leds} ${extra}` : leds;

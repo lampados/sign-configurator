@@ -39,7 +39,7 @@ describe('cuts on bends and assembly time', () => {
     expect(assemblyMin).toBe((bendCuts + result.bom.assembly.jumpers) * 10);
     expect(result.bom.assembly.jumpers).toBeGreaterThan(0);
     // Tagliare è permesso: la curva non è più un errore della striscia.
-    expect(result.warnings.join('\n')).not.toMatch(/non piega di lato/);
+    expect(result.warnings.join('\n')).not.toMatch(/does not bend sideways/);
   }, 120_000);
 
   it('the COB follows the curves: no cuts', async () => {

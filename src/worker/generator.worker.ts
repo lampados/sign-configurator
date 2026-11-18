@@ -42,7 +42,7 @@ const generator = {
   },
   async skeletonGraph(input: RasterizeInput, modes?: StripModes): Promise<SkeletonGraphResult> {
     const entry = getFont(input.fontId);
-    if (!entry) throw new Error(`Font sconosciuto: "${input.fontId}"`);
+    if (!entry) throw new Error(`Unknown font: "${input.fontId}"`);
     const laid = entry.kind === 'stroke' ? await layoutStroke(entry, input) : null;
     const raster = laid ? laid.raster : await rasterize(input);
     const t0 = performance.now();

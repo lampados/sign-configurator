@@ -125,7 +125,7 @@ describe('backdrop', () => {
     const plate = buildPlate(wasm, twoBlocks(), choice({ marginMm: 10, cornerRMm: 0 }))!;
     try {
       expect(plate.holes.some((h) => h.kind === 'mount')).toBe(false);
-      expect(plate.warnings.join(' ')).toContain('montaggio');
+      expect(plate.warnings.join(' ')).toContain('mounting holes');
     } finally {
       plate.solid.delete();
     }

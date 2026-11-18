@@ -16,12 +16,12 @@ for (const file of PAGES) {
     }
     if (file === 'debug.html') {
       await expect(page.locator('#raster')).toHaveAttribute('data-ok', 'true');
-      expect(track.wasmOk(), 'manifold.wasm non caricato').toBe(true);
+      expect(track.wasmOk(), 'manifold.wasm not loaded').toBe(true);
     }
     if (file === 'bend-test.html') {
       await expect(page.locator('#download-arcs')).toBeEnabled();
       await expect(page.locator('#download-corners')).toBeEnabled();
-      expect(track.wasmOk(), 'manifold.wasm non caricato').toBe(true);
+      expect(track.wasmOk(), 'manifold.wasm not loaded').toBe(true);
     }
 
     expectClean(track.problems);

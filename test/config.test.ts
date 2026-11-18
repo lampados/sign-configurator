@@ -90,10 +90,10 @@ describe('strip and channel', () => {
     expect(stripFitWarnings(DEFAULT_PARAMS)).toEqual([]);
     const narrow = stripFitWarnings({ ...DEFAULT_PARAMS, CHANNEL_W: 6 });
     expect(narrow).toHaveLength(1);
-    expect(narrow[0]).toMatch(/Canale largo 6 mm: la striscia da 10 mm non ci entra/);
+    expect(narrow[0]).toMatch(/Channel 6 mm wide: the 10 mm strip does not fit/);
     const shallow = stripFitWarnings({ ...DEFAULT_PARAMS, CHANNEL_DEPTH: 1 });
     expect(shallow).toHaveLength(1);
-    expect(shallow[0]).toMatch(/Canale profondo 1 mm: la striscia è spessa 2 mm/);
+    expect(shallow[0]).toMatch(/Channel 1 mm deep: the strip is 2 mm thick/);
     // Il canale esattamente largo quanto la striscia passa: la tolleranza è un consiglio, non un obbligo.
     expect(stripFitWarnings({ ...DEFAULT_PARAMS, CHANNEL_W: DEFAULT_PARAMS.STRIP_W })).toEqual([]);
   });

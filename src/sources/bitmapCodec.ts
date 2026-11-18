@@ -100,7 +100,7 @@ export function bitmapFromLuminance(
   height: number,
   options: LuminanceOptions,
 ): { source: RasterImageSource; binary: CroppedBitmap } | null {
-  if (luminance.length < width * height) throw new Error('Luminanza più corta delle dimensioni.');
+  if (luminance.length < width * height) throw new Error('Luminance shorter than the dimensions.');
   const cropped = cropInk(applyThreshold(luminance, options.threshold, options.invert), width, height);
   if (!cropped) return null;
   return {
@@ -123,7 +123,7 @@ export function bitmapFromLuminance(
  */
 export function encodeRle(data: Uint8Array, width: number, height: number): string {
   const count = width * height;
-  if (!(width > 0) || !(height > 0) || data.length < count) throw new Error('Bitmap non valida.');
+  if (!(width > 0) || !(height > 0) || data.length < count) throw new Error('Invalid bitmap.');
   const bytes: number[] = [];
   let index = 0;
   let value = 0;
@@ -142,18 +142,18 @@ export function encodeRle(data: Uint8Array, width: number, height: number): stri
 /** Inverso di `encodeRle`: stessi byte, 0 o 1. */
 export function decodeRle(rle: string, width: number, height: number): Uint8Array {
   const count = width * height;
-  if (!(width > 0) || !(height > 0)) throw new Error('Bitmap non valida.');
+  if (!(width > 0) || !(height > 0)) throw new Error('Invalid bitmap.');
   const bytes = fromBase64(rle);
   const out = new Uint8Array(count);
   let offset = 0;
   let cursor = 0;
   let value = 0;
   while (offset < count) {
-    if (cursor >= bytes.length) throw new Error('RLE troncato.');
+    if (cursor >= bytes.length) throw new Error('Truncated RLE.');
     const read = readVarint(bytes, cursor);
     cursor = read.next;
     const end = offset + read.value;
-    if (end > count) throw new Error('RLE più lungo della bitmap.');
+    if (end > count) throw new Error('RLE longer than the bitmap.');
     if (value === 1) out.fill(1, offset, end);
     offset = end;
     value = 1 - value;
@@ -168,12 +168,12 @@ export function lowResolutionWarning(heightPx: number, heightMm: number): string
   const maxMm = heightPx / MIN_BITMAP_PX_PER_MM;
   const rounded = Math.round(maxMm * 10) / 10;
   const text = Math.abs(rounded - Math.round(rounded)) < 1e-9 ? String(Math.round(rounded)) : rounded.toFixed(1);
-  return `Immagine a bassa risoluzione per questa altezza. Altezza massima ${text} mm.`;
+  return `Low-resolution image for this height. Maximum height ${text} mm.`;
 }
 
 /** Dall'ordine: margine di [A], `pxPerMm` = altezza px / `heightMm`, poi centerline o contorno. */
 export function layoutRaster(source: RasterImageSource, heightMm: number): SvgLayout {
-  if (!(heightMm > 0)) throw new Error('Altezza non valida.');
+  if (!(heightMm > 0)) throw new Error('Invalid height.');
   const { width, height, rle } = source.bitmap;
   const ink = decodeRle(rle, width, height);
   let any = false;
@@ -183,7 +183,7 @@ export function layoutRaster(source: RasterImageSource, heightMm: number): SvgLa
       break;
     }
   }
-  if (!any) throw new Error('La bitmap non ha inchiostro.');
+  if (!any) throw new Error('The bitmap has no ink.');
 
   const margin = RASTER_MARGIN_PX;
   const paddedWidth = width + margin * 2;
@@ -208,15 +208,15 @@ export function layoutRaster(source: RasterImageSource, heightMm: number): SvgLa
   let strokes: Point[][] | null = null;
   if (outline) {
     const lines = outlinePolylines(rasterBase);
-    if (lines.length === 0) throw new Error('Il disegno non produce percorsi.');
+    if (lines.length === 0) throw new Error('The drawing produces no paths.');
     graph = graphFromStrokes(lines.map((points) => ({ points, closed: true })));
     strokes = lines;
   }
   if (!graph || graph.edges.length === 0) {
     throw new Error(
       outline
-        ? 'Il disegno non produce percorsi.'
-        : 'La linea centrale non resta: il tratto non è uniforme e la traccia Contorno non è ancora disponibile.',
+        ? 'The drawing produces no paths.'
+        : 'No centreline is left: the stroke is not uniform and the Outline trace is not available yet.',
     );
   }
   if (!outline && strokeWidthCv(rasterBase.data, graph.skeleton, rasterBase.width, rasterBase.height) > 0.35) {
@@ -256,13 +256,13 @@ function readVarint(bytes: Uint8Array, offset: number): { value: number; next: n
   let factor = 1;
   let cursor = offset;
   for (;;) {
-    if (cursor >= bytes.length) throw new Error('Varint troncato.');
+    if (cursor >= bytes.length) throw new Error('Truncated varint.');
     const byte = bytes[cursor]!;
     cursor++;
     value += (byte & 0x7f) * factor;
     if ((byte & 0x80) === 0) return { value, next: cursor };
     factor *= 128;
-    if (factor > 2 ** 28) throw new Error('Varint troppo lungo.');
+    if (factor > 2 ** 28) throw new Error('Varint too long.');
   }
 }
 

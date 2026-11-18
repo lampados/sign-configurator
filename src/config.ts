@@ -586,10 +586,10 @@ export function minLetterH(p: Pick<StripProfile, 'HINGE_PITCH' | 'HINGE_MAX_DEG'
 export function stripFitWarnings(p: Pick<Params, 'STRIP_W' | 'STRIP_T' | 'CHANNEL_W' | 'CHANNEL_DEPTH'>): string[] {
   const out: string[] = [];
   if (p.CHANNEL_W < p.STRIP_W) {
-    out.push(`Canale largo ${p.CHANNEL_W} mm: la striscia da ${p.STRIP_W} mm non ci entra.`);
+    out.push(`Channel ${p.CHANNEL_W} mm wide: the ${p.STRIP_W} mm strip does not fit.`);
   }
   if (p.CHANNEL_DEPTH < p.STRIP_T) {
-    out.push(`Canale profondo ${p.CHANNEL_DEPTH} mm: la striscia è spessa ${p.STRIP_T} mm.`);
+    out.push(`Channel ${p.CHANNEL_DEPTH} mm deep: the strip is ${p.STRIP_T} mm thick.`);
   }
   return out;
 }

@@ -10,7 +10,7 @@ export type FontBytesReader = (file: string) => Promise<ArrayBuffer>;
 export const fetchFontBytes: FontBytesReader = async (file) => {
   const url = `${import.meta.env.BASE_URL}${file}`;
   const res = await fetch(url);
-  if (!res.ok) throw new Error(`Font non trovato: ${url} (HTTP ${res.status})`);
+  if (!res.ok) throw new Error(`Font not found: ${url} (HTTP ${res.status})`);
   return res.arrayBuffer();
 };
 
@@ -21,7 +21,7 @@ export function loadFont(id: string, read: FontBytesReader = fetchFontBytes): Pr
   let font = cache.get(id);
   if (!font) {
     const entry = getFont(id);
-    if (!entry) return Promise.reject(new Error(`Font sconosciuto: "${id}"`));
+    if (!entry) return Promise.reject(new Error(`Unknown font: "${id}"`));
     font = read(entry.file).then((bytes) => parse(bytes));
     font.catch(() => cache.delete(id));
     cache.set(id, font);

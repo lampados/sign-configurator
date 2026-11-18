@@ -1,7 +1,7 @@
 // Testi della pagina cliente (SPEC §12.2): il meno possibile, in inglese breve. Icone, numeri e
 // unità (mm, cm, V, A, LED/m) fanno il resto. Admin, debug e bend test restano in italiano.
-// Gli avvisi del generatore sono in italiano (servono all'admin): `customerMessage` li traduce in
-// poche frasi per il cliente e scarta tutto il resto.
+// Gli avvisi del generatore sono in inglese ma tecnici (servono a chi produce): `customerMessage`
+// li riduce a poche frasi per il cliente e scarta tutto il resto.
 
 export const S = {
   pageTitle: 'Ciao, a WYSIWYG Sign Configurator',
@@ -247,21 +247,21 @@ export const S = {
 /** Avviso del generatore → frase per il cliente, oppure null se non lo riguarda. */
 export function customerMessage(warning: string): string | null {
   const rules: [RegExp, (m: RegExpMatchArray) => string][] = [
-    [/curva troppo stretta/, () => 'Some curves are too tight for the LED strip: make the sign bigger or choose a strip with more LEDs per metre.'],
-    [/sotto il passo di taglio/, () => 'A stroke is too short for the LED strip: make the sign bigger or choose a strip with more LEDs per metre.'],
-    [/^Sagome che si fondono/, () => 'Some strokes are very close and share a channel. Where two strips cannot sit side by side, one is cut and bridged with a jumper: see Assembly. A bigger sign or a thinner strip avoids it.'],
-    [/^Carattere .* non presente in /, () => 'This font lacks some of these letters, so they were left out: pick another one under Font.'],
-    [/bassa risoluzione/, () => 'Low-resolution image for this size: upload a larger one.'],
-    [/^Canale largo/, () => 'The channel is narrower than the LED strip: widen it under Tech.'],
-    [/^Canale profondo/, () => 'The channel is shallower than the LED strip: deepen it under Tech.'],
-    [/tratto non uniforme/, () => 'Uneven stroke: try the Outline trace.'],
-    [/^Puntino troppo piccolo|^Puntino non/, () => 'The dot is too small to light at this size.'],
-    [/^Trattino fuori/, () => 'The dash does not fit inside the dot.'],
-    [/^Scatola (\S+) troppo piccola/, (m) => `The ${m[1]} box is too small for the power supply and controller.`],
-    [/^Nessuna scatola del catalogo/, () => 'No listed box fits the power supply and controller.'],
-    [/il controller .* accetta (\d+)–(\d+) V/, (m) => `This controller takes ${m[1]}–${m[2]} V strips: pick another one under Tech.`],
-    [/oltre i (\d+) A del controller/, (m) => `Over the controller's ${m[1]} A: needs power injection or a second controller.`],
-    [/oltre (?:gli|il limite di) (\d+) IC del controller/, (m) => `Over the controller's ${m[1]} LEDs: needs a second controller.`],
+    [/curve too tight/, () => 'Some curves are too tight for the LED strip: make the sign bigger or choose a strip with more LEDs per metre.'],
+    [/under the cut pitch/, () => 'A stroke is too short for the LED strip: make the sign bigger or choose a strip with more LEDs per metre.'],
+    [/^Outlines merging/, () => 'Some strokes are very close and share a channel. Where two strips cannot sit side by side, one is cut and bridged with a jumper: see Assembly. A bigger sign or a thinner strip avoids it.'],
+    [/^Character .* missing from /, () => 'This font lacks some of these letters, so they were left out: pick another one under Font.'],
+    [/^Low-resolution image/, () => 'Low-resolution image for this size: upload a larger one.'],
+    [/^Channel \S+ mm wide/, () => 'The channel is narrower than the LED strip: widen it under Tech.'],
+    [/^Channel \S+ mm deep/, () => 'The channel is shallower than the LED strip: deepen it under Tech.'],
+    [/uneven stroke/, () => 'Uneven stroke: try the Outline trace.'],
+    [/^Dot too small|^Dot not lit/, () => 'The dot is too small to light at this size.'],
+    [/^Dash outside/, () => 'The dash does not fit inside the dot.'],
+    [/^Box (\S+) too small/, (m) => `The ${m[1]} box is too small for the power supply and controller.`],
+    [/^No box in the catalogue/, () => 'No listed box fits the power supply and controller.'],
+    [/controller takes (\d+)–(\d+) V/, (m) => `This controller takes ${m[1]}–${m[2]} V strips: pick another one under Tech.`],
+    [/over the (\d+) A of the/, (m) => `Over the controller's ${m[1]} A: needs power injection or a second controller.`],
+    [/over the limit of (\d+) ICs/, (m) => `Over the controller's ${m[1]} LEDs: needs a second controller.`],
   ];
   for (const [pattern, phrase] of rules) {
     const match = warning.match(pattern);

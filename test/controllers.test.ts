@@ -48,12 +48,12 @@ describe('controllers', () => {
     // 30 LED a 60 mA, 5 V: 1,8 A, 3 A con il margine. Ci sta.
     expect(bomAssembly([], [], 30, 60, 5, 'xiao-led-driver').controllerWarnings).toEqual([]);
     // 100 LED: 6 A, 8 A con il margine. Troppi per 3 A.
-    expect(bomAssembly([], [], 100, 60, 5, 'xiao-led-driver').controllerWarnings.join(' ')).toContain('oltre i 3 A');
+    expect(bomAssembly([], [], 100, 60, 5, 'xiao-led-driver').controllerWarnings.join(' ')).toContain('over the 3 A');
     // A 12 V il limite scende a 2 A: 100 LED sono 2,5 A, 4 A con il margine.
-    expect(bomAssembly([], [], 100, 60, 12, 'xiao-led-driver').controllerWarnings.join(' ')).toContain('oltre i 2 A');
+    expect(bomAssembly([], [], 100, 60, 12, 'xiao-led-driver').controllerWarnings.join(' ')).toContain('over the 2 A');
     // A 24 V non si può usare, qualunque sia il numero di LED.
     const at24 = bomAssembly([], [], 10, 60, 24, 'xiao-led-driver').controllerWarnings;
-    expect(at24.join(' ')).toContain('accetta 5–12 V');
+    expect(at24.join(' ')).toContain('takes 5–12 V');
     expect(bomAssembly([], [], 10, 60, 24).controllerWarnings).toEqual([]);
   });
 
@@ -77,7 +77,7 @@ describe('controllers', () => {
     expect(read.order?.params).toEqual(params);
     const bad = decodeShare(encodeShare({ ...order, params: { CONTROLLER_ID: 'xyz' } }).hash ?? '');
     expect(bad.order?.params.CONTROLLER_ID).toBeUndefined();
-    expect(bad.warnings.join(' ')).toContain('Controller');
+    expect(bad.warnings.join(' ')).toContain('controller');
   });
 });
 

@@ -137,7 +137,7 @@ describe('splitting for the print bed', () => {
 
   it('a sign taller than the bed warns', () => {
     const plan = planSplit({ outline: [rect(0, 0, 500, 400)], centerlines: [], keepOut: [], bedW: 300, bedH: 300 });
-    expect(plan.warnings.join(' ')).toMatch(/oltre il piatto/);
+    expect(plan.warnings.join(' ')).toMatch(/beyond the print bed/);
     expect(plan.cutsX.length).toBeGreaterThan(0);
   });
 

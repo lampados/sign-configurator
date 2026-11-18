@@ -78,7 +78,7 @@ describe('minimum height', () => {
       100,
     );
     const limit = BENDABLE.CHANNEL_W + 2 * BENDABLE.WALL + BENDABLE.MIN_GAP;
-    const issue = model.issues.find((item) => item.message.startsWith('Sagome che si fondono'));
+    const issue = model.issues.find((item) => item.message.startsWith('Outlines merging'));
     expect(issue).toBeTruthy();
     expect(issue!.message).toContain(limit.toFixed(1));
     expect(issue!.y).toBeCloseTo(4, 0);
@@ -88,7 +88,7 @@ describe('minimum height', () => {
 
   it('a right angle is not a merged outline, not even when split in two', () => {
     const one = buildStrip(sourceFromPaths([{ points: [[0, 0], [40, 0], [40, 40]] }]), BENDABLE, 100);
-    expect(one.issues.some((issue) => issue.message.startsWith('Sagome che si fondono'))).toBe(false);
+    expect(one.issues.some((issue) => issue.message.startsWith('Outlines merging'))).toBe(false);
     const two = buildStrip(
       {
         nodes: [
@@ -104,7 +104,7 @@ describe('minimum height', () => {
       BENDABLE,
       100,
     );
-    expect(two.issues.some((issue) => issue.message.startsWith('Sagome che si fondono'))).toBe(false);
+    expect(two.issues.some((issue) => issue.message.startsWith('Outlines merging'))).toBe(false);
   });
 
   it('a T junction is not a merged outline and does not constrain the height', () => {
@@ -126,7 +126,7 @@ describe('minimum height', () => {
       100,
     );
     expect(model.chains.length).toBe(2);
-    expect(model.issues.some((issue) => issue.message.startsWith('Sagome che si fondono'))).toBe(false);
+    expect(model.issues.some((issue) => issue.message.startsWith('Outlines merging'))).toBe(false);
     expect(model.suggestion.heightMm).toBeLessThan(100);
   });
 
@@ -151,7 +151,7 @@ describe('minimum height', () => {
       BENDABLE,
       100,
     );
-    const issue = model.issues.find((item) => item.message.startsWith('Sagome che si fondono'));
+    const issue = model.issues.find((item) => item.message.startsWith('Outlines merging'));
     expect(issue).toBeTruthy();
     expect(model.suggestion.heightMm).toBeGreaterThan(100);
     expect(model.suggestion.heightMm).toBeLessThan(2000);
@@ -163,6 +163,6 @@ describe('minimum height', () => {
       BENDABLE,
       100,
     );
-    expect(model.issues.some((issue) => issue.message.startsWith('Sagome che si fondono'))).toBe(true);
+    expect(model.issues.some((issue) => issue.message.startsWith('Outlines merging'))).toBe(true);
   });
 });

@@ -104,7 +104,7 @@ describe('bend classification', () => {
     expect(Math.hypot(b[0] - a[0], b[1] - a[1])).toBeCloseTo(BENDABLE.CUT_PITCH, 1);
     expect(Math.abs(a[0] - b[0])).toBeLessThan(0.5);
     expect((a[1] + b[1]) / 2).toBeCloseTo(48, 0);
-    expect(model.issues.some((issue) => issue.message.startsWith('Anello chiuso escluso'))).toBe(false);
+    expect(model.issues.some((issue) => issue.message.startsWith('Closed loop excluded'))).toBe(false);
     expect(model.unlit).toHaveLength(0);
   });
 
@@ -120,7 +120,7 @@ describe('bend classification', () => {
     );
     expect(model.chains).toHaveLength(1);
     expect(model.unlit).toHaveLength(1);
-    const fallback = model.issues.find((issue) => issue.message.startsWith('Trattino fuori dal puntino'));
+    const fallback = model.issues.find((issue) => issue.message.startsWith('Dash outside the dot'));
     expect(fallback).toBeTruthy();
     expect(fallback!.x).toBeCloseTo(0, 0);
     expect(fallback!.y).toBeCloseTo(48, 0);
@@ -160,11 +160,11 @@ describe('bend classification', () => {
     expect(dots).toHaveLength(1);
     expect(model.unlit).toHaveLength(0);
     expect(model.bom.segments.find((segment) => segment.id === dots[0]!.id)?.ledCount).toBe(1);
-    const note = model.issues.find((issue) => issue.message.startsWith('Puntino più piccolo della pillola'));
+    const note = model.issues.find((issue) => issue.message.startsWith('Dot smaller than the LED pill'));
     expect(note).toBeTruthy();
     expect(note!.level).toBe('warning');
     expect(note!.y).toBeCloseTo(48, 0);
-    expect(model.issues.some((issue) => issue.message.startsWith('Puntino troppo piccolo'))).toBe(false);
+    expect(model.issues.some((issue) => issue.message.startsWith('Dot too small'))).toBe(false);
   });
 
   it('a short isolated accent becomes a pill with one LED, without wire slots', () => {
@@ -191,7 +191,7 @@ describe('bend classification', () => {
       expect(mark.lengthMm).toBeGreaterThanOrEqual(BENDABLE.CUT_PITCH - 0.2);
       expect(model.bom.segments.find((segment) => segment.id === mark.id)?.ledCount).toBe(1);
     }
-    expect(model.issues.some((issue) => issue.message.includes('sotto il passo di taglio'))).toBe(false);
+    expect(model.issues.some((issue) => issue.message.includes('under the cut pitch'))).toBe(false);
     expect(model.bom.wireSlots).toBe(2);
   });
 });

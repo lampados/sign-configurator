@@ -105,7 +105,7 @@ export function validateStrip(input: ValidateInput): ValidationIssue[] {
         radiusMm: null,
         x: mid[0],
         y: mid[1],
-        message: `Spezzone ${chain.id}: luce ${useful.toFixed(1)} mm, sotto il passo di taglio ${params.CUT_PITCH.toFixed(1)} mm, in ${where(mid[0], mid[1])}.`,
+        message: `Segment ${chain.id}: lit length ${useful.toFixed(1)} mm, under the cut pitch ${params.CUT_PITCH.toFixed(1)} mm, at ${where(mid[0], mid[1])}.`,
       });
     }
     const kinds = new Map<ChainHinge, BendKind>();
@@ -127,8 +127,8 @@ export function validateStrip(input: ValidateInput): ValidationIssue[] {
       if (!hinge.over) continue;
       const bend = kinds.get(hinge) ?? 'curva';
       const radius = hinge.radiusMm === null ? '∞' : hinge.radiusMm.toFixed(1);
-      const kind = bend === 'curva' ? 'curva troppo stretta' : 'spigolo';
-      const remedy = bend === 'curva' ? 'Si allenta ingrandendo il testo.' : 'Non si allenta ingrandendo il testo.';
+      const kind = bend === 'curva' ? 'curve too tight' : 'cusp';
+      const remedy = bend === 'curva' ? 'It eases when the text is made bigger.' : 'It does not ease when the text is made bigger.';
       issues.push({
         level: 'error',
         bend,
@@ -136,7 +136,7 @@ export function validateStrip(input: ValidateInput): ValidationIssue[] {
         radiusMm: hinge.radiusMm,
         x: hinge.x,
         y: hinge.y,
-        message: `Spezzone ${chain.id}: ${kind}, raggio ${radius} mm (angolo ${hinge.angleDeg.toFixed(1)}°, minimo ${minRadius.toFixed(1)} mm), in ${where(hinge.x, hinge.y)}. ${remedy}`,
+        message: `Segment ${chain.id}: ${kind}, radius ${radius} mm (angle ${hinge.angleDeg.toFixed(1)}°, minimum ${minRadius.toFixed(1)} mm), at ${where(hinge.x, hinge.y)}. ${remedy}`,
       });
     }
   }
@@ -150,7 +150,7 @@ export function validateStrip(input: ValidateInput): ValidationIssue[] {
         radiusMm: null,
         x: notice.x,
         y: notice.y,
-        message: `Incrocio interrotto di ${params.CROSSING_GAP.toFixed(1)} mm per lato, in ${where(notice.x, notice.y)}.`,
+        message: `Crossing interrupted by ${params.CROSSING_GAP.toFixed(1)} mm per side, at ${where(notice.x, notice.y)}.`,
       });
     } else if (notice.kind === 'excluded') {
       const radius = notice.radiusMm ?? 0;
@@ -161,7 +161,7 @@ export function validateStrip(input: ValidateInput): ValidationIssue[] {
         radiusMm: notice.radiusMm,
         x: notice.x,
         y: notice.y,
-        message: `Anello chiuso escluso: raggio ${radius.toFixed(1)} mm sotto il minimo ${minRadius.toFixed(1)} mm, in ${where(notice.x, notice.y)}.`,
+        message: `Closed loop excluded: radius ${radius.toFixed(1)} mm under the minimum ${minRadius.toFixed(1)} mm, at ${where(notice.x, notice.y)}.`,
       });
     } else if (notice.kind === 'unlit') {
       const radius = notice.radiusMm ?? 0;
@@ -172,7 +172,7 @@ export function validateStrip(input: ValidateInput): ValidationIssue[] {
         radiusMm: notice.radiusMm,
         x: notice.x,
         y: notice.y,
-        message: `Puntino non illuminato, raggio ${radius.toFixed(1)} mm, in ${where(notice.x, notice.y)}.`,
+        message: `Dot not lit, radius ${radius.toFixed(1)} mm, at ${where(notice.x, notice.y)}.`,
       });
     } else {
       issues.push({
@@ -182,7 +182,7 @@ export function validateStrip(input: ValidateInput): ValidationIssue[] {
         radiusMm: null,
         x: notice.x,
         y: notice.y,
-        message: `Giunzione di grado ${notice.degree ?? 0}: prosegue solo la coppia più dritta, in ${where(notice.x, notice.y)}.`,
+        message: `Degree-${notice.degree ?? 0} junction: only the straightest pair continues, at ${where(notice.x, notice.y)}.`,
       });
     }
   }

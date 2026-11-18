@@ -46,7 +46,7 @@ export function parseStrokeFont(text: string): StrokeFont {
   const trimmed = text.trimStart();
   if (trimmed.startsWith('<')) return parseSvgFont(text);
   if (trimmed.startsWith('{')) return parseJsonFont(text);
-  throw new Error('Font a tratto singolo: atteso un SVG `<font>` o un JSON.');
+  throw new Error('Single-stroke font: expected an SVG `<font>` or a JSON.');
 }
 
 // ---------------------------------------------------------------- SVG font
@@ -206,7 +206,7 @@ export function svgPath(d: string, tol: number): StrokePath[] {
   };
   const read = (): number => {
     const value = tokens[i++];
-    if (typeof value !== 'number') throw new Error('Path SVG: atteso un numero.');
+    if (typeof value !== 'number') throw new Error('SVG path: expected a number.');
     return value;
   };
   const pair = (rel: boolean): Point => {
@@ -335,7 +335,7 @@ export function svgPath(d: string, tol: number): StrokePath[] {
         prevCmd = cmd;
         break;
       default:
-        throw new Error(`Path SVG: comando "${cmd}" non gestito.`);
+        throw new Error(`SVG path: command "${cmd}" not supported.`);
     }
   }
   finish();
@@ -363,7 +363,7 @@ function tokenize(d: string): (string | number)[] {
     }
     const rest = d.slice(i);
     const m = /^[+-]?(?:\d*\.\d+|\d+\.?\d*)(?:[eE][+-]?\d+)?/.exec(rest);
-    if (!m || m[0] === '' || m[0] === '+' || m[0] === '-') throw new Error(`Path SVG illeggibile vicino a "${rest.slice(0, 12)}".`);
+    if (!m || m[0] === '' || m[0] === '+' || m[0] === '-') throw new Error(`SVG path unreadable near "${rest.slice(0, 12)}".`);
     out.push(Number(m[0]));
     i += m[0].length;
   }

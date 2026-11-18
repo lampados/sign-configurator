@@ -231,7 +231,7 @@ export function placeAnchorHoles(
     const mid = pointAt(points, length / 2);
     const id = opts.segmentId ?? 0;
     warnings.push(
-      `Spezzone ${id}: ${holes.length} fori di ancoraggio su ${params.ANCHOR_MIN_PER_SEGMENT} richiesti, in (${mid[0].toFixed(1)}, ${mid[1].toFixed(1)}).`,
+      `Segment ${id}: ${holes.length} anchor holes out of ${params.ANCHOR_MIN_PER_SEGMENT} required, at (${mid[0].toFixed(1)}, ${mid[1].toFixed(1)}).`,
     );
   }
   return { holes, warnings };

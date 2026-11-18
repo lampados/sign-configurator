@@ -101,9 +101,9 @@ describe('sign split for the print bed', () => {
     // e l'avviso lo dice. Prima della taratura dei costi li attraversavano tutti e due.
     const onChannel = split!.cutsX.filter((x) => channelsAt(result.centerlines, x) > 0).length;
     expect(onChannel).toBeLessThanOrEqual(1);
-    const notice = result.warnings.filter((w) => w.startsWith('Suddivisione per il piatto:'));
+    const notice = result.warnings.filter((w) => w.startsWith('Print-bed split:'));
     expect(notice).toHaveLength(onChannel > 0 ? 1 : 0);
-    if (onChannel > 0) expect(notice[0]).toMatch(/canale acceso/);
+    if (onChannel > 0) expect(notice[0]).toMatch(/lit channel/);
   }, 120_000);
 
   it('with a larger bed it is one piece again; the result is deterministic', async () => {

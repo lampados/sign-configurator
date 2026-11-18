@@ -29,10 +29,10 @@ export interface RasterImportResult {
 
 /** Decodifica, compone la trasparenza su bianco, riduce se serve, soglia e ritaglia. */
 export async function importRaster(file: Blob, options: RasterImportOptions = {}): Promise<RasterImportResult> {
-  if (file.size > IMAGE_MAX_BYTES) throw new Error('Il file supera 10 MB.');
+  if (file.size > IMAGE_MAX_BYTES) throw new Error('The file is over 10 MB.');
   const bitmap = await createImageBitmap(file);
   try {
-    if (!(bitmap.width > 0) || !(bitmap.height > 0)) throw new Error("L'immagine è vuota.");
+    if (!(bitmap.width > 0) || !(bitmap.height > 0)) throw new Error('The image is empty.');
     const warnings: string[] = [];
     let width = bitmap.width;
     let height = bitmap.height;
@@ -41,13 +41,13 @@ export async function importRaster(file: Blob, options: RasterImportOptions = {}
       const scale = IMAGE_MAX_PX / longSide;
       width = Math.max(1, Math.round(bitmap.width * scale));
       height = Math.max(1, Math.round(bitmap.height * scale));
-      warnings.push(`Immagine ridotta a ${width}×${height} px: il lato lungo supera ${IMAGE_MAX_PX} px.`);
+      warnings.push(`Image reduced to ${width}×${height} px: the long side is over ${IMAGE_MAX_PX} px.`);
     }
     const canvas = document.createElement('canvas');
     canvas.width = width;
     canvas.height = height;
     const ctx = canvas.getContext('2d', { colorSpace: 'srgb', willReadFrequently: true });
-    if (!ctx) throw new Error('Canvas non disponibile.');
+    if (!ctx) throw new Error('Canvas not available.');
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, width, height);
     ctx.drawImage(bitmap, 0, 0, width, height);
@@ -61,7 +61,7 @@ export async function importRaster(file: Blob, options: RasterImportOptions = {}
       invert: options.invert ?? false,
       trace: options.trace ?? 'centerline',
     });
-    if (!built) throw new Error('Nessun pixel di inchiostro con questa soglia.');
+    if (!built) throw new Error('No ink pixels at this threshold.');
     return { source: built.source, warnings, luminance, width, height };
   } finally {
     bitmap.close();

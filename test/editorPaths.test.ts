@@ -118,7 +118,7 @@ describe('frozen paths', () => {
     expect(dot).toEqual({ id: 'd1', type: 'dot', center: [2, 4], angle: 0 });
     const curve = paths[0];
     const grown = scaled[0];
-    if (!curve || !grown || 'type' in curve || 'type' in grown) throw new Error('curva attesa');
+    if (!curve || !grown || 'type' in curve || 'type' in grown) throw new Error('curve expected');
     expect(grown.nodes[0]!.p[0]).toBeCloseTo(curve.nodes[0]!.p[0] * 2, 3);
     expect(grown.nodes[0]!.p[1]).toBeCloseTo(curve.nodes[0]!.p[1] * 2, 3);
   });
@@ -138,7 +138,7 @@ describe('frozen paths', () => {
   it('a choice without a crossing produces a warning', async () => {
     const paths = cross();
     const result = await generateSign(orderOf(paths, [{ at: [100, 100], under: 'p1' }]));
-    expect(result.warnings).toContain('Scelta di incrocio senza incrocio corrispondente, in (100.0, 100.0).');
+    expect(result.warnings).toContain('Crossing choice without a matching crossing, at (100.0, 100.0).');
     expect(minOrigin(byAxis(result.centerlines, 'v'))).toBeGreaterThan(GAP - 0.2);
     expect(minOrigin(byAxis(result.centerlines, 'h'))).toBeLessThan(0.5);
   });

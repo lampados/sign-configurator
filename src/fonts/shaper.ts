@@ -57,7 +57,7 @@ const cache = new Map<string, Promise<Shaper>>();
  */
 export function loadShaper(id: string, read: FontBytesReader = fetchFontBytes): Promise<Shaper | null> {
   const entry = getFont(id);
-  if (!entry) return Promise.reject(new Error(`Font sconosciuto: "${id}"`));
+  if (!entry) return Promise.reject(new Error(`Unknown font: "${id}"`));
   if (entry.shaper !== 'harfbuzz') return Promise.resolve(null);
   let shaper = cache.get(id);
   if (!shaper) {

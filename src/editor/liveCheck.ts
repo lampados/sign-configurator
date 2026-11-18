@@ -91,7 +91,7 @@ export function liveCheck(
     });
     for (const issue of issues) {
       const kind: LiveMarker['kind'] | null =
-        issue.bend === 'curva' ? 'curva' : issue.bend === 'spigolo' ? 'spigolo' : issue.message.includes('passo di taglio') ? 'corto' : null;
+        issue.bend === 'curva' ? 'curva' : issue.bend === 'spigolo' ? 'spigolo' : issue.message.includes('cut pitch') ? 'corto' : null;
       if (!kind) continue;
       markers.push({ kind, x: issue.x, y: issue.y, pathId: segment.id });
     }

@@ -90,6 +90,6 @@ describe('Chinese and Japanese fonts (SPEC §4ter)', () => {
     expect(result.bom.segments.length).toBeGreaterThanOrEqual(4);
     expect(result.lightPoints.length).toBeGreaterThan(0);
     expect(result.housingMesh.triVerts.length).toBeGreaterThan(0);
-    expect(result.warnings.join(' ')).not.toMatch(/non manifold/);
+    expect(result.warnings.join(' ')).not.toMatch(/not manifold/);
   }, 180_000);
 });

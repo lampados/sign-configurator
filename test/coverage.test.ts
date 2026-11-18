@@ -82,7 +82,7 @@ describe('coverage of Ciao', () => {
       built = await ciao('neonderthaw', height);
     }
     expect(built.raster.stripMode).toBe('walls');
-    expect(built.strip.issues.some((issue) => issue.message.startsWith('Sagome che si fondono'))).toBe(false);
+    expect(built.strip.issues.some((issue) => issue.message.startsWith('Outlines merging'))).toBe(false);
     expect(built.coverage.letters.length).toBeGreaterThan(0);
     for (const letter of built.coverage.letters) {
       expect(letter.ratio, letter.letter).toBeGreaterThanOrEqual(BENDABLE.COVERAGE_MIN);

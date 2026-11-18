@@ -140,7 +140,7 @@ describe('bitmaps and outlines', () => {
       },
       40,
     );
-    expect(laid.raster.warnings.some((warning) => warning === 'tratto non uniforme: prova Contorno')).toBe(true);
+    expect(laid.raster.warnings.some((warning) => warning === 'uneven stroke: try Outline')).toBe(true);
   });
 
   it('the same JSON produces the same STLs and the same BOM', async () => {
@@ -170,8 +170,8 @@ describe('bitmaps and outlines', () => {
     const again = JSON.parse(JSON.stringify(order)) as SignOrder;
     const first = await generateSign(order);
     const second = await generateSign(again);
-    expect(first.warnings.some((warning) => warning.includes('Immagine a bassa risoluzione per questa altezza'))).toBe(true);
-    expect(first.warnings.some((warning) => warning.includes('Altezza massima 10 mm'))).toBe(true);
+    expect(first.warnings.some((warning) => warning.includes('Low-resolution image for this height'))).toBe(true);
+    expect(first.warnings.some((warning) => warning.includes('Maximum height 10 mm'))).toBe(true);
     expect(first.housingMesh.triVerts.length).toBeGreaterThan(0);
     expect(sameBytes(meshToStl(first.housingMesh), meshToStl(second.housingMesh))).toBe(true);
     expect(sameBytes(meshToStl(first.diffuserMesh), meshToStl(second.diffuserMesh))).toBe(true);

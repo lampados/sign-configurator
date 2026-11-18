@@ -179,7 +179,7 @@ function describe(label: string, result: BendTestResult, mesh: StlMesh): string[
     ),
   ];
   if (Math.max(size[0]!, size[1]!) > BED_WARN_MM) {
-    lines.push(`Attenzione: supera ${BED_WARN_MM} mm, separa gli oggetti nello slicer.`);
+    lines.push(`Warning: over ${BED_WARN_MM} mm, separate the objects in the slicer.`);
   }
   return lines;
 }
@@ -210,7 +210,7 @@ async function generate(): Promise<void> {
           c.height > 0
             ? `Bordi: ${c.profile}, smusso ${c.height.toFixed(2)} × ${c.run.toFixed(2)} mm (alto × largo)`
             : 'Bordi: square',
-          ...c.warnings.map((w) => `Avviso: ${w}`),
+          ...c.warnings.map((w) => `Warning: ${w}`),
         );
       }
       lines.push(...describe(piece.label, result, mesh));

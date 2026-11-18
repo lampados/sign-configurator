@@ -122,7 +122,7 @@ describe('Hindi, Devanagari font (SPEC §4ter)', () => {
     expect((await draw('प्यार १२३।')).missing).toEqual([]);
     expect((await draw('क्‍ष')).missing).toEqual([]);
     expect((await draw('ि')).glyphs).toHaveLength(1);
-    expect((await draw('नमस्ते 中')).warnings.join(' ')).toMatch(/U\+4E2D.* non presente in Poppins/);
+    expect((await draw('नमस्ते 中')).warnings.join(' ')).toMatch(/U\+4E2D.* missing from Poppins/);
   });
 
   it('the headline joins the word: a single piece, stroke width constant within 25 %', async () => {
@@ -148,6 +148,6 @@ describe('Hindi, Devanagari font (SPEC §4ter)', () => {
     expect(result.housingMesh.triVerts.length).toBeGreaterThan(0);
     expect(result.lightPoints.length).toBeGreaterThan(100);
     expect(result.bom.assembly.segments).toBeGreaterThanOrEqual(8);
-    expect(result.warnings.join(' ')).not.toMatch(/non manifold|non presente/);
+    expect(result.warnings.join(' ')).not.toMatch(/not manifold|missing from/);
   }, 180_000);
 });

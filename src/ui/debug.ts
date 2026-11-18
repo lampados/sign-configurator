@@ -502,7 +502,7 @@ function stripRows(strip: StripModel): [string, string][] {
 function summaryText(strip: StripModel): string {
   const curves = strip.issues.filter((issue) => issue.bend === 'curva').length;
   const cusps = strip.issues.filter((issue) => issue.bend === 'spigolo').length;
-  const crossings = strip.issues.filter((issue) => issue.message.startsWith('Incrocio')).length;
+  const crossings = strip.issues.filter((issue) => issue.message.startsWith('Crossing')).length;
   if (strip.suggestion.empty) return 'Nessuno spezzone da piegare.';
   const height = strip.suggestion.heightMm === null ? '—' : `${strip.suggestion.heightMm.toFixed(0)} mm`;
   const limit =
@@ -749,7 +749,7 @@ async function previewSolid(id: number, order: SignOrderV4, label = ''): Promise
     solidStatus.textContent = `${prefix}${result.centerlines.length} spezzoni · ${result.holes.anchors.length} ancoraggi · ${result.slots.length} asole · ${result.pockets.length} tasche`;
   } catch (err) {
     if (id !== runId) return;
-    solidStatus.textContent = `Solido non generato: ${err instanceof Error ? err.message : String(err)}`;
+    solidStatus.textContent = `Solid not generated: ${err instanceof Error ? err.message : String(err)}`;
   }
 }
 
@@ -845,7 +845,7 @@ async function run(): Promise<void> {
         downloadDiffuser.disabled = true;
         housingStl = null;
         diffuserStl = null;
-        const message = imageError ?? 'Carica un file SVG, PNG o JPG.';
+        const message = imageError ?? 'Upload an SVG, PNG or JPG file.';
         solidStatus.textContent = message;
         showWarnings([message], Boolean(imageError));
         return;
@@ -877,7 +877,7 @@ async function run(): Promise<void> {
           if (id !== runId) return;
           downloadHousing.disabled = true;
           downloadDiffuser.disabled = true;
-          const message = 'Nessun pixel di inchiostro con questa soglia.';
+          const message = 'No ink pixels at this threshold.';
           solidStatus.textContent = message;
           showWarnings([message], true);
           canvas.dataset.ok = 'false';
@@ -1022,7 +1022,7 @@ function isRasterFile(file: File): boolean {
 async function loadDebugImage(file: File): Promise<void> {
   imageLoad = null;
   if (file.size > IMAGE_MAX_BYTES) {
-    imageError = 'Il file supera 10 MB.';
+    imageError = 'The file is over 10 MB.';
     void run();
     return;
   }
@@ -1033,7 +1033,7 @@ async function loadDebugImage(file: File): Promise<void> {
     return;
   }
   if (!isRasterFile(file)) {
-    imageError = 'Carica un file SVG, PNG o JPG.';
+    imageError = 'Upload an SVG, PNG or JPG file.';
     void run();
     return;
   }

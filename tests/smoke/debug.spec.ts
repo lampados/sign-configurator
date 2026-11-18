@@ -20,7 +20,7 @@ test('debug: manifold cube and Ciao Torino with both fonts', async ({ page }) =>
 
   await page.getByRole('button', { name: 'Test manifold' }).click();
   await expect(page.locator('#manifold-check')).toHaveText('vertici: 8, triangoli: 12');
-  expect(track.wasmOk(), 'manifold.wasm non caricato').toBe(true);
+  expect(track.wasmOk(), 'manifold.wasm not loaded').toBe(true);
 
   await expect(page.locator('input[name="text"]')).toHaveValue('Ciao Torino');
   await expectGraph(page);

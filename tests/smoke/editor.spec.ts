@@ -24,7 +24,7 @@ function middlePin(pins: Pin[]): Pin {
   for (const list of groups.values()) if (list.length > best.length) best = list;
   best.sort((a, b) => a.index - b.index);
   const pin = best[Math.floor(best.length / 2)];
-  if (!pin) throw new Error('nessun nodo');
+  if (!pin) throw new Error('no node');
   return pin;
 }
 

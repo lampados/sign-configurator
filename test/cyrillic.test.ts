@@ -97,20 +97,20 @@ describe('Cyrillic font (SPEC §4ter)', () => {
     expect(result.housingMesh.triVerts.length).toBeGreaterThan(0);
     expect(result.lightPoints.length).toBeGreaterThan(10);
     expect(result.bom.assembly.segments).toBeGreaterThanOrEqual(6);
-    expect(result.warnings.join(' ')).not.toMatch(/non manifold|non presente/);
+    expect(result.warnings.join(' ')).not.toMatch(/not manifold|missing from/);
   }, 180_000);
 
   it('Latin and Cyrillic in the same sign, with the same font', async () => {
     const result = await generateSign(order('Ciao Привет', 250), readPublic);
     expect(result.housingMesh.triVerts.length).toBeGreaterThan(0);
-    expect(result.warnings.join(' ')).not.toMatch(/non presente/);
+    expect(result.warnings.join(' ')).not.toMatch(/missing from/);
   }, 180_000);
 
   it('a font without Cyrillic says so: recognizable error if everything is missing, warning if part is', async () => {
     const sacramento = (text: string): SignOrderV4 => ({ ...order(text, 250), source: { kind: 'text', text, fontId: 'sacramento' } });
     await expect(generateSign(sacramento('Привет'), readPublic)).rejects.toThrow(NO_LETTERS);
     const mixed = await generateSign(sacramento('Ciao Привет'), readPublic);
-    expect(mixed.warnings.filter((warning) => /^Carattere .* non presente in Sacramento/.test(warning))).toHaveLength(6);
+    expect(mixed.warnings.filter((warning) => /^Character .* missing from Sacramento/.test(warning))).toHaveLength(6);
     expect(mixed.housingMesh.triVerts.length).toBeGreaterThan(0);
   }, 180_000);
 });

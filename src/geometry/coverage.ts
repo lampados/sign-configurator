@@ -255,12 +255,12 @@ export function coverSign(input: {
     else heights.push(height);
     const advice =
       height === null
-        ? 'ingrandire non basta (restano tratti che scalano con la lettera)'
-        : `altezza consigliata ${height.toFixed(0)} mm`;
+        ? 'making it bigger is not enough (some stretches scale with the letter)'
+        : `recommended height ${height.toFixed(0)} mm`;
     const stretch = stretches.find((item) => item.letter === letter.letter);
     const mid = stretch?.points[Math.floor((stretch.points.length - 1) / 2)] ?? [0, 0];
     warnings.push({
-      message: `Lettera ${letter.letter}: copertura ${(letter.ratio * 100).toFixed(0)}% sotto ${(minimum * 100).toFixed(0)}%, ${advice}.`,
+      message: `Letter ${letter.letter}: coverage ${(letter.ratio * 100).toFixed(0)}% under ${(minimum * 100).toFixed(0)}%, ${advice}.`,
       x: mid[0],
       y: mid[1],
     });

@@ -275,7 +275,7 @@ export function rasterizeContourGroups(layers: readonly ContourLayer[], options:
   }
   if (res !== requested) {
     warnings.push(
-      `Bitmap oltre ${(maxPixels / 1e6).toFixed(0)} Mpx: risoluzione ridotta da ${requested} a ` +
+      `Bitmap over ${(maxPixels / 1e6).toFixed(0)} Mpx: resolution reduced from ${requested} to ` +
         `${res.toFixed(3)} px/mm (${width} × ${height} px).`,
     );
   }
@@ -411,16 +411,16 @@ export function rasterizeText(
   let text = input.text;
   if (/[\r\n]/.test(text)) {
     text = text.replace(/\r\n|[\r\n]/g, ' ');
-    warnings.push('Il testo va su una sola riga: gli a capo sono diventati spazi.');
+    warnings.push('The text goes on a single line: line breaks became spaces.');
   }
   // Senza compositore un font come Poppins darebbe lettere staccate e nell'ordine sbagliato:
   // un'insegna illeggibile, non un errore visibile. Meglio fermarsi.
-  if (entry.shaper === 'harfbuzz' && !shaper) throw new Error(`${fontName} va composto con harfbuzz: manca il compositore.`);
+  if (entry.shaper === 'harfbuzz' && !shaper) throw new Error(`${fontName} must be shaped with harfbuzz: the shaper is missing.`);
 
   // ZWNJ e ZWJ guidano le legature e non hanno un disegno: non sono caratteri mancanti.
   const invisible = (ch: string): boolean => /\s/.test(ch) || (shaper != null && /[\u200c\u200d]/.test(ch));
   const missing = [...new Set(Array.from(text).filter((ch) => !invisible(ch) && !font.hasChar(ch)))];
-  for (const ch of missing) warnings.push(`Carattere ${describeChar(ch)} non presente in ${fontName}: ignorato.`);
+  for (const ch of missing) warnings.push(`Character ${describeChar(ch)} missing from ${fontName}: ignored.`);
 
   const mmPerUnit = input.heightMm / entry.capHeightMeasured;
   const fontSizeMm = font.unitsPerEm * mmPerUnit;
@@ -498,7 +498,7 @@ export function rasterizeText(
 /** Comodità per main thread e worker: carica il font dal registro e rasterizza. I tratti singoli non hanno bitmap. */
 export async function rasterize(input: RasterizeInput, read?: FontBytesReader): Promise<TextRaster> {
   const entry = getFont(input.fontId);
-  if (!entry) throw new Error(`Font sconosciuto: "${input.fontId}"`);
+  if (!entry) throw new Error(`Unknown font: "${input.fontId}"`);
   if (entry.kind === 'stroke') return (await layoutStroke(entry, input, read)).raster;
   const [font, shaper] = await Promise.all([loadFont(input.fontId, read), loadShaper(input.fontId, read)]);
   return rasterizeText(font, entry, input, shaper);

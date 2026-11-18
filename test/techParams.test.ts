@@ -135,7 +135,7 @@ describe('strip model', () => {
     expect(ok.warnings).toEqual([]);
     expect(ok.order?.params.STRIP_ID).toBe('ws2812b-144');
     const bad = shared({ STRIP_ID: 'inventata' });
-    expect(bad.warnings.join(' ')).toMatch(/Striscia sconosciuta/);
+    expect(bad.warnings.join(' ')).toMatch(/Unknown strip/);
     expect(bad.order?.params.STRIP_ID).toBeUndefined();
   });
 });

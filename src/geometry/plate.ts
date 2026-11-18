@@ -152,7 +152,7 @@ function contourSection(wasm: ManifoldToplevel, sign: CrossSection, margin: numb
   }
   const parts = best.decompose();
   if (parts.length > 1) {
-    warnings.push('Fondale sagomato: le parti restano separate, si usa il loro inviluppo convesso.');
+    warnings.push('Contoured backdrop: the parts stay separate, their convex hull is used.');
     const hull = best.hull();
     best.delete();
     best = hull;
@@ -256,7 +256,7 @@ function plateHoles(
     else holes.push(hole);
   }
   if (dropped > 0) {
-    warnings.push(`Fondale: ${dropped} fori di montaggio cadono sotto l'insegna e sono stati tolti. Aumenta il margine.`);
+    warnings.push(`Backdrop: ${dropped} mounting holes fall under the sign and were removed. Increase the margin.`);
   }
   return holes;
 }

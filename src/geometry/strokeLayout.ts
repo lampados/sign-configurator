@@ -17,7 +17,7 @@ export function loadStrokeFont(id: string, read: FontBytesReader = fetchFontByte
   let font = cache.get(id);
   if (!font) {
     const entry = getFont(id);
-    if (!entry || entry.kind !== 'stroke') return Promise.reject(new Error(`Font a tratto singolo sconosciuto: "${id}"`));
+    if (!entry || entry.kind !== 'stroke') return Promise.reject(new Error(`Unknown single-stroke font: "${id}"`));
     font = read(entry.file).then((bytes) => parseStrokeFont(new TextDecoder().decode(bytes)));
     font.catch(() => cache.delete(id));
     cache.set(id, font);
@@ -63,10 +63,10 @@ export async function layoutStroke(
   let text = input.text;
   if (/[\r\n]/.test(text)) {
     text = text.replace(/\r\n|[\r\n]/g, ' ');
-    warnings.push('Il testo va su una sola riga: gli a capo sono diventati spazi.');
+    warnings.push('The text goes on a single line: line breaks became spaces.');
   }
   const missing = [...new Set([...text].filter((ch) => !/\s/.test(ch) && !font.glyphs.has(ch)))];
-  for (const ch of missing) warnings.push(`Carattere ${describeChar(ch)} non presente in ${entry.name}: ignorato.`);
+  for (const ch of missing) warnings.push(`Character ${describeChar(ch)} missing from ${entry.name}: ignored.`);
 
   const mmPerUnit = input.heightMm / entry.capHeightMeasured;
   const space = font.glyphs.get(' ');

@@ -46,21 +46,21 @@ export function planChamfer(p: EdgeProfileParams): ChamferPlan {
   if (p.EDGE_PROFILE === 'square') return square();
 
   if (!(p.CHAMFER_ANGLE > 0 && p.CHAMFER_ANGLE < 90)) {
-    warnings.push(`CHAMFER_ANGLE = ${p.CHAMFER_ANGLE}° fuori da (0°, 90°): smusso ignorato.`);
+    warnings.push(`CHAMFER_ANGLE = ${p.CHAMFER_ANGLE}° outside (0°, 90°): chamfer ignored.`);
     return square();
   }
   if (!(p.LAYER_STEP > 0)) {
-    warnings.push(`LAYER_STEP = ${p.LAYER_STEP} non valido: smusso ignorato.`);
+    warnings.push(`LAYER_STEP = ${p.LAYER_STEP} not valid: chamfer ignored.`);
     return square();
   }
   if (!(p.CHAMFER_SIZE > 0)) {
-    warnings.push(`CHAMFER_SIZE = ${p.CHAMFER_SIZE}: smusso ignorato.`);
+    warnings.push(`CHAMFER_SIZE = ${p.CHAMFER_SIZE}: chamfer ignored.`);
     return square();
   }
 
   let height = p.CHAMFER_SIZE;
   if (height > p.CHANNEL_DEPTH) {
-    warnings.push(`CHAMFER_SIZE ${fmt(height)} > CHANNEL_DEPTH: ridotto a ${fmt(p.CHANNEL_DEPTH)} mm.`);
+    warnings.push(`CHAMFER_SIZE ${fmt(height)} > CHANNEL_DEPTH: reduced to ${fmt(p.CHANNEL_DEPTH)} mm.`);
     height = p.CHANNEL_DEPTH;
   }
 
@@ -72,15 +72,15 @@ export function planChamfer(p: EdgeProfileParams): ChamferPlan {
     const sides = outer ? 2 : 1;
     const maxRun = (p.WALL - MIN_TOP_WALL) / sides;
     if (maxRun <= 0) {
-      warnings.push(`WALL ${fmt(p.WALL)} mm: non resta spazio per lo smusso interno (min ${MIN_TOP_WALL} mm in cima). Smusso ignorato.`);
+      warnings.push(`WALL ${fmt(p.WALL)} mm: no room left for the inner chamfer (min ${MIN_TOP_WALL} mm on top). Chamfer ignored.`);
       return square();
     }
     const top = p.WALL - (sides * height) / tan;
     if (top < MIN_TOP_WALL - 1e-9) {
       const reduced = maxRun * tan;
       warnings.push(
-        `In cima resterebbero ${fmt(top)} mm di parete (< ${MIN_TOP_WALL}): ` +
-          `CHAMFER_SIZE ridotto da ${fmt(height)} a ${fmt(reduced)} mm.`,
+        `Only ${fmt(top)} mm of wall would be left on top (< ${MIN_TOP_WALL}): ` +
+          `CHAMFER_SIZE reduced from ${fmt(height)} to ${fmt(reduced)} mm.`,
       );
       height = reduced;
     }

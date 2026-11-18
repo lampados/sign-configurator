@@ -235,15 +235,15 @@ function buildMidline(chainA: ChainPoint[], chainB: ChainPoint[], run: Run, step
 function warningOf(d: DubiousPair, nominal: number, dMin: number, dMax: number): string {
   const where = `(${d.x.toFixed(1)}, ${d.y.toFixed(1)}) mm`;
   if (d.reason === 'angle') {
-    return `Coppie dubbie: tangenti a ${d.angleDeg.toFixed(0)}°, oltre i ${PAIR_ANGLE_DEG.toFixed(0)}° ammessi, in ${where}.`;
+    return `Doubtful pairs: tangents at ${d.angleDeg.toFixed(0)}°, over the ${PAIR_ANGLE_DEG.toFixed(0)}° allowed, at ${where}.`;
   }
   if (d.reason === 'short') {
     if (d.overlapMm >= PAIR_MIN_LENGTH_W * nominal - 0.05) {
-      return `Coppie dubbie: la compagna è già accoppiata, tratto di ${d.overlapMm.toFixed(1)} mm, in ${where}.`;
+      return `Doubtful pairs: the partner is already paired, stretch of ${d.overlapMm.toFixed(1)} mm, at ${where}.`;
     }
-    return `Coppie dubbie: parallele solo per ${d.overlapMm.toFixed(1)} mm, meno dei ${(PAIR_MIN_LENGTH_W * nominal).toFixed(1)} mm richiesti, in ${where}.`;
+    return `Doubtful pairs: parallel for only ${d.overlapMm.toFixed(1)} mm, less than the ${(PAIR_MIN_LENGTH_W * nominal).toFixed(1)} mm required, at ${where}.`;
   }
-  return `Coppie dubbie: distanza ${d.distanceMm.toFixed(1)} mm fuori tolleranza ${dMin.toFixed(1)}–${dMax.toFixed(1)} mm, in ${where}.`;
+  return `Doubtful pairs: distance ${d.distanceMm.toFixed(1)} mm out of tolerance ${dMin.toFixed(1)}–${dMax.toFixed(1)} mm, at ${where}.`;
 }
 
 interface WallSeg {

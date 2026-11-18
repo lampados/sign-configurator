@@ -33,7 +33,7 @@ export interface SvgLayout {
   graph: SkeletonGraph;
 }
 
-export const UNEVEN_STROKE_WARNING = 'tratto non uniforme: prova Contorno';
+export const UNEVEN_STROKE_WARNING = 'uneven stroke: try Outline';
 
 const KAPPA = 0.5522847498307936;
 
@@ -108,11 +108,11 @@ export function parseTransform(value: string | null | undefined): Matrix {
     } else if (kind === 'skewy' && nums.length >= 1) {
       next = [1, Math.tan((nums[0]! * Math.PI) / 180), 0, 1, 0, 0];
     } else {
-      throw new Error('Trasformazione SVG non valida.');
+      throw new Error('Invalid SVG transform.');
     }
     acc = multiply(acc, next);
   }
-  if (matched === 0) throw new Error('Trasformazione SVG non valida.');
+  if (matched === 0) throw new Error('Invalid SVG transform.');
   return acc;
 }
 
@@ -272,17 +272,17 @@ function parsePointList(raw: string): [number, number][] {
  * origine nell'angolo in basso a sinistra del riquadro, altezza `heightMm`.
  */
 export function normalizeShapes(shapes: readonly RawShape[], heightMm: number): (SvgStrokeElement | SvgFillElement)[] {
-  if (!(heightMm > 0)) throw new Error("Altezza dell'immagine non valida.");
+  if (!(heightMm > 0)) throw new Error('Invalid image height.');
   const prepared: { cmds: Cmd[]; kind: RawShape['kind']; fillRule: RawShape['fillRule'] }[] = [];
   for (const shape of shapes) {
     const cmds = transformCmds(absoluteCommands(shape.d), shape.transform);
     if (cmds.some((cmd) => cmd.t === 'L' || cmd.t === 'C' || cmd.t === 'Q')) prepared.push({ cmds, kind: shape.kind, fillRule: shape.fillRule });
   }
-  if (prepared.length === 0) throw new Error('Il disegno SVG è vuoto.');
+  if (prepared.length === 0) throw new Error('The SVG drawing is empty.');
   const box = cmdsBBox(prepared.flatMap((shape) => shape.cmds));
-  if (!box) throw new Error('Il disegno SVG è vuoto.');
+  if (!box) throw new Error('The SVG drawing is empty.');
   const span = box.maxY - box.minY > 1e-9 ? box.maxY - box.minY : box.maxX - box.minX;
-  if (!(span > 1e-9)) throw new Error('Il disegno SVG è vuoto.');
+  if (!(span > 1e-9)) throw new Error('The SVG drawing is empty.');
   const scale = heightMm / span;
   const out: (SvgStrokeElement | SvgFillElement)[] = [];
   for (const shape of prepared) {
@@ -291,7 +291,7 @@ export function normalizeShapes(shapes: readonly RawShape[], heightMm: number): 
     if (shape.kind === 'stroke') out.push({ d, kind: 'stroke' });
     else out.push({ d, kind: 'fill', fillRule: shape.fillRule });
   }
-  if (out.length === 0) throw new Error('Il disegno SVG è vuoto.');
+  if (out.length === 0) throw new Error('The SVG drawing is empty.');
   return out;
 }
 
@@ -315,7 +315,7 @@ export function layoutSvg(source: SvgImageSource, heightMm: number, pxPerMm?: nu
     }
     if (contours.length > 0) layers.push({ contours, fillRule: element.fillRule });
   }
-  if (strokeLines.length === 0 && layers.length === 0) throw new Error('Il disegno SVG non produce percorsi.');
+  if (strokeLines.length === 0 && layers.length === 0) throw new Error('The SVG drawing produces no paths.');
 
   const px = pxPerMm ?? DEFAULT_PX_PER_MM;
   const strokePoints = strokeLines.flatMap((line) => line.points);
@@ -351,8 +351,8 @@ export function layoutSvg(source: SvgImageSource, heightMm: number, pxPerMm?: nu
   if (graph.edges.length === 0) {
     throw new Error(
       outline
-        ? 'Il disegno non produce percorsi.'
-        : 'La linea centrale non resta: il tratto non è uniforme e la traccia Contorno non è ancora disponibile.',
+        ? 'The drawing produces no paths.'
+        : 'No centreline is left: the stroke is not uniform and the Outline trace is not available yet.',
     );
   }
 
@@ -471,7 +471,7 @@ function absoluteCommands(d: string): Cmd[] {
   let prevQ: Point | null = null;
 
   const fail = (): never => {
-    throw new Error('Path SVG non valido.');
+    throw new Error('Invalid SVG path.');
   };
   const skip = (): void => {
     while (i < s.length && (s[i] === ' ' || s[i] === '\t' || s[i] === '\n' || s[i] === '\r' || s[i] === ',')) i++;

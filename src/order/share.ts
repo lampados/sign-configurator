@@ -167,20 +167,20 @@ function nodeOf(value: unknown): CurveNode | null {
 
 function pathOf(value: unknown, warnings: string[]): OrderPath | null {
   if (!isRecord(value) || typeof value.id !== 'string' || value.id.length === 0) {
-    warnings.push('Spezzone ignorato: manca l\'id.');
+    warnings.push('Segment ignored: the id is missing.');
     return null;
   }
   if (value.type === 'dot') {
     const center = pointOf(value.center);
     const angle = finite(value.angle);
     if (!center || angle === null) {
-      warnings.push(`Puntino ${value.id} ignorato.`);
+      warnings.push(`Dot ${value.id} ignored.`);
       return null;
     }
     return { id: value.id, type: 'dot', center, angle };
   }
   if (!Array.isArray(value.nodes)) {
-    warnings.push(`Spezzone ${value.id} ignorato.`);
+    warnings.push(`Segment ${value.id} ignored.`);
     return null;
   }
   const nodes: CurveNode[] = [];
@@ -189,7 +189,7 @@ function pathOf(value: unknown, warnings: string[]): OrderPath | null {
     if (read) nodes.push(read);
   }
   if (nodes.length < 2) {
-    warnings.push(`Spezzone ${value.id} ignorato.`);
+    warnings.push(`Segment ${value.id} ignored.`);
     return null;
   }
   return { id: value.id, closed: value.closed === true, nodes };
@@ -198,7 +198,7 @@ function pathOf(value: unknown, warnings: string[]): OrderPath | null {
 function pathsOf(value: unknown, warnings: string[]): OrderPath[] | null {
   if (value == null) return null;
   if (!Array.isArray(value)) {
-    warnings.push('Tracciati ignorati.');
+    warnings.push('Paths ignored.');
     return null;
   }
   const paths: OrderPath[] = [];
@@ -212,7 +212,7 @@ function pathsOf(value: unknown, warnings: string[]): OrderPath[] | null {
 function crossingsOf(value: unknown, warnings: string[]): OrderCrossing[] {
   if (value == null) return [];
   if (!Array.isArray(value)) {
-    warnings.push('Incroci ignorati.');
+    warnings.push('Crossings ignored.');
     return [];
   }
   const crossings: OrderCrossing[] = [];
@@ -236,7 +236,7 @@ function sourceOf(value: unknown, warnings: string[]): OrderSource | null {
     let fontId = typeof value.fontId === 'string' ? value.fontId : '';
     if (!fontId) {
       fontId = 'sacramento';
-      warnings.push('Font mancante: usato Sacramento.');
+      warnings.push('Font missing: Sacramento used.');
     }
     return { kind: 'text', text, fontId };
   }
@@ -245,7 +245,7 @@ function sourceOf(value: unknown, warnings: string[]): OrderSource | null {
   let trace = oneOf(value.trace, ['centerline', 'outline'] as const satisfies readonly TraceMode[]);
   if (!trace) {
     trace = 'centerline';
-    warnings.push('Traccia sconosciuta: usata la linea centrale.');
+    warnings.push('Unknown trace: centreline used.');
   }
   if (value.format === 'svg' && isRecord(value.svg) && Array.isArray(value.svg.elements)) {
     const elements: (SvgStrokeElement | SvgFillElement)[] = [];
@@ -268,7 +268,7 @@ function sourceOf(value: unknown, warnings: string[]): OrderSource | null {
     if (threshold === null) threshold = 128;
     else if (threshold < 0 || threshold > 255) {
       const next = Math.min(255, Math.max(0, threshold));
-      warnings.push(`Soglia ${threshold} fuori limite: riportata a ${next}.`);
+      warnings.push(`Threshold ${threshold} out of range: clamped to ${next}.`);
       threshold = next;
     }
     return {
@@ -287,7 +287,7 @@ function sourceOf(value: unknown, warnings: string[]): OrderSource | null {
 function paramsOf(value: unknown, warnings: string[]): Partial<Params> {
   if (value == null) return {};
   if (!isRecord(value)) {
-    warnings.push('Parametri ignorati.');
+    warnings.push('Parameters ignored.');
     return {};
   }
   const params: Partial<Params> = {};
@@ -295,17 +295,17 @@ function paramsOf(value: unknown, warnings: string[]): Partial<Params> {
     if (!(key in value)) continue;
     const number = finite(value[key]);
     if (number === null) {
-      warnings.push(`Parametro ${key} ignorato.`);
+      warnings.push(`Parameter ${key} ignored.`);
       continue;
     }
     if (key === 'STRIP_V') {
       if (STRIP_VOLTAGES.includes(number)) params.STRIP_V = number;
-      else warnings.push(`Tensione ${number} V sconosciuta: usata quella predefinita.`);
+      else warnings.push(`Unknown voltage ${number} V: default used.`);
       continue;
     }
     if (key === 'WALL') {
       const next = Math.min(SHARE_WALL_MAX_MM, Math.max(SHARE_WALL_MIN_MM, number));
-      if (next !== number) warnings.push(`Cornice ${number} mm fuori limite: riportata a ${next} mm.`);
+      if (next !== number) warnings.push(`Frame ${number} mm out of range: clamped to ${next} mm.`);
       params.WALL = next;
       continue;
     }
@@ -313,45 +313,45 @@ function paramsOf(value: unknown, warnings: string[]): Partial<Params> {
   }
   if ('ANCHOR_BOSS' in value) {
     if (typeof value.ANCHOR_BOSS === 'boolean') params.ANCHOR_BOSS = value.ANCHOR_BOSS;
-    else warnings.push('Parametro ANCHOR_BOSS ignorato.');
+    else warnings.push('Parameter ANCHOR_BOSS ignored.');
   }
   if ('MIN_LETTER_H' in value) {
     const letter = value.MIN_LETTER_H === null ? null : finite(value.MIN_LETTER_H);
     if (value.MIN_LETTER_H === null || letter !== null) params.MIN_LETTER_H = letter;
-    else warnings.push('Parametro MIN_LETTER_H ignorato.');
+    else warnings.push('Parameter MIN_LETTER_H ignored.');
   }
   if ('BOX_ID' in value) {
     const box = value.BOX_ID;
     if (typeof box === 'string' && (box === BOX_AUTO || box === BOX_NONE || BOXES.some((b) => b.id === box))) params.BOX_ID = box;
-    else warnings.push('Scatola sconosciuta: scelta automatica.');
+    else warnings.push('Unknown box: chosen automatically.');
   }
   if ('STRIP_ID' in value) {
     if (typeof value.STRIP_ID === 'string' && STRIP_PROFILES.some((s) => s.id === value.STRIP_ID)) {
       params.STRIP_ID = value.STRIP_ID;
-    } else warnings.push('Striscia sconosciuta: usata quella predefinita.');
+    } else warnings.push('Unknown strip: default used.');
   }
   if ('CONTROLLER_ID' in value) {
     if (typeof value.CONTROLLER_ID === 'string' && CONTROLLERS.some((c) => c.id === value.CONTROLLER_ID)) {
       params.CONTROLLER_ID = value.CONTROLLER_ID;
-    } else warnings.push('Controller sconosciuto: usato quello standard.');
+    } else warnings.push('Unknown controller: standard one used.');
   }
   if ('EDGE_PROFILE' in value) {
     const profile = oneOf(value.EDGE_PROFILE, ['square', 'outer', 'inner', 'both'] as const satisfies readonly EdgeProfile[]);
     if (profile) params.EDGE_PROFILE = profile;
     else {
       params.EDGE_PROFILE = 'square';
-      warnings.push('Bordo sconosciuto: usato il bordo dritto.');
+      warnings.push('Unknown edge: square edge used.');
     }
   }
   if ('CUSP_MODE' in value) {
     const mode = oneOf(value.CUSP_MODE, ['warn', 'split'] as const satisfies readonly CuspMode[]);
     if (mode) params.CUSP_MODE = mode;
-    else warnings.push('Parametro CUSP_MODE ignorato.');
+    else warnings.push('Parameter CUSP_MODE ignored.');
   }
   if ('I_DOT_MODE' in value) {
     const mode = oneOf(value.I_DOT_MODE, ['omit', 'dash', 'dot', 'unlit'] as const satisfies readonly IDotMode[]);
     if (mode) params.I_DOT_MODE = mode;
-    else warnings.push('Parametro I_DOT_MODE ignorato.');
+    else warnings.push('Parameter I_DOT_MODE ignored.');
   }
   return params;
 }
@@ -360,27 +360,27 @@ function customerOf(value: unknown, warnings: string[]): CustomerChoices {
   const customer: CustomerChoices = { ...DEFAULT_CUSTOMER };
   if (value == null) return customer;
   if (!isRecord(value)) {
-    warnings.push('Scelte del cliente ignorate.');
+    warnings.push('Customer choices ignored.');
     return customer;
   }
   const effect = oneOf(value.effect, ['colore fisso', 'arcobaleno'] as const satisfies readonly LightEffect[]);
   if (value.effect !== undefined) {
     if (effect) customer.effect = effect;
-    else warnings.push('Effetto sconosciuto: usato il colore fisso.');
+    else warnings.push('Unknown effect: solid colour used.');
   }
   if (value.diffuser !== undefined) {
     if (typeof value.diffuser === 'boolean') customer.diffuser = value.diffuser;
-    else warnings.push('Diffusore non valido: lasciato attivo.');
+    else warnings.push('Invalid diffuser: left on.');
   }
-  if (value.mount !== undefined && value.mount !== 'wall') warnings.push('Fissaggio sconosciuto: usato il muro.');
+  if (value.mount !== undefined && value.mount !== 'wall') warnings.push('Unknown mounting: wall used.');
   if (value.plug !== undefined) {
     const plug = oneOf(value.plug, ['EU', 'UK', 'CH', 'US'] as const satisfies readonly PlugType[]);
     if (plug) customer.plug = plug;
-    else warnings.push('Spina sconosciuta: usata la EU.');
+    else warnings.push('Unknown plug: EU used.');
   }
   if (value.proof !== undefined) {
     if (typeof value.proof === 'boolean') customer.proof = value.proof;
-    else warnings.push('Bozza non valida: lasciata attiva.');
+    else warnings.push('Invalid draft: left on.');
   }
   return customer;
 }
@@ -392,31 +392,31 @@ function clampMm(value: number, min: number, max: number): number {
 function plateOf(value: unknown, warnings: string[]): PlateChoice | null {
   if (value == null) return null;
   if (!isRecord(value)) {
-    warnings.push('Fondale ignorato.');
+    warnings.push('Backdrop ignored.');
     return null;
   }
   const shape = oneOf(value.shape, ['rect', 'pill', 'contour'] as const satisfies readonly PlateShape[]);
   const material = oneOf(value.material, ['clear', 'black', 'wood'] as const satisfies readonly PlateMaterial[]);
   if (!shape || !material) {
-    warnings.push('Fondale sconosciuto: nessun fondale.');
+    warnings.push('Unknown backdrop: no backdrop.');
     return null;
   }
   let marginMm = finite(value.marginMm);
   if (marginMm === null) {
     marginMm = PLATE_MARGIN;
-    warnings.push(`Margine del fondale mancante: usato ${PLATE_MARGIN} mm.`);
+    warnings.push(`Backdrop margin missing: ${PLATE_MARGIN} mm used.`);
   } else {
     const next = clampMm(marginMm, PLATE_MARGIN_MIN, PLATE_MARGIN_MAX);
-    if (next !== marginMm) warnings.push(`Margine del fondale ${marginMm} mm fuori limite: riportato a ${next} mm.`);
+    if (next !== marginMm) warnings.push(`Backdrop margin ${marginMm} mm out of range: clamped to ${next} mm.`);
     marginMm = next;
   }
   let cornerRMm = finite(value.cornerRMm);
   if (cornerRMm === null) {
     cornerRMm = PLATE_CORNER_R;
-    warnings.push(`Raggio degli angoli mancante: usato ${PLATE_CORNER_R} mm.`);
+    warnings.push(`Corner radius missing: ${PLATE_CORNER_R} mm used.`);
   } else {
     const next = clampMm(cornerRMm, PLATE_CORNER_R_MIN, PLATE_CORNER_R_MAX);
-    if (next !== cornerRMm) warnings.push(`Raggio degli angoli ${cornerRMm} mm fuori limite: riportato a ${next} mm.`);
+    if (next !== cornerRMm) warnings.push(`Corner radius ${cornerRMm} mm out of range: clamped to ${next} mm.`);
     cornerRMm = next;
   }
   return { shape, material, marginMm, cornerRMm };
@@ -426,28 +426,28 @@ function sizeOf(value: unknown, warnings: string[]): SizePreset | null {
   if (value == null) return null;
   const preset = oneOf(value, ['S', 'M', 'L', 'XL'] as const satisfies readonly SizePreset[]);
   if (preset) return preset;
-  warnings.push('Taglia sconosciuta: fa fede l\'altezza.');
+  warnings.push('Unknown size: the height applies.');
   return null;
 }
 
 function colorOf(value: unknown, warnings: string[]): string {
   if (typeof value === 'string' && /^#[0-9a-fA-F]{6}$/.test(value)) return value;
-  warnings.push(`Colore non valido: usato ${DEFAULT_COLOR}.`);
+  warnings.push(`Invalid colour: ${DEFAULT_COLOR} used.`);
   return DEFAULT_COLOR;
 }
 
 function heightOf(value: unknown, warnings: string[]): number | null {
   const height = finite(value);
   if (height === null) {
-    warnings.push('Altezza mancante o non valida.');
+    warnings.push('Height missing or invalid.');
     return null;
   }
   if (height < SHARE_HEIGHT_MIN_MM) {
-    warnings.push(`Altezza ${height} mm fuori limite: riportata a ${SHARE_HEIGHT_MIN_MM} mm.`);
+    warnings.push(`Height ${height} mm out of range: clamped to ${SHARE_HEIGHT_MIN_MM} mm.`);
     return SHARE_HEIGHT_MIN_MM;
   }
   if (height > SHARE_HEIGHT_MAX_MM) {
-    warnings.push(`Altezza ${height} mm fuori limite: riportata a ${SHARE_HEIGHT_MAX_MM} mm.`);
+    warnings.push(`Height ${height} mm out of range: clamped to ${SHARE_HEIGHT_MAX_MM} mm.`);
     return SHARE_HEIGHT_MAX_MM;
   }
   return height;
@@ -455,7 +455,7 @@ function heightOf(value: unknown, warnings: string[]): number | null {
 
 function orderFromRecord(record: Record<string, unknown>, warnings: string[]): SignOrderV4 | null {
   const extra = Object.keys(record).filter((key) => !KNOWN_ROOT.has(key));
-  if (extra.length > 0) warnings.push(`Campi ignorati: ${extra.join(', ')}.`);
+  if (extra.length > 0) warnings.push(`Fields ignored: ${extra.join(', ')}.`);
   const version = finite(record.schemaVersion);
   const generatorVersion = typeof record.generatorVersion === 'string' ? record.generatorVersion : '';
   const heightMm = heightOf(record.heightMm, warnings);
@@ -467,14 +467,14 @@ function orderFromRecord(record: Record<string, unknown>, warnings: string[]): S
     let fontId = typeof record.fontId === 'string' ? record.fontId : '';
     if (!fontId) {
       fontId = 'sacramento';
-      warnings.push('Font mancante: usato Sacramento.');
+      warnings.push('Font missing: Sacramento used.');
     }
     const v1: OrderV1 = { schemaVersion: 1, generatorVersion, text, fontId, heightMm, color, params };
     return migrateOrder(v1);
   }
   const source = sourceOf(record.source, warnings);
   if (!source) {
-    warnings.push('Sorgente mancante o non valida.');
+    warnings.push('Source missing or invalid.');
     return null;
   }
   if (version === 2) {
@@ -511,13 +511,13 @@ function orderFromRecord(record: Record<string, unknown>, warnings: string[]): S
     const v4: SignOrderV4 = { schemaVersion: 4, ...shared, plate: plateOf(record.plate, warnings) };
     return migrateOrder(v4);
   }
-  warnings.push('Versione dell\'ordine non riconosciuta.');
+  warnings.push('Order version not recognized.');
   return null;
 }
 
 function noteGenerator(order: SignOrderV4, warnings: string[]): void {
   if (order.generatorVersion !== GENERATOR_VERSION) {
-    warnings.push(`Versione del generatore ${order.generatorVersion || 'mancante'}: il risultato può cambiare.`);
+    warnings.push(`Generator version ${order.generatorVersion || 'missing'}: the result may change.`);
   }
 }
 
@@ -548,7 +548,7 @@ export function decodeShare(input: string): ShareRead {
     if (trimmed.startsWith('{')) {
       const parsed: unknown = JSON.parse(trimmed);
       if (!isRecord(parsed)) {
-        warnings.push('File del design non valido.');
+        warnings.push('Invalid design file.');
         return { order: null, warnings };
       }
       const order = orderFromRecord(parsed, warnings);
@@ -557,7 +557,7 @@ export function decodeShare(input: string): ShareRead {
     }
     const payload = payloadOf(trimmed);
     if (payload === null) {
-      warnings.push('Link non valido.');
+      warnings.push('Invalid link.');
       return { order: null, warnings };
     }
     let text = payload;
@@ -565,25 +565,25 @@ export function decodeShare(input: string): ShareRead {
       try {
         text = decodeURIComponent(text);
       } catch {
-        warnings.push('Link non valido.');
+        warnings.push('Invalid link.');
         return { order: null, warnings };
       }
     }
     const bytes = fromBase64Url(text);
     if (!bytes) {
-      warnings.push('Link non valido.');
+      warnings.push('Invalid link.');
       return { order: null, warnings };
     }
     const parsed: unknown = JSON.parse(new TextDecoder().decode(bytes));
     if (!isRecord(parsed)) {
-      warnings.push('Link non valido.');
+      warnings.push('Invalid link.');
       return { order: null, warnings };
     }
     const order = orderFromRecord(parsed, warnings);
     if (order) noteGenerator(order, warnings);
     return { order, warnings };
   } catch {
-    warnings.push('Link non valido.');
+    warnings.push('Invalid link.');
     return { order: null, warnings };
   }
 }

@@ -50,7 +50,7 @@ describe('sharing', () => {
     const json = JSON.stringify({ ...order, heightMm: 2000, email: 'a@b.c' });
     const read = decodeShare(json);
     expect(read.order?.heightMm).toBe(800);
-    expect(read.warnings.some((warning) => warning.includes('Altezza'))).toBe(true);
+    expect(read.warnings.some((warning) => warning.includes('Height'))).toBe(true);
     expect(read.warnings.some((warning) => warning.includes('email'))).toBe(true);
     expect(JSON.stringify(read.order)).not.toContain('email');
   });
@@ -62,8 +62,8 @@ describe('sharing', () => {
       plate: { shape: 'rect', material: 'clear', marginMm: 80, cornerRMm: -2 },
     }));
     expect(wide.order?.plate).toEqual({ shape: 'rect', material: 'clear', marginMm: 60, cornerRMm: 0 });
-    expect(wide.warnings.some((warning) => warning.includes('Margine'))).toBe(true);
-    expect(wide.warnings.some((warning) => warning.includes('Raggio'))).toBe(true);
+    expect(wide.warnings.some((warning) => warning.includes('margin'))).toBe(true);
+    expect(wide.warnings.some((warning) => warning.includes('radius'))).toBe(true);
 
     const raw = JSON.parse(JSON.stringify(order)) as { customer: { effect: string }; plate?: unknown };
     raw.customer.effect = 'fisso';
@@ -71,7 +71,7 @@ describe('sharing', () => {
     const unknown = decodeShare(JSON.stringify(raw));
     expect(unknown.order?.plate).toBeNull();
     expect(unknown.order?.customer.effect).toBe('colore fisso');
-    expect(unknown.warnings.some((warning) => warning.includes('Fondale'))).toBe(true);
-    expect(unknown.warnings.some((warning) => warning.includes('Effetto'))).toBe(true);
+    expect(unknown.warnings.some((warning) => warning.includes('backdrop'))).toBe(true);
+    expect(unknown.warnings.some((warning) => warning.includes('effect'))).toBe(true);
   });
 });

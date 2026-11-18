@@ -88,7 +88,7 @@ describe('moved holes', () => {
     );
     expect(short.holes.length).toBeLessThan(P.ANCHOR_MIN_PER_SEGMENT);
     expect(short.warnings).toHaveLength(1);
-    expect(short.warnings[0]).toContain('Spezzone 2');
+    expect(short.warnings[0]).toContain('Segment 2');
     expect(short.warnings[0]).toContain('(15.0, 0.0)');
     for (const hole of short.holes) expect(hole.along).toBeGreaterThanOrEqual(14);
   });
@@ -370,10 +370,10 @@ describe('inner wall', () => {
     });
     try {
       expect(built.solid.status()).toBe('NoError');
-      const warning = built.warnings.find((line) => line.startsWith('Parete interna sotto'));
+      const warning = built.warnings.find((line) => line.startsWith('Inner wall under'));
       expect(warning).toBeTruthy();
       expect(warning).toContain(P.WALL_MIN.toFixed(1));
-      expect(warning).toMatch(/in \(-?\d+\.\d, -?\d+\.\d\)/);
+      expect(warning).toMatch(/at \(-?\d+\.\d, -?\d+\.\d\)/);
     } finally {
       built.solid.delete();
       built.diffuser.delete();
