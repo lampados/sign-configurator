@@ -758,7 +758,9 @@ input[type="color"] {
 .choice label:has(input:checked) {
   background: var(--neon);
   color: var(--on-neon);
-  box-shadow: none;
+  /* A ring that does not depend on the chosen colour: with white, the fill alone looks unselected. */
+  box-shadow: inset 0 0 0 2px rgb(0 0 0 / 0.78);
+  font-weight: 600;
 }
 
 .image-drop {

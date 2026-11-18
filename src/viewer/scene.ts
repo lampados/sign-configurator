@@ -419,7 +419,9 @@ export function mountSignScene(host: HTMLElement, options?: { background?: numbe
     // Time 0 is the still frame (snapshot, reduced motion): full colour, or the rainbow standing still.
     const moving = time > 0 && !reducedMotion.matches;
     const shift = moving ? (time * 0.00008) % 1 : 0;
-    const breath = 0.2 + 0.8 * (0.5 + 0.5 * Math.cos(time * 0.0021));
+    // The dark phases stay at about half brightness: below that the diffuser stops saturating and the
+    // preview shows the soft gaussians, which reads as a blurred, broken sign.
+    const breath = 0.5 + 0.5 * (0.5 + 0.5 * Math.cos(time * 0.0021));
     const head = (time * 0.00035) % 1;
     for (let i = 0; i < lights.length; i++) {
       const light = lights[i]!;
@@ -434,13 +436,13 @@ export function mountSignScene(host: HTMLElement, options?: { background?: numbe
         // Distance behind the head of the comet, along the piece of strip: a tail of a third.
         const behind = (head - light.index / span + 1) % 1;
         const tail = behind < 0.34 ? 1 - behind / 0.34 : 0;
-        scratch.copy(baseColor).multiplyScalar(0.12 + 0.88 * tail * tail);
+        scratch.copy(baseColor).multiplyScalar(0.42 + 0.58 * tail * tail);
       } else {
         // Every LED flickers with its own phase and speed, the same at every run.
         const seed = Math.sin((i + 1) * 12.9898) * 43758.5453;
         const phase = seed - Math.floor(seed);
         const wave = 0.5 + 0.5 * Math.sin(time * (0.003 + phase * 0.006) + phase * 6.283);
-        scratch.copy(baseColor).multiplyScalar(0.25 + 0.75 * wave * wave);
+        scratch.copy(baseColor).multiplyScalar(0.5 + 0.5 * wave * wave);
       }
       data[i * 3] = scratch.r;
       data[i * 3 + 1] = scratch.g;
