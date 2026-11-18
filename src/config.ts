@@ -24,8 +24,13 @@ export const PLATE_MOUNT_HOLE_D = 5.0;
 export const PLATE_MOUNT_INSET = 10;
 /** Fori passanti sotto asole e cavo. `false` lascia la lastra chiusa (SPEC §13). */
 export const PLATE_WIRE_HOLES = true;
-/** Diametro dei passaggi dei fili sotto asole e tasche d'angolo, mm. */
+/**
+ * Diametro dei passaggi dei fili sotto asole e tasche d'angolo, mm. Sotto un foro tondo
+ * dell'housing (`WIRE_HOLE_D`, `PATH_HOLE_D`) il fondale ha invece un foro uguale, nello stesso punto.
+ */
 export const PLATE_WIRE_HOLE_D = 6;
+/** Il fondale riporta anche i fori piccoli lungo il percorso. `false`: solo quelli dei capi. */
+export const PLATE_PATH_HOLES = true;
 /** Aria minima fra un foro di montaggio e la sagoma dell'insegna, mm. */
 export const PLATE_MOUNT_CLEARANCE = 3;
 /** Spessore lastra per materiale, mm. Segnaposto finché non si compra il foglio. */

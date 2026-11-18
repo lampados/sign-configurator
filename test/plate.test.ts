@@ -178,6 +178,41 @@ describe('fondale', () => {
     expect(withPlate.housingMesh.triVerts.length).toBe(none.housingMesh.triVerts.length);
   });
 
+  it('riporta i fori tondi dell\'housing: stesso punto, stesso diametro, capi e percorso', async () => {
+    const wasm = await getManifold();
+    const housing = twoBlocks();
+    // Il cavo passa dal foro grande del primo capo; un secondo capo e tre fori lungo il percorso.
+    housing.holes.cable = { kind: 'cable', x: 3, y: 10, d: 6 };
+    housing.holes.wireSlots = [
+      { segmentId: 1, role: 'DIN', d: 8, points: [[-1, 10], [3, 6], [7, 10], [3, 14]] },
+      { segmentId: 1, role: 'DOUT', d: 8, points: [[33, 10], [37, 6], [41, 10], [37, 14]] },
+    ];
+    housing.holes.pathHoles = [10, 28, 70].map((x) => ({ segmentId: 1, x, y: 10, d: 4 }));
+    const plate = buildPlate(wasm, housing, choice({}))!;
+    try {
+      const at = (x: number) => plate.holes.filter((hole) => Math.abs(hole.x - x) < 1e-6 && Math.abs(hole.y - 10) < 1e-6);
+      // Un foro solo dove cavo e capo coincidono, largo quanto il più grande dei due.
+      expect(at(3)).toEqual([{ kind: 'cable', x: 3, y: 10, d: 8 }]);
+      expect(at(37)).toEqual([{ kind: 'wire', x: 37, y: 10, d: 8 }]);
+      for (const x of [10, 28, 70]) expect(at(x)).toEqual([{ kind: 'wire', x, y: 10, d: 4 }]);
+      // Nessun foro si sovrappone a un altro: il genere della lastra è il numero dei fori.
+      expect(plate.solid.genus()).toBe(plate.holes.length);
+      expect(plateBom(plate).wireHoles).toBe(5);
+    } finally {
+      plate.solid.delete();
+    }
+  });
+
+  it('sotto un\'insegna vera il fondale ha un foro per ogni foro dell\'housing', async () => {
+    const result = await generateSign(order(choice({ shape: 'rect', marginMm: 20 })), readPublic);
+    expect(result.pathHoles.length).toBeGreaterThan(20);
+    const openings = result.slots.length + result.pockets.length + result.pathHoles.length;
+    // I puntini hanno due fori l'uno; il cavo conta fra i passaggi dei fili ed è uno dei capi.
+    const dots = result.bom.plate!.wireHoles - openings;
+    expect(dots).toBeGreaterThanOrEqual(0);
+    expect(dots % 2).toBe(0);
+  }, 180_000);
+
   it('passa per il link condiviso', () => {
     const plate = choice({ shape: 'pill', material: 'black', marginMm: 25 });
     const link = encodeShare(migrateOrder(order(plate)));

@@ -58,6 +58,8 @@ export interface HousingSlot {
   segmentId: number;
   role: 'DIN' | 'DOUT';
   points: [number, number][];
+  /** Diametro, se l'apertura è un foro tondo (`WIRE_HOLE_D`); assente se è un'asola. */
+  d?: number;
 }
 
 export interface HousingPocket {
@@ -66,6 +68,8 @@ export interface HousingPocket {
   segments: [number, number];
   wireMm: 0;
   points: [number, number][];
+  /** Diametro, se l'apertura è un foro tondo; assente se è una tasca. */
+  d?: number;
 }
 
 export interface HousingModel {
@@ -483,10 +487,11 @@ export function buildHousing(wasm: ManifoldToplevel, request: HousingRequest): H
     if (channel !== clipped) clipped.delete();
     const slots: HousingSlot[] = [];
     const wide = { ...p, WIRE_SLOT_W: p.CHANNEL_W };
+    const roundD = wireHoleD(p);
     for (const pending of freeSlots) {
       const section = keep(wireSlotSection(wasm, channel, pending.end, wide));
       for (const points of contoursOf(section)) {
-        if (points.length >= 3) slots.push({ segmentId: pending.segmentId, role: pending.role, points });
+        if (points.length >= 3) slots.push({ segmentId: pending.segmentId, role: pending.role, points, ...(roundD > 0 ? { d: roundD } : {}) });
       }
     }
     const cornerPockets: HousingPocket[] = [];
@@ -495,7 +500,7 @@ export function buildHousing(wasm: ManifoldToplevel, request: HousingRequest): H
       const section = keep(pocketSection(wasm, channel, joint, p));
       for (const points of contoursOf(section)) {
         if (points.length >= 3) {
-          cornerPockets.push({ x: joint.x, y: joint.y, segments: joint.segments, wireMm: 0, points });
+          cornerPockets.push({ x: joint.x, y: joint.y, segments: joint.segments, wireMm: 0, points, ...(roundD > 0 ? { d: roundD } : {}) });
         }
       }
       if (section.area() > 1e-8) {

@@ -15,6 +15,7 @@ import {
   PLATE_MOUNT_HOLE_D,
   PLATE_MOUNT_INSET,
   PLATE_T,
+  PLATE_PATH_HOLES,
   PLATE_WIRE_HOLE_D,
   PLATE_WIRE_HOLES,
 } from '../config';
@@ -205,8 +206,9 @@ function mountSpots(shape: PlateShape, min: Vec2, max: Vec2): Vec2[] {
 }
 
 /**
- * Fori del fondale: fissaggio sotto gli ancoraggi, cavo principale, passaggi dei fili sotto le
- * asole e i puntini (se `PLATE_WIRE_HOLES`), montaggio a parete se non cadono sotto l'insegna.
+ * Fori del fondale: fissaggio sotto gli ancoraggi, cavo principale, passaggi dei fili sotto i
+ * fori dei capi, quelli lungo il percorso e i puntini (se `PLATE_WIRE_HOLES`), montaggio a parete
+ * se non cadono sotto l'insegna.
  */
 function plateHoles(
   wasm: ManifoldToplevel,
@@ -222,15 +224,24 @@ function plateHoles(
   const cable = housing.holes.cable;
   if (cable) holes.push({ kind: 'cable', x: cable.x, y: cable.y, d: cable.d });
   if (PLATE_WIRE_HOLES) {
+    // Gli stessi fori dell'housing, nello stesso punto e dello stesso diametro: i fili passano
+    // dritti. Sotto un'asola o una tasca (non tonde) resta il foro da PLATE_WIRE_HOLE_D.
+    const wire = (x: number, y: number, d: number): void => {
+      // Il cavo passa dal foro grande del primo capo: lì si fa un foro solo, il più largo dei due.
+      const same = holes.find((hole) => hole.kind === 'cable' && Math.hypot(hole.x - x, hole.y - y) < (hole.d + d) / 2);
+      if (same) same.d = Math.max(same.d, d);
+      else holes.push({ kind: 'wire', x, y, d });
+    };
     for (const slot of housing.holes.wireSlots) {
       const [x, y] = centroid(slot.points);
-      holes.push({ kind: 'wire', x, y, d: PLATE_WIRE_HOLE_D });
+      wire(x, y, slot.d ?? PLATE_WIRE_HOLE_D);
     }
     for (const pocket of housing.holes.cornerPockets) {
-      const [x, y] = centroid(pocket.points);
-      holes.push({ kind: 'wire', x, y, d: PLATE_WIRE_HOLE_D });
+      const [x, y] = pocket.d ? [pocket.x, pocket.y] : centroid(pocket.points);
+      wire(x, y, pocket.d ?? PLATE_WIRE_HOLE_D);
     }
-    for (const dot of housing.holes.dotWires) holes.push({ kind: 'wire', x: dot.x, y: dot.y, d: dot.d });
+    for (const dot of housing.holes.dotWires) wire(dot.x, dot.y, dot.d);
+    if (PLATE_PATH_HOLES) for (const hole of housing.holes.pathHoles) wire(hole.x, hole.y, hole.d);
   }
 
   let dropped = 0;

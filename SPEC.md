@@ -1237,9 +1237,14 @@ le misure finali sono quelle nominali.
 
 ### Passaggi dei fili
 
-I fili che escono dall'insegna attraversano il fondale se `PLATE_WIRE_HOLES` è vero (default `true`):
-un foro Ø `PLATE_WIRE_HOLE_D` sotto ogni asola e tasca d'angolo e uno sotto ogni piazzola dei
-puntini (Ø `DOT_WIRE_HOLE_D`). `false` lascia il fondale chiuso in quei punti (resta il foro del
+I fili che escono dall'insegna attraversano il fondale se `PLATE_WIRE_HOLES` è vero (default `true`).
+**Dal 18 novembre 2026 il fondale riporta gli stessi fori dell'housing**, nello stesso punto e dello
+stesso diametro: quelli grandi dei capi (`WIRE_HOLE_D`), quelli piccoli lungo il percorso
+(`PATH_HOLE_D`; si spengono da soli con `PLATE_PATH_HOLES` falso) e quelli dei puntini
+(`DOT_WIRE_HOLE_D`). Dove il cavo passa dal foro grande del primo capo il fondale ha un foro solo,
+largo quanto il più grande dei due. Nessun foro si sovrappone a un altro. Vale per ogni fondale
+pieno, cioè oggi per tutti. Con le asole di prima (`WIRE_HOLE_D` 0) resta
+un foro Ø `PLATE_WIRE_HOLE_D` sotto ogni asola e tasca d'angolo. `false` lascia il fondale chiuso in quei punti (resta il foro del
 cavo). Non cambia cornice né diffusore. Resta una domanda aperta (§10) finché non si misura sul
 campione.
 
