@@ -5,12 +5,13 @@ Bozza, da incollare in `SPEC.md` dopo §4bis. Sostituisce, per queste quattro sc
 nel configuratore.
 
 **Stato**: cinese e giapponese sono **misurati e integrati** (14 novembre 2026). Il **cirillico** è
-integrato dal 17 novembre 2026: vedi «Cirillico» più sotto.
+integrato dal 17 novembre 2026: vedi «Cirillico» più sotto. L'**hindi** (devanagari) è integrato dal
+18 novembre 2026, ed è la prima scrittura che passa da harfbuzzjs: vedi «Hindi» più sotto.
 
 **Arabo ed ebraico sono rimandati.** Non bastano i font: l'arabo cambia la forma di ogni lettera
 secondo la posizione nella parola, e in entrambe le scritture l'ordine visivo va calcolato
-(algoritmo bidirezionale). Serve un motore di composizione, harfbuzzjs in WebAssembly, caricato solo
-per quei font. È un lavoro a sé e non blocca niente: fino ad allora quelle scritture restano al
+(algoritmo bidirezionale). Il motore di composizione c'è già, per l'hindi (`src/fonts/shaper.ts`);
+mancano l'ordine da destra a sinistra e le regole sui punti e sulle vocali. Non blocca niente: fino ad allora quelle scritture restano al
 preventivo su misura (§12.8). Quanto segue su di loro è una traccia, non ancora una scelta.
 
 Fase 0, variazione della larghezza del tratto sullo scheletro (limite 25 %):
@@ -21,6 +22,8 @@ Fase 0, variazione della larghezza del tratto sullo scheletro (limite 25 %):
 | Noto Sans SC Light | 6–9 % | adottato per il cinese |
 | LXGW WenKai Light | 30–37 % | **scartato**: il pennello modula troppo il tratto |
 | Comfortaa Light | 6–11 % | adottato per il cirillico |
+| Poppins Light | entro il 25 % (test) | adottato per l'hindi |
+| Mukta ExtraLight | — | **scartato**: terminali a goccia, lasciano uncini nello scheletro |
 
 I file sono sottoinsiemi (GB 2312 e Shift-JIS) di circa 2,5 MB l'uno, invece di 18 e 27 MB: vedi
 `public/fonts/README.md`. Devono essere **istanze statiche**: opentype.js ignora gli assi dei font
@@ -35,6 +38,7 @@ Un font per scrittura, tutti SIL OFL, tutti `kind: "outline"`, `stripMode: "cent
 |---|---|---|---|---|
 | Cinese (semplificato) | `noto-sans-sc` | **Noto Sans SC** Light | tratto uniforme, copre tutto il cinese quotidiano, si abbina a M PLUS Rounded | — |
 | Cirillico | `comfortaa` | **Comfortaa** Light | geometrico, terminali tondi, tratto costante; ha anche il latino | Neucha (a mano) |
+| Hindi (devanagari) | `poppins` | **Poppins** Light | geometrico, tratto costante, terminali netti; ha anche il latino | — |
 | Giapponese (kana + kanji) | `mplus-rounded` | **M PLUS Rounded 1c** Light | terminali tondi e tratto costante: è già la forma di un tubo | Klee One (a penna) |
 | Arabo | `playpen-arabic` | **Playpen Sans Arabic** Light | scrittura a mano, monolinea, ha anche il latino | Lemonada |
 | Ebraico | `playpen-hebrew` | **Playpen Sans Hebrew** Light | corsivo a mano, stessa famiglia dell'arabo | Varela Round |
@@ -55,7 +59,7 @@ Campi nuovi, con default che lasciano invariati i quattro font latini:
 
 | Campo | Default | Significato |
 |---|---|---|
-| `script` | `"latin"` | `"latin"` \| `"han"` \| `"japanese"` \| `"cyrillic"` \| `"arabic"` \| `"hebrew"` |
+| `script` | `"latin"` | `"latin"` \| `"han"` \| `"japanese"` \| `"cyrillic"` \| `"devanagari"` \| `"arabic"` \| `"hebrew"` |
 | `direction` | `"ltr"` | `"ltr"` \| `"rtl"` |
 | `shaper` | `"opentype"` | `"opentype"` (com'è oggi) \| `"harfbuzz"` |
 | `heightGlyph` | `"H"` | glifo che definisce l'altezza chiesta dal cliente |
@@ -77,15 +81,48 @@ legano, un glifo per carattere. Basta un font che abbia i glifi.
 - **Fuori**: il corsivo russo legato (lettere unite come a mano) aspetta il motore di composizione,
   come l'arabo.
 
+### Hindi
+
+Si scrive da sinistra a destra, ma le lettere non stanno una per casella: le consonanti senza vocale
+si fondono in legature (स + ् + त) e la vocale ि si disegna **prima** della consonante che nel
+testo la precede. `forEachGlyph` di opentype.js darebbe lettere staccate, il virama a vista e la ि
+al posto sbagliato.
+
+- **Font**: Poppins Light, file statico originale (162 KB), con il suo latino: «Ciao नमस्ते» è una
+  sola insegna in un solo font.
+- **Composizione** (`src/fonts/shaper.ts`): `shaper: "harfbuzz"` nel registro. harfbuzzjs decide
+  quali glifi usare e dove (indice, avanzamento, spostamento, in unità font); i contorni si leggono
+  dallo stesso file con opentype.js, e da lì [A] prosegue invariata. Il modulo (WASM, 440 KB) si
+  carica con `import()` dinamico alla prima richiesta di un font che lo chiede: gli altri font non
+  lo scaricano. Gira nel main thread, nel worker e in Node; è deterministico.
+- **Tratti per scrittura**: harfbuzz compone un tratto con una sola scrittura. La riga si divide in
+  tratti devanagari (script `Deva`, lingua `hi`) e non; spazi, cifre, punteggiatura, ZWNJ e ZWJ
+  restano nel tratto in corso.
+- **Senza compositore** `rasterizeText` si rifiuta con un errore: lettere staccate sarebbero
+  un'insegna sbagliata che sembra giusta.
+- **Vocale senza consonante**: niente cerchio tratteggiato (`DO_NOT_INSERT_DOTTED_CIRCLE`).
+- **Altezza**: `heightGlyph` क. La sua sommità è la linea orizzontale in alto (shirorekha), da cui
+  pendono le lettere. Le vocali sopra la linea (े, ि, ी) salgono di un altro 35 % circa: l'ingombro
+  reale è quello del bbox. La «H» latina di Poppins è più bassa del 6 %.
+- **Gruppi**: `glyphs[].char` è il testo della sillaba («स्ते»), sul glifo più a sinistra del gruppo;
+  la copertura per lettera (§5) diventa copertura per sillaba.
+- **Geometria**: la linea in alto unisce tutta la parola in un tratto continuo. Ogni asta che ne
+  scende è una giunzione a T, quindi molti spezzoni: «नमस्ते» ne ha 11–13. Anusvara e nukta sono
+  componenti piccole e seguono `I_DOT_MODE`.
+- **Limite noto**: dove una vocale sopra la linea la incontra ad angolo stretto (े) la validazione
+  segnala «sagome che si fondono» con un'altezza minima che cresce insieme all'altezza. È un
+  incrocio, non due tratti vicini: l'avviso non blocca, ma l'altezza suggerita lì non è affidabile.
+- **Caricamento**: non è `lazy`; la miniatura è disegnata nel font stesso («नमस्ते»), composta dal
+  browser.
+
 ### Composizione del testo
 
 - **Normalizzazione**: il testo dell'ordine è NFC, in **ordine logico** (come è stato digitato).
   L'ordine visivo lo calcola la pipeline, mai l'ordine salvato.
 - **Arabo**: le lettere cambiano forma secondo la posizione (iniziale, mediana, finale, isolata) e si
   legano. `forEachGlyph` di opentype.js non basta. Con `shaper: "harfbuzz"` la riga passa da
-  **harfbuzzjs** (WASM, caricato con `import()` dinamico solo per questi font): restituisce glifi,
-  avanzamenti e spostamenti; i contorni si leggono poi dallo stesso TTF. Gira nel worker e in Node come
-  il resto di [A].
+  **harfbuzzjs**, come già fa l'hindi: restituisce glifi, avanzamenti e spostamenti; i contorni si
+  leggono poi dallo stesso TTF.
 - **Ebraico**: nessuna legatura, solo direzione da destra a sinistra e forme finali già nel testo.
   Stesso `shaper`, per avere un solo percorso RTL.
 - **Bidi**: una riga può contenere numeri o parole latine dentro un testo RTL. L'ordine visivo segue
@@ -103,6 +140,7 @@ L'altezza chiesta dal cliente non può essere la sommità della «H». `heightGl
 | Scrittura | `heightGlyph` | L'altezza è |
 |---|---|---|
 | cinese, giapponese | 永 | l'altezza del riquadro del carattere (dal punto più basso al più alto) |
+| hindi | क | dalla linea di base alla sommità della linea orizzontale in alto |
 | arabo | ا (alef isolata) | dalla linea di base alla sommità dell'alef |
 | ebraico | ה | dalla linea di base alla sommità della lettera |
 
@@ -181,7 +219,10 @@ sale; nessuna migrazione di schema.
 
 ### Domande aperte
 
-- Peso di harfbuzzjs e dei font CJK sul primo caricamento da mobile: va misurato.
+- Peso dei font CJK sul primo caricamento da mobile: va misurato. harfbuzzjs pesa 440 KB e si
+  scarica solo con un font che lo chiede.
+- Altre lingue in devanagari (marathi, nepalese, sanscrito): il font le copre, ma la lingua passata
+  a harfbuzz è sempre `hi` e alcune forme locali possono differire. Non provate.
 - Cinese: serve distinguere semplificato e tradizionale nel menu, o basta un font che li copre entrambi?
-- Coreano, greco, devanagari, thai: fuori da questa sezione. Playpen Sans copre già greco,
-  devanagari e thai con lo stesso disegno, se servissero. Comfortaa ha anche il greco: non è provato.
+- Coreano, greco, thai: fuori da questa sezione. Playpen Sans copre già greco e thai con lo
+  stesso disegno, se servissero. Comfortaa ha anche il greco: non è provato.

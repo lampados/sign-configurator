@@ -20,9 +20,10 @@ Last updated: November 2026.
 - **Translations.** One JSON file per language, English as the source. Italian, French, Spanish,
   Portuguese and Chinese first. An issue form will let anyone translate the interface without
   using git.
-- **Arabic and Hebrew.** These need a text-shaping engine (joining letters, right-to-left).
-  The same engine will fix joined scripts such as Pecita, whose letters do not connect today,
-  and allow joined Russian handwriting.
+- **Arabic and Hebrew.** The text-shaping engine they need is now in place (it arrived with
+  Hindi). What is left is right-to-left order and the rules for dots and vowel marks. The same
+  engine can fix joined scripts such as Pecita, whose letters do not connect today, and allow
+  joined Russian handwriting.
 - **More fonts.** Seven more are checked and waiting. A font enters only with a licence that
   allows redistribution, stated by its author.
 - **Assembly time you can trust.** Strips that do not bend sideways are cut at every bend, ten
@@ -44,6 +45,8 @@ Last updated: November 2026.
 
 - Cutting the sign into parts that fit your printer's plate, set in Technical settings.
 - A menu of LED strips that fills in the measurements, with a scale drawing of each strip.
+- Hindi (Poppins), with letters that join and reorder as they should. It also takes Latin:
+  "Ciao नमस्ते" is one sign.
 - A Cyrillic font (Comfortaa), which also takes Latin: "Ciao Привет" is one sign.
 - Chinese and Japanese fonts; five more Latin fonts.
 - Saving, sharing and reopening a design; editing the paths by hand.

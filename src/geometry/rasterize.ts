@@ -2,6 +2,7 @@
 // Modulo puro, senza DOM né canvas: scanline scritta a mano, regole nonzero ed evenodd, un campione
 // al centro di ogni pixel, nessun antialiasing. Stesso input → stessi byte, in browser, worker e Node.
 import type { Font, PathCommand } from 'opentype.js';
+import { loadShaper, type Shaper } from '../fonts/shaper';
 import { getFont, type FontEntry, type StripMode } from '../fonts/registry';
 import { loadFont, type FontBytesReader } from '../fonts/loadFont';
 import { layoutStroke } from './strokeLayout';
@@ -399,7 +400,12 @@ export function measureFontMetrics(
  * fedele al font: con `hollowTubes` contiene due linee per tubo. Con `stripMode` `"walls"`
  * ognuna diventa una striscia, senza accoppiarle in una mediana.
  */
-export function rasterizeText(font: Font, entry: FontEntry, input: Omit<RasterizeInput, 'fontId'>): TextRaster {
+export function rasterizeText(
+  font: Font,
+  entry: FontEntry,
+  input: Omit<RasterizeInput, 'fontId'>,
+  shaper?: Shaper | null,
+): TextRaster {
   const fontName = entry.name;
   const warnings: string[] = [];
   let text = input.text;
@@ -407,8 +413,13 @@ export function rasterizeText(font: Font, entry: FontEntry, input: Omit<Rasteriz
     text = text.replace(/\r\n|[\r\n]/g, ' ');
     warnings.push('Il testo va su una sola riga: gli a capo sono diventati spazi.');
   }
+  // Senza compositore un font come Poppins darebbe lettere staccate e nell'ordine sbagliato:
+  // un'insegna illeggibile, non un errore visibile. Meglio fermarsi.
+  if (entry.shaper === 'harfbuzz' && !shaper) throw new Error(`${fontName} va composto con harfbuzz: manca il compositore.`);
 
-  const missing = [...new Set(Array.from(text).filter((ch) => !/\s/.test(ch) && !font.hasChar(ch)))];
+  // ZWNJ e ZWJ guidano le legature e non hanno un disegno: non sono caratteri mancanti.
+  const invisible = (ch: string): boolean => /\s/.test(ch) || (shaper != null && /[\u200c\u200d]/.test(ch));
+  const missing = [...new Set(Array.from(text).filter((ch) => !invisible(ch) && !font.hasChar(ch)))];
   for (const ch of missing) warnings.push(`Carattere ${describeChar(ch)} non presente in ${fontName}: ignorato.`);
 
   const mmPerUnit = input.heightMm / entry.capHeightMeasured;
@@ -418,18 +429,47 @@ export function rasterizeText(font: Font, entry: FontEntry, input: Omit<Rasteriz
 
   const contours: Contour[] = [];
   const glyphs: GlyphInfo[] = [];
-  const advanceMm = font.forEachGlyph(text, 0, 0, fontSizeMm, options, (glyph, gx, gy, size) => {
-    if (glyph.index === 0) return; // .notdef: il carattere è già segnalato come mancante
-    const own = flattenCommands(glyph.getPath(gx, gy, size, options, font).commands, FLATTEN_TOLERANCE_MM, flip);
-    if (own.length === 0) return;
-    contours.push(...own);
-    glyphs.push({
-      glyphIndex: glyph.index,
-      char: glyph.unicode !== undefined ? String.fromCodePoint(glyph.unicode) : null,
-      x: gx,
-      bbox: contoursBBox(own),
+  let advanceMm: number;
+  if (shaper) {
+    // Glifi e posizioni da harfbuzz, contorni da opentype.js (SPEC §4ter). Un gruppo (sillaba) può
+    // avere più glifi, o un glifo solo per più caratteri: il suo nome è il testo del gruppo, sul
+    // glifo più a sinistra.
+    const shaped = shaper(text);
+    const starts = [...new Set(shaped.map((g) => g.cluster))].sort((a, b) => a - b);
+    const named = new Map<number, GlyphInfo>();
+    let pen = 0;
+    for (const g of shaped) {
+      const gx = (pen + g.xOffset) * mmPerUnit;
+      pen += g.xAdvance;
+      if (g.glyphIndex === 0) continue; // .notdef: il carattere è già segnalato come mancante
+      const path = font.glyphs.get(g.glyphIndex).getPath(gx, -g.yOffset * mmPerUnit, fontSizeMm);
+      const own = flattenCommands(path.commands, FLATTEN_TOLERANCE_MM, flip);
+      if (own.length === 0) continue;
+      contours.push(...own);
+      const info: GlyphInfo = { glyphIndex: g.glyphIndex, char: null, x: gx, bbox: contoursBBox(own) };
+      glyphs.push(info);
+      const first = named.get(g.cluster);
+      if (!first || info.x < first.x) named.set(g.cluster, info);
+    }
+    for (const [cluster, info] of named) {
+      const next = starts[starts.indexOf(cluster) + 1] ?? text.length;
+      info.char = text.slice(cluster, next).trim() || null;
+    }
+    advanceMm = pen * mmPerUnit;
+  } else {
+    advanceMm = font.forEachGlyph(text, 0, 0, fontSizeMm, options, (glyph, gx, gy, size) => {
+      if (glyph.index === 0) return; // .notdef: il carattere è già segnalato come mancante
+      const own = flattenCommands(glyph.getPath(gx, gy, size, options, font).commands, FLATTEN_TOLERANCE_MM, flip);
+      if (own.length === 0) return;
+      contours.push(...own);
+      glyphs.push({
+        glyphIndex: glyph.index,
+        char: glyph.unicode !== undefined ? String.fromCodePoint(glyph.unicode) : null,
+        x: gx,
+        bbox: contoursBBox(own),
+      });
     });
-  });
+  }
 
   const raster = rasterizeContours(contours, input.pxPerMm !== undefined ? { pxPerMm: input.pxPerMm } : {});
   warnings.push(...raster.warnings);
@@ -460,6 +500,6 @@ export async function rasterize(input: RasterizeInput, read?: FontBytesReader): 
   const entry = getFont(input.fontId);
   if (!entry) throw new Error(`Font sconosciuto: "${input.fontId}"`);
   if (entry.kind === 'stroke') return (await layoutStroke(entry, input, read)).raster;
-  const font = await loadFont(input.fontId, read);
-  return rasterizeText(font, entry, input);
+  const [font, shaper] = await Promise.all([loadFont(input.fontId, read), loadShaper(input.fontId, read)]);
+  return rasterizeText(font, entry, input, shaper);
 }

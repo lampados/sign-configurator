@@ -37,6 +37,20 @@ It is the static `Comfortaa-Light.ttf` (version 3.103) from
 is a variable file whose default master is Regular: because the name is reserved we cannot ship an
 instance cut from it, and `opentype.js` would read the wrong weight (see below).
 
+## Devanagari (Hindi)
+
+One upstream file, unchanged. Poppins carries Latin and Devanagari in the same design, so a sign
+can mix them.
+
+| Folder | Font | Author | Licence |
+|---|---|---|---|
+| `Poppins` | Poppins Light | Indian Type Foundry | OFL |
+
+It is the static `Poppins-Light.ttf` from
+[google/fonts `ofl/poppins`](https://github.com/google/fonts/tree/main/ofl/poppins). Devanagari
+letters fuse and reorder, so this font is laid out by `harfbuzzjs` (`src/fonts/shaper.ts`) and the
+outlines are then read by `opentype.js` from the same file.
+
 ## CJK: subsets
 
 The Chinese and Japanese fonts are **subsets** of the upstream releases, cut down to the everyday

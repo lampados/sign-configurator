@@ -58,9 +58,10 @@ export default defineConfig(({ command, isPreview, mode }) => ({
     },
   },
   // Il pre-bundling sposterebbe manifold.js in .vite/deps, rompendo il suo
-  // new URL('manifold.wasm', import.meta.url): l'URL del .wasm lo passiamo noi.
+  // new URL('manifold.wasm', import.meta.url): l'URL del .wasm lo passiamo noi. harfbuzzjs trova
+  // il suo .wasm allo stesso modo, e fuori dal pre-bundling l'URL resta giusto.
   optimizeDeps: {
-    exclude: ['manifold-3d'],
+    exclude: ['manifold-3d', 'harfbuzzjs'],
   },
   worker: {
     format: 'es',

@@ -21,7 +21,7 @@ export type StripMode = 'centerline' | 'walls';
 export type FontKind = 'outline' | 'stroke';
 
 /** Scrittura del font (SPEC §4ter): decide il glifo che dà l'altezza chiesta dal cliente. */
-export type FontScript = 'latin' | 'han' | 'japanese' | 'cyrillic';
+export type FontScript = 'latin' | 'han' | 'japanese' | 'cyrillic' | 'devanagari';
 
 export interface FontEntry {
   id: string;
@@ -46,8 +46,14 @@ export interface FontEntry {
   /** Scrittura. Assente: latina. */
   script?: FontScript;
   /**
+   * Chi mette in fila i glifi. Assente: opentype.js, un glifo per carattere. `harfbuzz` per le
+   * scritture che fondono e riordinano le lettere (devanagari): vedi `src/fonts/shaper.ts`.
+   */
+  shaper?: 'harfbuzz';
+  /**
    * Glifo che definisce l'altezza. Assente: "H" (ripiego "I"). Per cinese e giapponese è 永, il
-   * carattere di riferimento dei font CJK: la "H" lì è un glifo latino di servizio.
+   * carattere di riferimento dei font CJK: la "H" lì è un glifo latino di servizio. Per l'hindi è क:
+   * la sua sommità è la linea orizzontale (shirorekha) da cui pendono tutte le lettere.
    */
   heightGlyph?: string;
   /**
@@ -230,6 +236,26 @@ export const FONTS: readonly FontEntry[] = [
     notes:
       'SIL OFL. Giapponese, peso Light: terminali tondi e tratto costante entro il 10 %, cioè già ' +
       'la forma di un tubo. Sottoinsieme Shift-JIS, vedi public/fonts/README.md.',
+  },
+  {
+    id: 'poppins',
+    name: 'Poppins',
+    kind: 'outline',
+    file: 'fonts/Poppins/Poppins-Light.ttf',
+    defaultTracking: 0,
+    capHeightMeasured: 740,
+    xHeightMeasured: 546,
+    hollowTubes: false,
+    stripMode: 'centerline',
+    script: 'devanagari',
+    shaper: 'harfbuzz',
+    heightGlyph: 'क',
+    sample: 'नमस्ते',
+    notes:
+      'SIL OFL, Indian Type Foundry. Hindi (devanagari) e latino con lo stesso disegno: geometrico, ' +
+      'peso Light, tratto costante. Le lettere si fondono e si riordinano, quindi il testo passa da ' +
+      'harfbuzz. L\'altezza è quella della linea orizzontale in alto, misurata su क: la "H" latina ' +
+      'è più bassa del 6 %. File statico originale.',
   },
 ];
 
