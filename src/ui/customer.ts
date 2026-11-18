@@ -298,6 +298,7 @@ app.innerHTML = `
         </div>
         <div class="pane" data-pane="tech" hidden>
           <p class="tech-note">${S.tech.note}</p>
+          <p id="parts-tech" class="tech-note">${S.parts.techLead} <a href="${S.parts.url}" target="_blank" rel="noopener">${S.parts.link}</a>. ${S.parts.tail}</p>
           ${techGroups}
           <div class="actions">
             <button type="button" id="tech-reset">${S.tech.reset}</button>
@@ -324,6 +325,7 @@ app.innerHTML = `
             <h3 id="price-title">${S.price.title}</h3>
             <dl id="price-lines"></dl>
             <p class="tech-note">${S.price.note}</p>
+            <p id="parts-price" class="tech-note">${S.parts.priceLead} <a href="${S.parts.url}" target="_blank" rel="noopener">${S.parts.link}</a>. ${S.parts.tail}</p>
           </section>
           <p id="wled-note" class="tech-note">${S.wled.noteLead} <a href="${S.wled.url}" target="_blank" rel="noopener">${S.wled.name}</a>, ${S.wled.note}</p>
           <p id="blocked-reason" hidden></p>

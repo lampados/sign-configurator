@@ -14,6 +14,14 @@ export const S = {
     contribute: 'Contribute to this project on GitHub',
     repo: 'https://github.com/lampados/sign-configurator',
   },
+  /** Link to the parts page: the open list of strips, controllers, power supplies and boxes. */
+  parts: {
+    url: 'parts.html',
+    priceLead: 'Prices come from the open',
+    techLead: 'Strips, controllers, power supplies and boxes are in the open',
+    link: 'parts list',
+    tail: 'Know a better part or price? Add it there.',
+  },
   /** Credit to WLED, the firmware of the controllers. Ciao is a separate project: say both. */
   wled: {
     url: 'https://kno.wled.ge/',

@@ -10,7 +10,7 @@ import { supplyArt } from '../parts/supplyArt';
 import { SUPPLIES, type SupplyFamily, type SupplyKind } from '../parts/supplies';
 
 /** "New part" issue form (`.github/ISSUE_TEMPLATE/new-part.yml`): anyone proposes, the maintainer approves. */
-const NEW_PART_URL = 'https://github.com/vongomben/sign-configurator/issues/new?template=new-part.yml';
+const NEW_PART_URL = 'https://github.com/lampados/sign-configurator/issues/new?template=new-part.yml';
 
 function addOne(category: string): string {
   const title = encodeURIComponent(`[Part] ${category}: `);
