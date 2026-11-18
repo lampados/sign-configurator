@@ -111,8 +111,13 @@ export async function openPathEditor(options: PathEditorOptions): Promise<PathEd
     return screen / zoom;
   }
 
+  /**
+   * Reach of the pointer, in sign millimetres. paper.js measures the hit tolerance in project
+   * units, not in screen pixels: the 8 px (22 with a finger) must be divided by the zoom, like the
+   * size of the nodes. Without it, zoomed in, a click reached 8 mm around: several nodes at once.
+   */
   function hitPad(): number {
-    return coarsePointer() ? 22 : 8;
+    return px(coarsePointer() ? 22 : 8);
   }
 
   function itemOf(id: string | null): CurveItem | null {
@@ -388,13 +393,37 @@ export async function openPathEditor(options: PathEditorOptions): Promise<PathEd
     options.onCommit(doc.paths, doc.crossings);
   }
 
+  /**
+   * What is under the pointer. `hitTest` returns the item drawn last among those within the
+   * tolerance, so a neighbouring node drawn later used to win over the node actually pressed. Here
+   * all the hits are read: among nodes, handles and dots the one whose centre is nearest wins, and
+   * a curve is picked only when no such point is in reach.
+   */
   function hitAt(point: paper.Point): paper.HitResult | null {
-    return paper.project.hitTest(point, {
+    const hits = paper.project.hitTestAll(point, {
       segments: false,
       stroke: true,
       fill: true,
       tolerance: hitPad(),
     });
+    let best: paper.HitResult | null = null;
+    let bestDist = Infinity;
+    let curve: paper.HitResult | null = null;
+    for (const hit of hits) {
+      const role = hit.item.data?.role as string | undefined;
+      if (role === 'curve') {
+        curve ??= hit;
+        continue;
+      }
+      if (role !== 'node' && role !== 'handle' && role !== 'dot' && role !== 'rotate') continue;
+      // A handle is smaller than a node: at the same distance it comes first.
+      const dist = hit.item.bounds.center.getDistance(point) - (role === 'handle' ? 1e-3 : 0);
+      if (dist < bestDist) {
+        best = hit;
+        bestDist = dist;
+      }
+    }
+    return best ?? curve ?? hits[0] ?? null;
   }
 
   function clampNode(path: paper.Path, index: number, point: paper.Point): paper.Point {
