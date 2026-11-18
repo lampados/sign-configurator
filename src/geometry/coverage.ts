@@ -1,5 +1,5 @@
-// Copertura della striscia rispetto alla linea di riferimento (SPEC §5).
-// Ogni millimetro è acceso o spento, e lo spento ha un motivo. Modulo puro.
+// Coverage of the strip against the reference line (SPEC §5).
+// Every millimetre is lit or unlit, and the unlit has a reason. Pure module.
 
 import type { Params } from '../config';
 import type { Point } from './rasterize';
@@ -20,7 +20,7 @@ export const DARK_LABEL: Record<DarkReason, string> = {
 export interface DarkStretch {
   letter: string;
   reason: DarkReason;
-  /** Lunghezza che entra nel conto. Per una parete è la metà del tratto. */
+  /** Length that enters the count. For a wall it is half the stretch. */
   lengthMm: number;
   points: Point[];
 }
@@ -35,7 +35,7 @@ export interface LetterCoverage {
 export interface CoverageReport {
   letters: LetterCoverage[];
   stretches: DarkStretch[];
-  /** null se ingrandire non basta, per esempio per le pareti senza compagna. */
+  /** null if making it bigger is not enough, for example for walls without a partner. */
   heightMm: number | null;
   warnings: { message: string; x: number; y: number }[];
 }
@@ -154,7 +154,7 @@ interface Span {
   reason: DarkReason | null;
   lengthMm: number;
   points: Point[];
-  /** Quanto di questa lunghezza entra nel riferimento. */
+  /** How much of this length enters the reference. */
   accountMm: number;
 }
 
@@ -214,7 +214,7 @@ export function coverSign(input: {
   for (const gap of input.gaps) {
     if (gap.points.length >= 2) spans.push(...spansOf(gap.points, letters, 'incrocio', 1));
   }
-  // Il puntino segue I_DOT_MODE: non è un tratto spento «scartato dalla validazione».
+  // The dot follows I_DOT_MODE: it is not an unlit stretch "discarded by validation".
   for (const wall of input.walls) {
     if (wall.points.length >= 2) spans.push(...spansOf(wall.points, letters, 'parete', 0.5));
   }
@@ -270,7 +270,7 @@ export function coverSign(input: {
   return { letters: reportLetters, stretches, heightMm, warnings };
 }
 
-/** Pareti rimaste senza coppia accettata: niente striscia sopra. */
+/** Walls left without an accepted pair: no strip on them. */
 export function unpairedWalls(
   edges: readonly { id: number; points: Point[] }[],
   pairing: { pairs: readonly { a: number; b: number }[]; dubious: readonly { a: number; b: number }[] } | null,
@@ -293,7 +293,7 @@ export function unpairedWalls(
     .map((edge) => ({ points: edge.points }));
 }
 
-/** Inserisce gli avvisi di copertura fra quelli dello spezzone e alza l'altezza minima. */
+/** Inserts the coverage warnings among those of the segment and raises the minimum height. */
 export function applyCoverage(
   strip: { issues: ValidationIssue[]; suggestion: { heightMm: number | null } },
   report: CoverageReport,

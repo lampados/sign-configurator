@@ -1,4 +1,4 @@
-// [A]–[I] nel worker: dall'ordine alle mesh, ai fori e alla distinta (SPEC §5, §6).
+// [A]–[I] in the worker: from the order to the meshes, the holes and the bill of materials (SPEC §5, §6).
 import { buildPlate, plateBom, type PlateBom, type PlateModel } from '../geometry/plate';
 import type { Manifold, Mesh } from 'manifold-3d';
 import { ASSEMBLY_MIN_PER_CUT, resolveParams, stripFitWarnings, stripProfileOf } from '../config';
@@ -41,39 +41,39 @@ export interface GenerateResult {
   holes: { anchors: HousingHole[]; cable: HousingHole | null };
   slots: HousingSlot[];
   pockets: HousingPocket[];
-  /** Fori piccoli lungo il percorso, sul fondo del canale. */
+  /** Small holes along the path, in the channel floor. */
   pathHoles: { segmentId: number; x: number; y: number; d: number }[];
   outline: [number, number][][];
   centerlines: Centerline[];
-  /** LED lungo la linea centrale, DIN → DOUT. Il passo è LED_PER_M. */
+  /** LEDs along the centreline, DIN → DOUT. The pitch is LED_PER_M. */
   lightPoints: LightPoint[];
-  /** Distanza faccia LED–diffusore, mm. È la sigma della gaussiana in anteprima. */
+  /** LED face–diffuser distance, mm. It is the sigma of the gaussian in the preview. */
   ledGapMm: number;
-  /** BOM di geometria più `plate`, il riepilogo del fondale (SPEC §13). Senza fondale è null. */
+  /** Geometry BOM plus `plate`, the summary of the backdrop (SPEC §13). Without a backdrop it is null. */
   bom: Bom & { plate: PlateBom | null };
   warnings: string[];
-  /** Spezzoni dopo [D], prima di Chaikin. «Modifica tracciati» parte da qui. */
+  /** Segments after [D], before Chaikin. "Edit paths" starts from here. */
   segments: EditSegment[];
-  /** Fondale (SPEC §13), dietro l'housing fra Z = −spessore e 0. null senza fondale. */
+  /** Backdrop (SPEC §13), behind the housing between Z = −thickness and 0. null without a backdrop. */
   plateMesh: MeshData | null;
   plate: PlateSummary | null;
-  /** Pezzi per il piatto di stampa (SPEC §14). null: housing e diffusore stanno sul piatto interi. */
+  /** Pieces for the print bed (SPEC §14). null: housing and diffuser fit the bed whole. */
   split: SplitResult | null;
 }
 
 export interface SplitResult {
-  /** Ascisse dei tagli verticali, crescenti, mm. */
+  /** Abscissas of the vertical cuts, increasing, mm. */
   cutsX: number[];
-  /** Giunti che attraversano un canale acceso: lì la striscia va interrotta e risaldata. */
+  /** Joints that cross a lit channel: there the strip must be interrupted and resoldered. */
   onChannel: number;
   minY: number;
   maxY: number;
-  /** Un pezzo per elemento, da sinistra a destra. */
+  /** One piece per element, from left to right. */
   housing: MeshData[];
   diffuser: MeshData[];
 }
 
-/** Il fondale senza la mesh: quanto serve all'SVG di taglio, al riepilogo e all'anteprima. */
+/** The backdrop without the mesh: what the cutting SVG, the summary and the preview need. */
 export type PlateSummary = Omit<PlateModel, 'solid'>;
 
 function editSegments(strip: StripModel): EditSegment[] {
@@ -103,7 +103,7 @@ function copyMesh(mesh: Mesh): MeshData {
   };
 }
 
-/** Taglia il solido ai piani x = costante dei pezzi, con SPLIT_CLEARANCE d'aria per faccia. */
+/** Cuts the solid at the x = constant planes of the pieces, with SPLIT_CLEARANCE of air per face. */
 function cutSolid(solid: Manifold, pieces: readonly SplitPiece[]): MeshData[] {
   const meshes: MeshData[] = [];
   pieces.forEach((piece, i) => {
@@ -136,7 +136,7 @@ function xRange(points: readonly (readonly [number, number])[]): { x0: number; x
   return { x0, x1 };
 }
 
-/** Con `paths` la geometria è già in mm: niente [A]–[D] e niente Chaikin. */
+/** With `paths` the geometry is already in mm: no [A]–[D] and no Chaikin. */
 function stripFromPaths(order: SignOrderV4, params: ReturnType<typeof resolveParams>, warnings: string[]): StripModel {
   const flat = flattenPaths(order.paths ?? []);
   const hits = intersectPaths(flat.curves);
@@ -164,7 +164,7 @@ function stripFromPaths(order: SignOrderV4, params: ReturnType<typeof resolvePar
   });
 }
 
-/** Pipeline completa. `read` serve ai test in Node; nel browser il worker usa fetch. */
+/** Full pipeline. `read` is for the tests in Node; in the browser the worker uses fetch. */
 export async function generateSign(order: AnyOrder, read?: FontBytesReader): Promise<GenerateResult> {
   const current = migrateOrder(order);
   const params = resolveParams(current.params);
@@ -187,8 +187,8 @@ export async function generateSign(order: AnyOrder, read?: FontBytesReader): Pro
       if (!entry) throw new Error(`Unknown font: "${current.source.fontId}"`);
       const laid = entry.kind === 'stroke' ? await layoutStroke(entry, input, read) : null;
       raster = laid ? laid.raster : await rasterize(input, read);
-      // Nessuna lettera del testo è nel font (cirillico in Sacramento): un grafo vuoto farebbe
-      // fallire i passi successivi con un errore che non dice niente. La pagina cliente lo riconosce.
+      // No letter of the text is in the font (Cyrillic in Sacramento): an empty graph would make
+      // the following steps fail with an error that says nothing. The customer page recognizes it.
       const lost = new Set(raster.missing);
       if (lost.size > 0 && [...input.text].every((ch) => /\s/.test(ch) || lost.has(ch))) throw new Error(NO_LETTERS);
       graph = laid ? laid.graph : buildGraph(raster);
@@ -203,7 +203,7 @@ export async function generateSign(order: AnyOrder, read?: FontBytesReader): Pro
     }
     warnings.push(...raster.warnings);
     glyphs = raster.glyphs;
-    // stripMode "walls" e "centerline" usano gli archi del grafo: niente mediana.
+    // stripMode "walls" and "centerline" use the edges of the graph: no median.
     strip = buildStrip(
       { nodes: graph.nodes, edges: graph.edges, strokeWidthMm: graph.strokeWidthMm },
       params,
@@ -222,8 +222,8 @@ export async function generateSign(order: AnyOrder, read?: FontBytesReader): Pro
   });
   applyCoverage(strip, coverage);
   warnings.push(...strip.issues.map((issue) => issue.message));
-  // Una striscia che non piega di lato si taglia a ogni curva: ogni cerniera piegata è un taglio,
-  // e ogni taglio è tempo di montaggio (SPEC §2). Le strisce che curvano non ne hanno.
+  // A strip that does not bend sideways is cut at every curve: every bent hinge is a cut,
+  // and every cut is assembly time (SPEC §2). Strips that curve have none.
   const profile = stripProfileOf(params.STRIP_ID);
   if (!profile.sideBend) {
     let cuts = 0;
@@ -233,7 +233,7 @@ export async function generateSign(order: AnyOrder, read?: FontBytesReader): Pro
     }
     strip.bom.assembly.bendCuts = cuts;
   }
-  // Tagli in curva e ponticelli costano lo stesso: tagliare, sistemare, risaldare.
+  // Cuts on bends and jumpers cost the same: cut, arrange, resolder.
   strip.bom.assembly.assemblyMin = (strip.bom.assembly.bendCuts + strip.bom.assembly.jumpers) * ASSEMBLY_MIN_PER_CUT;
 
   const wasm = await getManifold();
@@ -268,10 +268,10 @@ export async function generateSign(order: AnyOrder, read?: FontBytesReader): Pro
       outline: housing.outline,
       centerlines: strip.chains.map((chain) => (chain.smooth.length >= 2 ? chain.smooth : chain.points)),
       keepOut: [
-        // Asole e tasche: lì lo spezzone già finisce, il taglio ci passa quasi senza danno.
+        // Slots and pockets: there the segment already ends, the cut goes through almost without harm.
         ...housing.holes.wireSlots.map((slot) => ({ ...xRange(slot.points), kind: 'slot' as const })),
         ...housing.holes.cornerPockets.map((pocket) => ({ ...xRange(pocket.points), kind: 'slot' as const })),
-        // Fori: tagliarli a metà li rovina, ma bastano pochi millimetri per schivarli.
+        // Holes: cutting them in half ruins them, but a few millimetres are enough to avoid them.
         ...[...housing.holes.anchors, ...(housing.holes.cable ? [housing.holes.cable] : []), ...housing.holes.dotWires].map(
           (hole) => ({ x0: hole.x - hole.d / 2, x1: hole.x + hole.d / 2, kind: 'hole' as const }),
         ),

@@ -1,5 +1,5 @@
-// Geometria SVG pura (SPEC §4bis): path, trasformazioni, millimetri, raster e grafo.
-// Nessun DOM. Lo stesso ordine normalizzato produce gli stessi file in browser, worker e Node.
+// Pure SVG geometry (SPEC §4bis): paths, transforms, millimetres, raster and graph.
+// No DOM. The same normalized order produces the same files in browser, worker and Node.
 import type { SvgFillElement, SvgImageSource, SvgStrokeElement } from '../order/schema';
 import { buildGraph, strokeWidthCv, type SkeletonGraph } from '../geometry/graph';
 import type { GlyphInfo, Point, Raster, TextRaster } from '../geometry/rasterize';
@@ -21,7 +21,7 @@ export type Matrix = readonly [number, number, number, number, number, number];
 export const IDENTITY: Matrix = [1, 0, 0, 1, 0, 0];
 
 export interface RawShape {
-  /** Path in spazio utente locale, prima della matrice. */
+  /** Path in local user space, before the matrix. */
   d: string;
   transform: Matrix;
   kind: 'stroke' | 'fill';
@@ -81,7 +81,7 @@ function rotate(deg: number): Matrix {
   return [c, s, -s, c, 0, 0];
 }
 
-/** `null`, stringa vuota o solo spazi → identità. */
+/** `null`, empty string or only spaces → identity. */
 export function parseTransform(value: string | null | undefined): Matrix {
   if (!value || !value.trim()) return IDENTITY;
   const re = /(matrix|translate|scale|rotate|skewX|skewY)\s*\(([^)]*)\)/gi;
@@ -126,7 +126,7 @@ const UNIT: Record<string, number> = {
   q: 96 / 25.4 / 4,
 };
 
-/** Lunghezza SVG → unità utente. Percentuali e valori assenti restituiscono `fallback`. */
+/** SVG length → user units. Percentages and missing values return `fallback`. */
 export function parseLength(raw: string | null | undefined, fallback = 0): number {
   if (raw == null) return fallback;
   const s = raw.trim();
@@ -138,8 +138,8 @@ export function parseLength(raw: string | null | undefined, fallback = 0): numbe
 }
 
 /**
- * viewBox + viewport, senza la posizione x/y dell'elemento. Senza larghezza e altezza assolute
- * il disegno resta nelle unità del viewBox: l'altezza in mm la decide il riquadro d'ingombro.
+ * viewBox + viewport, without the x/y position of the element. Without absolute width and height
+ * the drawing stays in viewBox units: the height in mm is decided by the bounding box.
  */
 export function viewBoxMatrix(
   viewBox: string | null,
@@ -192,7 +192,7 @@ function parseAspect(raw: string | null): { ax: number; ay: number; fit: 'meet' 
   return { ax, ay, fit };
 }
 
-/** Forma di base → `d` nello spazio locale dell'elemento. `null` se è degenere. */
+/** Basic shape → `d` in the local space of the element. `null` if it is degenerate. */
 export function geometryToD(tag: string, get: (name: string) => string | null): string | null {
   const n = (name: string, fallback = 0): number => parseLength(get(name), fallback);
   if (tag === 'path') {
@@ -268,8 +268,8 @@ function parsePointList(raw: string): [number, number][] {
 }
 
 /**
- * Forme già trasformate → `d` assoluti in mm, solo `M L C Q Z`, Y verso l'alto,
- * origine nell'angolo in basso a sinistra del riquadro, altezza `heightMm`.
+ * Already transformed shapes → absolute `d` in mm, only `M L C Q Z`, Y pointing up,
+ * origin at the bottom-left corner of the box, height `heightMm`.
  */
 export function normalizeShapes(shapes: readonly RawShape[], heightMm: number): (SvgStrokeElement | SvgFillElement)[] {
   if (!(heightMm > 0)) throw new Error('Invalid image height.');
@@ -295,7 +295,7 @@ export function normalizeShapes(shapes: readonly RawShape[], heightMm: number): 
   return out;
 }
 
-/** Dall'ordine normalizzato a bitmap [A] e grafo [C]. `outline` segue il bordo delle aree. */
+/** From the normalized order to bitmap [A] and graph [C]. `outline` follows the border of the areas. */
 export function layoutSvg(source: SvgImageSource, heightMm: number, pxPerMm?: number): SvgLayout {
   const fills = source.svg.elements.filter((element): element is SvgFillElement => element.kind === 'fill');
   const strokes = source.svg.elements.filter((element) => element.kind === 'stroke');
@@ -419,7 +419,7 @@ function unionBounds(contours: readonly Contour[], points: readonly Point[]): BB
   return contoursBBox(all);
 }
 
-/** Componenti connesse del grafo, da sinistra a destra: «regione 1», «regione 2»… */
+/** Connected components of the graph, from left to right: "region 1", "region 2"… */
 export function regionsOf(graph: SkeletonGraph): GlyphInfo[] {
   const parent = graph.nodes.map((_, index) => index);
   const find = (index: number): number => (parent[index] === index ? index : (parent[index] = find(parent[index]!)));

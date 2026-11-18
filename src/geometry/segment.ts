@@ -1,15 +1,15 @@
-// [D] Segmentazione (SPEC §5). A un incrocio di grado 4 i rami si accoppiano per
-// continuità di tangente: la coppia più dritta prosegue, l'altra si interrompe di
-// CROSSING_GAP per lato. A una giunzione di grado 3 prosegue la coppia più dritta e
-// il ramo restante è uno spezzone. I componenti sconnessi restano spezzoni; un anello
-// chiuso di raggio inferiore a R_MIN è escluso. Modulo puro.
+// [D] Segmentation (SPEC §5). At a degree-4 crossing the branches are paired by
+// tangent continuity: the straightest pair continues, the other is interrupted by
+// CROSSING_GAP per side. At a degree-3 junction the straightest pair continues and
+// the remaining branch is a segment. Disconnected components stay segments; a closed
+// loop with radius under R_MIN is excluded. Pure module.
 
 import type { GraphEdge, GraphNode } from './graph';
 import type { Point } from './rasterize';
 
 export interface SegmentOptions {
   crossingGap: number;
-  /** Raggio minimo della striscia: sotto, l'anello chiuso si esclude. */
+  /** Minimum radius of the strip: under it, the closed loop is excluded. */
   rMin: number;
 }
 
@@ -26,7 +26,7 @@ export interface SegmentNotice {
   y: number;
   radiusMm: number | null;
   degree: number | null;
-  /** Contorno dell'anello, se l'avviso è un puntino. Altrimenti vuoto. */
+  /** Outline of the loop, if the notice is a dot. Otherwise empty. */
   points: Point[];
 }
 
@@ -38,7 +38,7 @@ export interface SegmentGap {
 export interface SegmentResult {
   segments: StripSegment[];
   notices: SegmentNotice[];
-  /** Tratti tolti davanti a un incrocio: la striscia non li percorre. */
+  /** Stretches removed in front of a crossing: the strip does not run along them. */
   gaps: SegmentGap[];
 }
 
@@ -85,7 +85,7 @@ function armOf(edge: GraphEdge, side: 'a' | 'b'): Arm {
   return { port: { edge: edge.id, side }, tx, ty };
 }
 
-/** 0 = i due rami sono uno il prolungamento dell'altro. */
+/** 0 = the two branches are one the continuation of the other. */
 function deviation(a: Arm, b: Arm): number {
   const dot = Math.min(1, Math.max(-1, a.tx * b.tx + a.ty * b.ty));
   return Math.abs(180 - (Math.acos(dot) * 180) / Math.PI);
@@ -220,8 +220,8 @@ interface RawSeg {
 }
 
 /**
- * Grafo [C] → spezzoni. Gli id partono da 1, da sinistra a destra e dall'alto in basso.
- * `sourceFromPaths` prepara lo stesso ingresso per le mediane dei font a tubi cavi.
+ * Graph [C] → segments. Ids start from 1, from left to right and from top to bottom.
+ * `sourceFromPaths` prepares the same input for the medians of hollow-tube fonts.
  */
 export function segmentGraph(
   source: { nodes: readonly GraphNode[]; edges: readonly GraphEdge[] },
@@ -353,7 +353,7 @@ export function segmentGraph(
 
 const CLOSE_EPS_MM = 0.25;
 
-/** Mediane e linee singole dei tubi: ogni percorso è un componente, senza nodi condivisi. */
+/** Medians and single lines of the tubes: every path is a component, without shared nodes. */
 export function sourceFromPaths(paths: readonly { points: readonly Point[] }[]): {
   nodes: GraphNode[];
   edges: GraphEdge[];

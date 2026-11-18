@@ -15,7 +15,7 @@ const readPublic: FontBytesReader = async (file) => {
   return b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength) as ArrayBuffer;
 };
 
-/** Due rettangoli staccati (come due lettere), un ancoraggio, il cavo e un'asola. */
+/** Two detached rectangles (like two letters), an anchor, the cable and a slot. */
 function twoBlocks(): Pick<HousingModel, 'outline' | 'holes'> {
   return {
     outline: [
@@ -70,7 +70,7 @@ describe('backdrop', () => {
       const box = plate.solid.boundingBox();
       expect(box.min[2]).toBeCloseTo(-PLATE_T.wood, 6);
       expect(box.max[2]).toBeCloseTo(0, 6);
-      // Un buco per foro: il genere della lastra è il numero dei fori.
+      // One hole per hole: the genus of the plate is the number of holes.
       expect(plate.solid.genus()).toBe(plate.holes.length);
     } finally {
       plate.solid.delete();
@@ -95,8 +95,8 @@ describe('backdrop', () => {
     try {
       expect(pill.widthMm).toBeCloseTo(140, 1);
       expect(pill.heightMm).toBeCloseTo(60, 1);
-      // Rettangolo 140×60 con teste da raggio 30: 140·60 − (4 − π)·30².
-      // Archi poligonali a 48 lati: qualche mm² in meno del cerchio vero.
+      // 140×60 rectangle with ends of radius 30: 140·60 − (4 − π)·30².
+      // Polygonal arcs with 48 sides: a few mm² less than the true circle.
       expect(Math.abs(pill.areaMm2 - (140 * 60 - (4 - Math.PI) * 900))).toBeLessThan(20);
       expect(rect.areaMm2).toBeCloseTo(140 * 60, 0);
       expect(pill.holes.filter((h) => h.kind === 'mount')).toHaveLength(2);
@@ -147,7 +147,7 @@ describe('backdrop', () => {
     expect(svg).toContain('height="70mm"');
     expect((svg.match(/<circle /g) ?? []).length).toBe(plate.holes.length);
     expect(svg).toContain('stroke="#ff0000"');
-    // Vista dal retro: l'ancoraggio frontale a x = 20 sta a destra nel file.
+    // Seen from the back: the front anchor at x = 20 is on the right in the file.
     const fix = /cx="([\d.]+)"[^>]*data-kind="fix"/.exec(svg)!;
     expect(Number(fix[1])).toBeGreaterThan(75);
   });
@@ -174,14 +174,14 @@ describe('backdrop', () => {
     expect(withPlate.plate?.outline.length).toBe(1);
     expect(withPlate.plateMesh?.triVerts.length).toBeGreaterThan(0);
     expect(withPlate.bom.plate?.shape).toBe('contour');
-    // Gli STL dell'insegna non cambiano col fondale.
+    // The STLs of the sign do not change with the backdrop.
     expect(withPlate.housingMesh.triVerts.length).toBe(none.housingMesh.triVerts.length);
   });
 
   it('carries over the round holes of the housing: same point, same diameter, ends and path', async () => {
     const wasm = await getManifold();
     const housing = twoBlocks();
-    // Il cavo passa dal foro grande del primo capo; un secondo capo e tre fori lungo il percorso.
+    // The cable goes through the large hole of the first end; a second end and three holes along the path.
     housing.holes.cable = { kind: 'cable', x: 3, y: 10, d: 6 };
     housing.holes.wireSlots = [
       { segmentId: 1, role: 'DIN', d: 8, points: [[-1, 10], [3, 6], [7, 10], [3, 14]] },
@@ -191,11 +191,11 @@ describe('backdrop', () => {
     const plate = buildPlate(wasm, housing, choice({}))!;
     try {
       const at = (x: number) => plate.holes.filter((hole) => Math.abs(hole.x - x) < 1e-6 && Math.abs(hole.y - 10) < 1e-6);
-      // Un foro solo dove cavo e capo coincidono, largo quanto il più grande dei due.
+      // A single hole where cable and end coincide, as wide as the larger of the two.
       expect(at(3)).toEqual([{ kind: 'cable', x: 3, y: 10, d: 8 }]);
       expect(at(37)).toEqual([{ kind: 'wire', x: 37, y: 10, d: 8 }]);
       for (const x of [10, 28, 70]) expect(at(x)).toEqual([{ kind: 'wire', x, y: 10, d: 4 }]);
-      // Nessun foro si sovrappone a un altro: il genere della lastra è il numero dei fori.
+      // No hole overlaps another: the genus of the plate is the number of holes.
       expect(plate.solid.genus()).toBe(plate.holes.length);
       expect(plateBom(plate).wireHoles).toBe(5);
     } finally {
@@ -207,7 +207,7 @@ describe('backdrop', () => {
     const result = await generateSign(order(choice({ shape: 'rect', marginMm: 20 })), readPublic);
     expect(result.pathHoles.length).toBeGreaterThan(20);
     const openings = result.slots.length + result.pockets.length + result.pathHoles.length;
-    // I puntini hanno due fori l'uno; il cavo conta fra i passaggi dei fili ed è uno dei capi.
+    // Dots have two holes each; the cable counts among the wire passages and is one of the ends.
     const dots = result.bom.plate!.wireHoles - openings;
     expect(dots).toBeGreaterThanOrEqual(0);
     expect(dots % 2).toBe(0);

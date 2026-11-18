@@ -1,5 +1,5 @@
-// GET /api/stats — i totali del contatore (SPEC §14): { downloads, requests }. Senza il D1 STATS
-// risponde { downloads: null, requests: null }: la pagina non mostra la riga e la console resta pulita.
+// GET /api/stats — the totals of the counter (SPEC §14): { downloads, requests }. Without the STATS D1
+// it answers { downloads: null, requests: null }: the page does not show the line and the console stays clean.
 import { readStats, type StatsDb } from '../../src/api/statsStore';
 
 interface Env {

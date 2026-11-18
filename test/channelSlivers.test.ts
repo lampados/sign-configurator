@@ -31,7 +31,7 @@ const square = (x: number, y: number, s: number, cw = false): Vec2[] => {
   return cw ? pts.reverse() : pts;
 };
 
-/** Area che una chiusura di raggio `r` aggiungerebbe ancora: tacche e buchi residui. */
+/** Area that a closing of radius `r` would still add: leftover notches and holes. */
 async function leftover(section: CrossSection, r: number): Promise<number> {
   const grown = section.offset(r, 'Round', 2, 32);
   const closed = grown.offset(-r, 'Round', 2, 32);
@@ -72,7 +72,7 @@ async function diffuserSlice(text: string, heightMm: number): Promise<CrossSecti
 describe('closing the channel: no holes or notches narrower than 2·WALL_MIN', () => {
   it('fills a lens and a narrow notch, keeps an island of real wall', async () => {
     const wasm = await getManifold();
-    // Canale 40×40 con un buco 1×1 (lente), uno 8×8 (isola vera) e una tacca larga 1 mm dal bordo.
+    // 40×40 channel with a 1×1 hole (lens), an 8×8 one (real island) and a notch 1 mm wide from the edge.
     const notch: Vec2[] = [[0, 0], [40, 0], [40, 40], [20.5, 40], [20.5, 30], [19.5, 30], [19.5, 40], [0, 40]];
     const section = new wasm.CrossSection([notch, square(5, 5, 1, true), square(25, 5, 8, true)], 'Positive');
     const outline = wasm.CrossSection.square([40, 40]);
@@ -80,7 +80,7 @@ describe('closing the channel: no holes or notches narrower than 2·WALL_MIN', (
     const holes = holeAreas(closed.toPolygons());
     expect(holes).toHaveLength(1);
     expect(holes[0]!).toBeGreaterThan(60);
-    // La tacca è sparita: il bordo alto è di nuovo dritto, l'area è quella del quadrato meno l'isola.
+    // The notch is gone: the top edge is straight again, the area is that of the square minus the island.
     expect(closed.area()).toBeGreaterThan(1600 - 64 - 0.5);
     for (const s of [closed, section, outline]) s.delete();
   });

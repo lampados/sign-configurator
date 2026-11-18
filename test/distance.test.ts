@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { squaredDistanceTo } from '../src/geometry/distance';
 import { measureTubes } from '../src/geometry/tubes';
 
-/** Generatore pseudo-casuale deterministico (mulberry32). */
+/** Deterministic pseudo-random generator (mulberry32). */
 function rng(seed: number): () => number {
   let a = seed;
   return () => {

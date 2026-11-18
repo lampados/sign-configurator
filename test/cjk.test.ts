@@ -14,7 +14,7 @@ const readPublic: FontBytesReader = async (file) => {
   return b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength) as ArrayBuffer;
 };
 
-/** Larghezza del tratto sui pixel dello scheletro: mediana e scarto fra i decili. */
+/** Stroke width on the skeleton pixels: median and spread between the deciles. */
 async function strokeSpread(fontId: string, text: string, heightMm: number) {
   const entry = getFont(fontId)!;
   const font = await loadFont(fontId, readPublic);
@@ -65,7 +65,7 @@ describe('Chinese and Japanese fonts (SPEC §4ter)', () => {
   it('a character outside the subset warns instead of vanishing silently', async () => {
     const entry = getFont('noto-sans-sc')!;
     const font = await loadFont('noto-sans-sc', readPublic);
-    // U+9FA5 è l'ultimo CJK del blocco base, fuori dal GB 2312.
+    // U+9FA5 is the last CJK of the base block, outside GB 2312.
     const raster = rasterizeText(font, entry, { text: '龥', heightMm: 200 });
     expect(raster.warnings.join(' ')).toMatch(/U\+9FA5/i);
   }, 60_000);
@@ -86,7 +86,7 @@ describe('Chinese and Japanese fonts (SPEC §4ter)', () => {
       plate: null,
     };
     const result = await generateSign(order, readPublic);
-    // 永 ha quattro tratti che si staccano più il corpo centrale: la striscia va in più spezzoni.
+    // 永 has four strokes that come apart plus the central body: the strip goes in several segments.
     expect(result.bom.segments.length).toBeGreaterThanOrEqual(4);
     expect(result.lightPoints.length).toBeGreaterThan(0);
     expect(result.housingMesh.triVerts.length).toBeGreaterThan(0);

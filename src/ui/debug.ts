@@ -48,7 +48,7 @@ const niceStep = (screenPxPerMm: number, minPx: number): number =>
   NICE_STEPS.find((s) => s * screenPxPerMm >= minPx) ?? NICE_STEPS[NICE_STEPS.length - 1]!;
 const fmt = (mm: number): string => `${mm.toFixed(2)} mm`;
 
-/** Colori dei nodi per grado: estremi, anelli, giunzioni a T/Y, incroci, oltre. */
+/** Colours of the nodes by degree: endpoints, loops, T/Y junctions, crossings, beyond. */
 const DEGREE_COLORS: Record<number, string> = { 1: '#2e7d32', 2: '#757575', 3: '#ef6c00', 4: '#d32f2f' };
 const degreeColor = (d: number): string => DEGREE_COLORS[d] ?? '#7b1fa2';
 const SEGMENT_COLORS = ['#6a1b9a', '#0277bd', '#2e7d32', '#ef6c00', '#c2185b', '#00838f', '#f9a825', '#455a64'];
@@ -96,7 +96,7 @@ function draw(
   const zoom = Math.min(requestedZoom, (MAX_CANVAS_SIDE - RULER) / Math.max(r.width, r.height));
   const w = Math.round(r.width * zoom);
   const h = Math.round(r.height * zoom);
-  // Spazio sopra la bitmap se la linea dell'altezza supera l'inchiostro.
+  // Space above the bitmap if the height line goes beyond the ink.
   const top = RULER + Math.max(0, Math.ceil((r.capHeightMm - r.pxToMm.originY) * r.pxPerMm * zoom) + 14);
   canvas.width = w + RULER;
   canvas.height = h + top;
@@ -105,8 +105,8 @@ function draw(
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   const img = new ImageData(r.width, r.height);
-  // Con il grafo sopra, la bitmap va schiarita e lo scheletro resta scuro.
-  // Per i tubi le pareti si disegnano come polilinee colorate, non come pixel dello scheletro.
+  // With the graph on top, the bitmap is lightened and the skeleton stays dark.
+  // For tubes the walls are drawn as coloured polylines, not as skeleton pixels.
   const ink = graph || pairing || strip ? 205 : 0;
   for (let i = 0; i < r.data.length; i++) {
     const v = !pairing && graph?.skeleton[i] ? 0 : r.data[i] ? ink : 255;
@@ -134,7 +134,7 @@ function draw(
     }
   }
 
-  // mm → coordinate della canvas
+  // mm → canvas coordinates
   const sx = (xMm: number): number => RULER + mmToPx(r.pxToMm, xMm, 0)[0] * zoom;
   const sy = (yMm: number): number => top + mmToPx(r.pxToMm, 0, yMm)[1] * zoom;
 
@@ -163,7 +163,7 @@ function draw(
   if (coverage) drawDark(ctx, coverage, sx, sy);
   lastMap = (xMm, yMm) => [sx(xMm), sy(yMm)];
   scrollToPending();
-  // Righelli in mm (x lungo il bordo alto, y lungo il bordo sinistro, 0 = origine del testo)
+  // Rulers in mm (x along the top edge, y along the left edge, 0 = origin of the text)
   const screenPxPerMm = r.pxPerMm * zoom;
   const minor = niceStep(screenPxPerMm, 6);
   const major = niceStep(screenPxPerMm, 60);
@@ -197,7 +197,7 @@ function draw(
   ctx.stroke();
 }
 
-/** Archi come polilinee (colore alternato per distinguerli), nodi come dischi colorati per grado. */
+/** Edges as polylines (alternating colour to tell them apart), nodes as discs coloured by degree. */
 function drawGraph(
   ctx: CanvasRenderingContext2D,
   g: SkeletonGraph,
@@ -281,7 +281,7 @@ function focusIssue(x: number, y: number): void {
   } else scrollToPending();
 }
 
-/** Spezzoni colorati, cerniere nere e in rosso quelle oltre HINGE_MAX_DEG. */
+/** Coloured segments, hinges in black and in red those beyond HINGE_MAX_DEG. */
 function drawStrip(
   ctx: CanvasRenderingContext2D,
   strip: StripModel,
@@ -375,7 +375,7 @@ function drawMarkers(
   }
 }
 
-/** Pareti accoppiate in blu, mediana in verde, linee singole in arancio, coppie dubbie in rosso. */
+/** Paired walls in blue, median in green, single lines in orange, doubtful pairs in red. */
 function drawPairing(
   ctx: CanvasRenderingContext2D,
   g: SkeletonGraph,

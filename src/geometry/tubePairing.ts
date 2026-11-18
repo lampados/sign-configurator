@@ -1,43 +1,43 @@
-// Accoppiamento delle pareti in una linea mediana. Non è nella pipeline dell'insegna:
-// gli occhielli piccoli (archi concentrici di lunghezza molto diversa) non si accoppiano
-// in modo affidabile. Neonderthaw usa stripMode "walls" e tratta ogni parete come
-// una monolinea. Il modulo resta per i test e per un eventuale ritorno. Modulo puro.
+// Pairing of the walls into a median line. It is not in the sign pipeline:
+// small counters (concentric arcs of very different length) do not pair
+// reliably. Neonderthaw uses stripMode "walls" and treats every wall as
+// a monoline. The module stays for the tests and for a possible return. Pure module.
 
 import type { SkeletonGraph } from './graph';
 import type { Point } from './rasterize';
 import { smoothPolyline } from './smooth';
 
-/** La luce reale sta fra questi multipli della luce mediana del registro. */
+/** The real gap lies between these multiples of the median gap of the registry. */
 export const GAP_TOL_MIN = 0.6;
 export const GAP_TOL_MAX = 1.8;
-/** Fascia in cui una parallela è almeno una coppia candidata, in multipli della distanza nominale. */
+/** Band in which a parallel is at least a candidate pair, in multiples of the nominal distance. */
 const SEARCH_DIST_MIN = 0.3;
 const SEARCH_DIST_MAX = 2.5;
 /**
- * Angolo massimo fra le tangenti, e fra la congiungente e la normale.
- * 42° e non 28°: in «Ciao» di Neonderthaw le pareti di un tubo piegano fino a circa 40°.
+ * Maximum angle between the tangents, and between the joining line and the normal.
+ * 42° and not 28°: in Neonderthaw's "Ciao" the walls of a tube bend up to about 40°.
  */
 export const PAIR_ANGLE_DEG = 42;
-/** Sovrapposizione minima del metodo a normali, in distanze nominali. */
+/** Minimum overlap of the normals method, in nominal distances. */
 export const PAIR_MIN_LENGTH_W = 2;
-/** Sotto questa lunghezza la vicinanza è rumore, senza avviso. */
+/** Under this length the closeness is noise, without a warning. */
 const DUBIOUS_MIN_LENGTH_W = 1;
-/** La mediana prosegue sulle estremità sfalsate finché la tangente non gira di più. */
+/** The median continues on staggered ends until the tangent turns more than this. */
 const STAGGER_TURN_DEG = 40;
-/** E non oltre queste distanze nominali: uno svolazzo dritto non è un'estremità sfalsata. */
+/** And not beyond these nominal distances: a straight flourish is not a staggered end. */
 const STAGGER_MAX_W = 4;
 const SAMPLE_STEP_MM = 0.5;
 
 export interface TubePair {
-  /** Indici degli archi del grafo. a === b: la polilinea si accoppia con sé stessa (tubo a U). */
+  /** Indices of the graph edges. a === b: the polyline pairs with itself (U-shaped tube). */
   a: number;
   b: number;
-  /** Linea mediana in mm, estremità sfalsate comprese. */
+  /** Median line in mm, staggered ends included. */
   midline: Point[];
   lengthMm: number;
-  /** Tratto in cui le due pareti corrono affiancate. */
+  /** Stretch in which the two walls run side by side. */
   overlapMm: number;
-  /** Distanza mediana fra gli assi, mm. */
+  /** Median distance between the axes, mm. */
   distanceMm: number;
 }
 
@@ -50,22 +50,22 @@ export interface DubiousPair {
   a: number;
   b: number;
   reason: 'short' | 'distance' | 'angle';
-  /** Angolo fra le tangenti, gradi. */
+  /** Angle between the tangents, degrees. */
   angleDeg: number;
   overlapMm: number;
   distanceMm: number;
-  /** Centro del tratto parallelo, mm. */
+  /** Centre of the parallel stretch, mm. */
   x: number;
   y: number;
 }
 
 export interface TubePairing {
   pairs: TubePair[];
-  /** Linee senza compagna (barra della t, puntino della i). */
+  /** Lines without a partner (bar of the t, dot of the i). */
   singles: TubeLine[];
   dubious: DubiousPair[];
   warnings: string[];
-  /** lineWidth + gap, alla scala del testo. */
+  /** lineWidth + gap, at the scale of the text. */
   nominalMm: number;
   distanceMinMm: number;
   distanceMaxMm: number;
@@ -177,15 +177,15 @@ function median(values: number[]): number {
   return s[Math.floor(s.length / 2)] ?? 0;
 }
 
-/** Campioni oltre `fromS`, ordinati a partire dal tratto accoppiato verso l'esterno. */
+/** Samples beyond `fromS`, ordered from the paired stretch outwards. */
 function outward(chain: ChainPoint[], fromS: number, dir: -1 | 1, step: number): ChainPoint[] {
   const got = chain.filter((c) => dir < 0 ? c.s < fromS - step * 0.4 : c.s > fromS + step * 0.4);
   return dir < 0 ? got.reverse() : got;
 }
 
 /**
- * Estremità in cui una sola delle due pareti prosegue: la mediana continua a metà distanza,
- * finché la linea non gira.
+ * End in which only one of the two walls continues: the median goes on at half the distance,
+ * until the line turns.
  */
 function staggerExtension(samples: ChainPoint[], toward: Point, half: number, maxLen: number): Point[] {
   const first = samples[0];
@@ -260,9 +260,9 @@ interface WallSeg {
 
 interface CastHit {
   seg: WallSeg;
-  /** Distanza lungo la normale, mm. */
+  /** Distance along the normal, mm. */
   t: number;
-  /** Ascissa d'arco del punto colpito. */
+  /** Arc abscissa of the hit point. */
   s: number;
   x: number;
   y: number;
@@ -350,7 +350,7 @@ function nearbySegments(
   return out;
 }
 
-/** Prima intersezione della semiretta con una parete, a distanza fra tMin e tMax. */
+/** First intersection of the ray with a wall, at a distance between tMin and tMax. */
 function castNormal(
   ox: number,
   oy: number,
@@ -394,8 +394,8 @@ function nearOwn(seg: WallSeg, edge: number, s: number, minAlong: number, loop: 
 }
 
 /**
- * Normale da un campione: la parete opposta è la più vicina, e la sua normale
- * deve ricadere sullo stesso campione. Una terza linea in mezzo rompe la coppia.
+ * Normal from a sample: the opposite wall is the nearest, and its normal
+ * must fall back on the same sample. A third line in between breaks the pair.
  */
 function confirmedHit(
   sample: ChainPoint,
@@ -465,7 +465,7 @@ function oppositeWall(
     .sort((a, b) => a.dist - b.dist);
   const nearest = confirmed[0];
   if (!nearest) return null;
-  // A parità di distanza resta la compagna già seguita, così un tubo corto affiancato non buca quello lungo.
+  // At equal distance the partner already followed stays, so a short tube alongside does not pierce the long one.
   const kept =
     prefer === null
       ? nearest
@@ -497,7 +497,7 @@ function groupRuns(hits: readonly NormalHit[], maxGap: number): NormalHit[][] {
   return runs;
 }
 
-/** Grafo delle pareti → coppie con linea mediana, linee singole e coppie dubbie. */
+/** Graph of the walls → pairs with median line, single lines and doubtful pairs. */
 export function pairTubes(
   graph: SkeletonGraph,
   tube: { lineWidthMm: number; gapMm: number },
@@ -532,8 +532,8 @@ export function pairTubes(
   const collect = (tMin: number, tMax: number): Map<number, NormalHit[]> => {
     const byEdge = new Map<number, NormalHit[]>();
     chains.forEach((chain, edge) => {
-      // Il puntino è un anello solo: non si accoppia con sé stesso. Può però essere
-      // la parete interna di un occhiello, di fronte a un altro arco.
+      // The dot is a single loop: it does not pair with itself. It can however be
+      // the inner wall of a counter, facing another arc.
       const hits: NormalHit[] = [];
       let prefer: number | null = null;
       for (const sample of chain) {

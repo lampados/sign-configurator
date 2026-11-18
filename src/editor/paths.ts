@@ -1,15 +1,15 @@
-// Spezzoni [D] → curve dell'ordine (SPEC §5bis). Fit di Schneider, scala, appiattimento.
-// Niente Paper.js: il worker non lo scarica e il risultato non dipende da un motore grafico.
+// Segments [D] → curves of the order (SPEC §5bis). Schneider fit, scale, flattening.
+// No Paper.js: the worker does not download it and the result does not depend on a graphics engine.
 
 import { EDIT_FIT_TOL } from '../config';
 import type { Point } from '../geometry/rasterize';
 import type { CurveNode, CurvePath, DotPath, OrderPath } from '../order/schema';
 
-/** Polilinea dopo [D], prima della levigatura. */
+/** Polyline after [D], before smoothing. */
 export interface FreezeSegment {
   points: readonly Point[];
   closed?: boolean;
-  /** Puntino: diventa un dot, non una curva. */
+  /** Dot: it becomes a dot, not a curve. */
   dot?: boolean;
 }
 
@@ -25,14 +25,14 @@ export interface FlatDot {
   angle: number;
 }
 
-/** Spezzone dopo [D], prima della levigatura. */
+/** Segment after [D], before smoothing. */
 export interface EditSegment {
   points: Point[];
   closed: boolean;
   dot: boolean;
 }
 
-/** Tolleranza di appiattimento delle Bézier in [E] (SPEC §5). */
+/** Flattening tolerance of the Béziers in [E] (SPEC §5). */
 const FLATTEN_TOLERANCE_MM = 0.02;
 
 const MAX_FIT_DEPTH = 24;
@@ -222,7 +222,7 @@ function reparameterize(points: readonly Point[], curve: Cubic, u: readonly numb
   return next;
 }
 
-/** Fit cubico ricorsivo (Schneider / Graphics Gems). Gli estremi restano i punti dati. */
+/** Recursive cubic fit (Schneider / Graphics Gems). The endpoints stay the given points. */
 function fitCubic(points: readonly Point[], left: Point, right: Point, tolerance: number, depth: number): Cubic[] {
   if (points.length < 2) return [];
   if (points.length === 2 || depth >= MAX_FIT_DEPTH) return [heuristic(points, left, right)];
@@ -302,8 +302,8 @@ function isDot(path: OrderPath): path is DotPath {
 }
 
 /**
- * Converte gli spezzoni [D] in path dell'ordine.
- * Gli id `p1`, `p2`… e `d1`, `d2`… seguono l'ordine da sinistra a destra.
+ * Converts the segments [D] into paths of the order.
+ * The ids `p1`, `p2`… and `d1`, `d2`… follow the order from left to right.
  */
 export function freezePaths(segments: readonly FreezeSegment[]): OrderPath[] {
   const ranked = segments
@@ -331,7 +331,7 @@ export function freezePaths(segments: readonly FreezeSegment[]): OrderPath[] {
   return paths;
 }
 
-/** Scala uniforme rispetto all'origine. L'angolo di un puntino non cambia. */
+/** Uniform scale about the origin. The angle of a dot does not change. */
 export function scalePaths(paths: readonly OrderPath[], factor: number): OrderPath[] {
   return paths.map((path) => {
     if (isDot(path)) {
@@ -407,7 +407,7 @@ function flattenCurve(path: CurvePath, tolerance: number): Point[] {
   return out;
 }
 
-/** Appiattisce le Bézier a 0,02 mm. I puntini restano centri, non polilinee. */
+/** Flattens the Béziers at 0.02 mm. Dots stay centres, not polylines. */
 export function flattenPaths(paths: readonly OrderPath[], tolerance = FLATTEN_TOLERANCE_MM): { curves: FlatCurve[]; dots: FlatDot[] } {
   const curves: FlatCurve[] = [];
   const dots: FlatDot[] = [];
@@ -422,7 +422,7 @@ export function flattenPaths(paths: readonly OrderPath[], tolerance = FLATTEN_TO
   return { curves, dots };
 }
 
-/** Spezzone del puntino, lungo `lengthMm`, centrato e ruotato di `angle` (radianti). */
+/** Segment of the dot, `lengthMm` long, centred and rotated by `angle` (radians). */
 export function dotSegment(center: Point, angle: number, lengthMm: number): Point[] {
   const half = lengthMm / 2;
   const c = Math.cos(angle);

@@ -26,7 +26,7 @@ function order(fontId: string, heightMm: number, params: SignOrderV4['params']):
   };
 }
 
-/** Solidi separati di una mesh: triangoli uniti dai vertici in comune (non da punti che si toccano). */
+/** Separate solids of a mesh: triangles joined by shared vertices (not by points that touch). */
 function pieces(mesh: MeshData): number {
   const count = mesh.vertProperties.length / mesh.numProp;
   const parent = Int32Array.from({ length: count }, (_, i) => i);
@@ -48,15 +48,15 @@ function pieces(mesh: MeshData): number {
   return roots.size;
 }
 
-/** Parti dell'insegna volute staccate (il puntino della i, una lettera a sé): i contorni esterni. */
+/** Parts of the sign meant to be detached (the dot of the i, a letter of its own): the outer contours. */
 function wanted(outline: readonly (readonly [number, number][])[]): number {
   const area = (ring: readonly (readonly [number, number])[]): number =>
     ring.reduce((sum, p, i) => sum + p[0] * ring[(i + 1) % ring.length]![1] - ring[(i + 1) % ring.length]![0] * p[1], 0) / 2;
   return outline.filter((ring) => area(ring) > 0).length;
 }
 
-// Insegne dove le asole larghe quanto il canale toglievano il fondo sotto un pezzo di parete e lo
-// lasciavano staccato da tutto (trovate il 18 novembre 2026 provando 9 font a 4 misure e 3 strisce).
+// Signs where slots as wide as the channel removed the floor under a piece of wall and
+// left it detached from everything (found on 18 November 2026 trying 9 fonts at 4 sizes and 3 strips).
 const CASES: [fontId: string, heightMm: number, stripId: string][] = [
   ['sacramento', 80, 'ws2812b-144'],
   ['sacramento', 80, 'ws2812b-60'],

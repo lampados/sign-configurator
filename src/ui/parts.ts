@@ -1,5 +1,5 @@
-// Pagina parts (SPEC §2, Alimentatori): alimentatori del catalogo, controller e strisce.
-// Solo inglese, come la pagina cliente.
+// Parts page (SPEC §2, Power supplies): catalogue power supplies, controllers and strips.
+// English only, like the customer page.
 
 import './parts.css';
 import { CONTROLLER, CONTROLLERS, STRIP_PROFILES, STRIP_VOLTAGES } from '../config';
@@ -9,7 +9,7 @@ import { controllerArt } from '../parts/controllerArt';
 import { supplyArt } from '../parts/supplyArt';
 import { SUPPLIES, type SupplyFamily, type SupplyKind } from '../parts/supplies';
 
-/** Modulo issue «New part» (`.github/ISSUE_TEMPLATE/new-part.yml`): chi propone, chi approva è il maintainer. */
+/** "New part" issue form (`.github/ISSUE_TEMPLATE/new-part.yml`): anyone proposes, the maintainer approves. */
 const NEW_PART_URL = 'https://github.com/vongomben/sign-configurator/issues/new?template=new-part.yml';
 
 function addOne(category: string): string {
@@ -152,6 +152,6 @@ document.querySelector('#parts')!.innerHTML = `
   </section>
 `;
 
-// L'ancora del link della pagina cliente evidenzia la riga del modello consigliato.
+// The anchor of the customer page link highlights the row of the recommended model.
 const target = location.hash ? document.getElementById(location.hash.slice(1)) : null;
 target?.scrollIntoView({ block: 'center' });

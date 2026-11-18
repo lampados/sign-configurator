@@ -1,6 +1,6 @@
-// POST /api/event — conta un click su «Download STL» (SPEC §14). Corpo: { "type": "stl" }.
-// Le richieste si contano in /api/design, non da qui. Il D1 si collega da Cloudflare Pages →
-// Settings → Bindings, con il nome STATS; senza, l'evento si accetta e non si conta.
+// POST /api/event — counts a click on "Download STL" (SPEC §14). Body: { "type": "stl" }.
+// Requests are counted in /api/design, not here. The D1 is bound from Cloudflare Pages →
+// Settings → Bindings, with the name STATS; without it, the event is accepted and not counted.
 import { recordEvent, sameOrigin, type StatsDb } from '../../src/api/statsStore';
 
 interface Env {

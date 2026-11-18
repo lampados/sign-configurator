@@ -7,7 +7,7 @@
   --line: rgba(28, 25, 22, 0.12);
   --dock: #161311;
   --stage: #5c5c62;
-  /* Un solo raggio per tutti i pulsanti: anteprima, barra degli strumenti e pannello. */
+  /* A single radius for all the buttons: preview, toolbar and panel. */
   --radius: 12px;
   color: var(--ink);
   font-family: system-ui, sans-serif;
@@ -105,7 +105,7 @@ select {
 
 .hud > * { pointer-events: auto; }
 
-/* Ingombro dell'insegna: larghezza in basso, altezza a destra (SPEC §12.2). */
+/* Footprint of the sign: width at the bottom, height on the right (SPEC §12.2). */
 .dims {
   position: absolute;
   inset: 0;
@@ -161,7 +161,7 @@ select {
 .dim-h .dim-line::after { bottom: -1px; left: -4px; border-bottom: 0; border-top: 9px solid currentColor; }
 .dim-h span { writing-mode: vertical-rl; }
 
-/* Nome, autore e invito a contribuire in alto a sinistra; «Order» in alto a destra. */
+/* Name, author and invitation to contribute top left; "Order" top right. */
 .brand {
   display: flex;
   flex-direction: column;
@@ -176,7 +176,7 @@ select {
 
 .brand strong { font-size: 0.95rem; }
 
-/* Nome lungo solo su desktop: su telefono la testata è stretta. */
+/* Long name on desktop only: on a phone the header is narrow. */
 .brand-long { display: none; }
 
 @media (min-width: 900px) {
@@ -190,7 +190,7 @@ select {
   text-underline-offset: 2px;
 }
 
-/* Gira lo schermo: solo su telefono, accanto a «Order». */
+/* Rotate the screen: on a phone only, next to "Order". */
 .hud-actions {
   display: flex;
   flex: none;
@@ -241,7 +241,7 @@ select {
   #rotate-screen:not([hidden]) { display: flex; }
 }
 
-/* In basso a sinistra: numero di LED, acceso/spento, diffusore. */
+/* Bottom left: number of LEDs, on/off, diffuser. */
 .stage-controls {
   display: flex;
   flex-wrap: wrap;
@@ -259,7 +259,7 @@ select {
   .hud { gap: 6px; }
   .brand { font-size: 0.68rem; }
   #rotate-screen, #open-help { width: 36px; height: 36px; }
-  /* LED, acceso/spento e diffusore su una riga sola anche su telefono. */
+  /* LEDs, on/off and diffuser on a single row on a phone too. */
   .stage-controls { gap: 4px; }
   .stage-controls .mode-switch { font-size: 0.72rem; }
   .stage-controls .mode-switch label { padding: 0 6px; }
@@ -376,7 +376,7 @@ select {
   text-underline-offset: 3px;
 }
 
-/* Spina e alimentatore, affiancati in basso a destra. */
+/* Plug and power supply, side by side bottom right. */
 .stage-power {
   display: flex;
   align-items: center;
@@ -431,7 +431,7 @@ select {
   outline-offset: 2px;
 }
 
-/* Oltre i limiti del controller (corrente o numero di LED): il motivo sta nel title e in Richiedi. */
+/* Beyond the controller limits (current or number of LEDs): the reason is in the title and in Request. */
 #preview-supply.is-over {
   background: #b3261e;
   color: #fff;
@@ -457,7 +457,7 @@ select {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  /* Alta quanto «Fatto» anche quando su desktop non c'è: il contenuto non le scorre addosso. */
+  /* As tall as "Done" even when it is not there on desktop: the content does not scroll over it. */
   min-height: 54px;
   padding: 6px 12px;
   border-bottom: 1px solid var(--line);
@@ -480,7 +480,7 @@ select {
   gap: 12px;
 }
 
-/* Sezioni richiudibili: tutti gli strumenti in un solo foglio. */
+/* Collapsible sections: all the tools in a single sheet. */
 .sections {
   display: flex;
   flex-direction: column;
@@ -556,7 +556,7 @@ input[name="text"] {
 }
 
 .font-row {
-  /* Griglia compatta: tutti i font in vista, niente scorrimento orizzontale. */
+  /* Compact grid: all the fonts in view, no horizontal scrolling. */
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
@@ -811,7 +811,7 @@ input[type="color"] {
   overflow-wrap: anywhere;
 }
 
-/* Prezzo voce per voce, sotto il riepilogo: gli importi in colonna a destra. */
+/* Line-by-line price, under the summary: amounts in a column on the right. */
 #price {
   display: flex;
   flex-direction: column;
@@ -851,7 +851,7 @@ input[type="color"] {
   color: #9d1c1c;
 }
 
-/* Fondale: forme e materiali vanno a capo, uno per riga se lo spazio non basta. */
+/* Backdrop: shapes and materials wrap, one per row if there is not enough room. */
 .plate-shape,
 .plate-material {
   flex-wrap: wrap;
@@ -950,7 +950,7 @@ input[type="color"] {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  /* Sempre in vista in fondo al foglio, anche quando il riepilogo è lungo e scorre. */
+  /* Always in view at the bottom of the sheet, even when the summary is long and scrolls. */
   position: sticky;
   bottom: -14px;
   margin: 0 -14px -14px;
@@ -959,13 +959,13 @@ input[type="color"] {
   border-top: 1px solid var(--line);
 }
 
-/* Totali di download e richieste: una riga intera sotto i pulsanti, che non li sposta. */
+/* Totals of downloads and requests: a full row under the buttons, which does not move them. */
 #request-stats {
   flex: 0 0 100%;
   font-size: 0.78rem;
 }
 
-/* Invito a offrire un caffè: come la riga dei totali, sotto. */
+/* Invitation to offer a coffee: like the row of totals, below. */
 #support-note {
   flex: 0 0 100%;
   font-size: 0.78rem;
@@ -977,28 +977,28 @@ input[type="color"] {
   text-underline-offset: 2px;
 }
 
-/* Con la barra a destra l'anteprima è più stretta. */
+/* With the bar on the right the preview is narrower. */
 @media (max-width: 899px) {
   .hud { flex-wrap: nowrap; }
 
-  /* Due righe in basso: le quote salgono per non finirci sotto. */
+  /* Two rows at the bottom: the dimensions move up so as not to end up under them. */
   .dim-w { bottom: 96px; }
   .dim-h { bottom: 128px; }
 }
 
-/* Telefoni stretti: niente spina e alimentatore sull'anteprima (restano nel riepilogo dell'ordine). */
+/* Narrow phones: no plug and power supply on the preview (they stay in the order summary). */
 @media (max-width: 380px) {
   .stage-power { display: none; }
 }
 
-/* Telefono in orizzontale: lo schermo è basso, in basso resta una riga sola. */
+/* Phone in landscape: the screen is low, a single row stays at the bottom. */
 @media (max-height: 480px) {
   .stage-power { display: none; }
   .dim-w { bottom: 54px; }
   .dim-h { bottom: 86px; }
 }
 
-/* Barra verticale sul bordo destro, alta quanto lo schermo. */
+/* Vertical bar on the right edge, as tall as the screen. */
 .dock {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -1078,12 +1078,12 @@ input[type="color"] {
 
   .shell[data-sheet=""] .sheet { display: flex; }
 
-  /* Su desktop il foglio di configurazione resta aperto: «Fatto» serve solo a lasciare Richiedi. */
+  /* On desktop the configuration sheet stays open: "Done" only serves to leave Request. */
   .shell[data-sheet="config"] #sheet-close { display: none; }
 
 }
 
-/* Disegno della striscia scelta, sotto il menu: in scala, vista dall'alto. */
+/* Drawing of the chosen strip, under the menu: to scale, seen from above. */
 .strip-figure {
   padding: 6px 8px;
   border-radius: var(--radius);
@@ -1147,7 +1147,7 @@ input[type="color"] {
   font-family: ui-monospace, monospace;
 }
 
-/* Uscita dall'editor dei tracciati: sopra il disegno, dove si sta lavorando. */
+/* Exit from the path editor: above the drawing, where the work is. */
 #editor-done {
   position: absolute;
   z-index: 4;
@@ -1174,7 +1174,7 @@ input[type="color"] {
   color: #b3261e;
 }
 
-/* Giro guidato: il buio è l'ombra del riquadro illuminato. */
+/* Guided tour: the dark is the shadow of the highlighted box. */
 .tour {
   position: fixed;
   inset: 0;

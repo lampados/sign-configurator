@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { readStats, recordEvent, sameOrigin, statsLine, type StatsDb, type StatsStatement } from '../src/api/statsStore';
 
-/** Finto D1: tiene le righe in memoria e capisce le due query del modulo. */
+/** Fake D1: it keeps the rows in memory and understands the two queries of the module. */
 function memoryDb(): StatsDb & { rows: { type: string; ts: string }[] } {
   const rows: { type: string; ts: string }[] = [];
   return {

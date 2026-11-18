@@ -1,7 +1,7 @@
-// [J] Export STL binario (SPEC §5).
+// [J] Binary STL export (SPEC §5).
 import type { Manifold } from 'manifold-3d';
 
-/** Sottoinsieme di `Mesh` di manifold-3d che serve all'export: le prime 3 proprietà sono x, y, z. */
+/** Subset of manifold-3d `Mesh` needed for the export: the first 3 properties are x, y, z. */
 export interface StlMesh {
   numProp: number;
   vertProperties: Float32Array;
@@ -12,8 +12,8 @@ const HEADER_BYTES = 80;
 const TRI_BYTES = 50;
 
 /**
- * STL binario little-endian: header da 80 byte, numero di triangoli (uint32), poi per ogni
- * triangolo normale + 3 vertici (12 float32) e attributo (uint16). Unità: millimetri.
+ * Binary little-endian STL: 80-byte header, number of triangles (uint32), then for every
+ * triangle normal + 3 vertices (12 float32) and attribute (uint16). Units: millimetres.
  */
 export function meshToStl(mesh: StlMesh, header = 'sign-configurator binary STL, mm'): ArrayBuffer {
   const { numProp, vertProperties: v, triVerts: t } = mesh;
@@ -21,7 +21,7 @@ export function meshToStl(mesh: StlMesh, header = 'sign-configurator binary STL,
   const buffer = new ArrayBuffer(HEADER_BYTES + 4 + TRI_BYTES * triCount);
   const view = new DataView(buffer);
 
-  // L'header non deve iniziare con "solid": alcuni lettori lo scambierebbero per STL ASCII.
+  // The header must not start with "solid": some readers would mistake it for an ASCII STL.
   const headerBytes = new TextEncoder().encode(header).subarray(0, HEADER_BYTES);
   new Uint8Array(buffer, 0, HEADER_BYTES).set(headerBytes);
   view.setUint32(HEADER_BYTES, triCount, true);
@@ -57,7 +57,7 @@ export function meshToStl(mesh: StlMesh, header = 'sign-configurator binary STL,
   return buffer;
 }
 
-/** STL binario direttamente da un Manifold (non lo libera: resta del chiamante). */
+/** Binary STL straight from a Manifold (it does not free it: it stays the caller's). */
 export function manifoldToStl(manifold: Manifold, header?: string): ArrayBuffer {
   return meshToStl(manifold.getMesh(), header);
 }

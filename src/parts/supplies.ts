@@ -1,11 +1,11 @@
-// Catalogo degli alimentatori (SPEC §2, Alimentatori; pagina parts.html). Dieci famiglie
-// Mean Well comuni, ciascuna con le versioni a 5, 12 e 24 V. Correnti e misure dalle schede
-// tecniche; prezzi indicativi per un pezzo, IVA esclusa, novembre 2026. Modulo puro.
+// Power supply catalogue (SPEC §2, Power supplies; page parts.html). Ten common Mean Well
+// families, each with the 5, 12 and 24 V versions. Currents and measurements from the
+// datasheets; indicative prices for one piece, excluding VAT, November 2026. Pure module.
 
 export type SupplyKind = 'adapter' | 'enclosed' | 'waterproof';
 
 export interface SupplyVariant {
-  /** Codice d'ordine del costruttore. */
+  /** Maker's order code. */
   model: string;
   volts: number;
   amps: number;
@@ -16,13 +16,13 @@ export interface SupplyFamily {
   name: string;
   kind: SupplyKind;
   watts: number;
-  /** Lunghezza × larghezza × altezza, mm. */
+  /** Length × width × height, mm. */
   sizeMm: [number, number, number];
-  /** Prezzo medio, € per pezzo, IVA esclusa: minimo e massimo visti. */
+  /** Average price, € per piece, excluding VAT: minimum and maximum seen. */
   priceEur: [number, number];
   datasheet: string;
   variants: SupplyVariant[];
-  /** Nota per la pagina parts (misure da verificare, versioni mancanti). */
+  /** Note for the parts page (measurements to check, missing versions). */
   note?: string;
 }
 
@@ -102,9 +102,9 @@ export interface SupplyPick {
 }
 
 /**
- * Alimentatore consigliato per `amps` (già con il margine) a `volts`, per un'insegna da interno:
- * l'adattatore con spina se basta, altrimenti l'LRS più piccolo che regge la corrente.
- * Gli LPV (esterno) restano nel catalogo ma non vengono scelti. null se nessuno basta.
+ * Recommended power supply for `amps` (margin already included) at `volts`, for an indoor sign:
+ * the plug-in adapter if it is enough, otherwise the smallest LRS that holds the current.
+ * The LPVs (outdoor) stay in the catalogue but are never picked. null if none is enough.
  */
 export function pickSupply(volts: number, amps: number): SupplyPick | null {
   if (!(amps > 0)) return null;

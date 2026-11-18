@@ -1,7 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { expectClean, trackPage } from './guard';
 
-/** Prezzo voce per voce nel pannello Order (SPEC §12.5). */
+/** Line-by-line price in the Order panel (SPEC §12.5). */
 async function priceOf(page: Page): Promise<Map<string, string>> {
   const terms = await page.locator('#price-lines dt').allTextContents();
   const values = await page.locator('#price-lines dd').allTextContents();
@@ -18,7 +18,7 @@ test('Order: every line has its cost and the sum is the total', async ({ page })
   const status = page.locator('#preview-status');
   await expect(status).toContainText('LED');
 
-  // Una striscia con il prezzo al metro, così il totale è completo.
+  // A strip with a price per metre, so the total is complete.
   await page.locator('[data-tool="tech"]').click();
   const before = await status.getAttribute('data-generation');
   await page.locator('select[name="tech-STRIP_ID"]').selectOption('ws2812b-60');
@@ -37,16 +37,16 @@ test('Order: every line has its cost and the sum is the total', async ({ page })
   expect(labels.at(-2)).toBe('Total, excl. VAT');
   expect(labels.at(-1)).toBe('Shipping (estimate)');
   expect(price.get('Shipping (estimate)')).toBe('€20');
-  // Il montaggio costa 1 € al minuto: gli stessi minuti scritti nell'etichetta.
+  // Assembly costs €1 per minute: the same minutes written in the label.
   const assembly = labels.find((label) => label.startsWith('Assembly · '));
   if (assembly) expect(eur(price.get(assembly))).toBe(Number(assembly.match(/(\d+) min/)![1]));
-  // Le voci sopra il totale, sommate, danno il totale.
+  // The lines above the total, added up, give the total.
   const total = eur(price.get('Total, excl. VAT'));
   const sum = labels.slice(0, -2).reduce((acc, label) => acc + eur(price.get(label)), 0);
   expect(Math.abs(sum - total)).toBeLessThan(0.02);
   expect(total % 5).toBe(0);
 
-  // Con un altro controller cambia la sua voce.
+  // With another controller its line changes.
   await page.locator('[data-tool="tech"]').click();
   const again = await status.getAttribute('data-generation');
   await page.locator('select[name="tech-CONTROLLER_ID"]').selectOption('xiao-led-driver');
@@ -62,7 +62,7 @@ test('Order: a strip without a price per metre says so, and the total leaves it 
   await page.goto('index.html', { waitUntil: 'load' });
   const status = page.locator('#preview-status');
   await expect(status).toContainText('LED');
-  // Con la striscia standard il totale è completo.
+  // With the standard strip the total is complete.
   await page.locator('#open-request').click();
   await expect(page.locator('#price')).toBeVisible();
   expect((await priceOf(page)).has('Total, excl. VAT')).toBe(true);

@@ -1,14 +1,14 @@
-// Profilo dello spigolo superiore della parete: smusso esterno, interno o entrambi (SPEC §3).
-// Smusso a gradini: fette alte LAYER_STEP, ognuna con un offset del profilo crescente verso l'alto.
+// Profile of the top edge of the wall: outer chamfer, inner or both (SPEC §3).
+// Stepped chamfer: slices LAYER_STEP high, each with an offset of the profile growing upwards.
 import type { CrossSection, Manifold, ManifoldToplevel } from 'manifold-3d';
 import type { EdgeProfile, Params } from '../config';
 
-/** Larghezza minima di parete che deve restare in cima con smusso interno. */
+/** Minimum wall width that must be left on top with an inner chamfer. */
 export const MIN_TOP_WALL = 0.8;
 const ROUND_SEGMENTS = 96;
 /**
- * Gli offset moltiplicano i vertici delle curve già fitte; togliere quelli entro 5 µm dalla
- * corda rende l'union delle fette ~5× più veloce senza effetti misurabili sul pezzo.
+ * The offsets multiply the vertices of already dense curves; removing those within 5 µm of the
+ * chord makes the union of the slices ~5× faster with no measurable effect on the part.
  */
 const SLICE_SIMPLIFY = 0.005;
 
@@ -17,14 +17,14 @@ export type EdgeProfileParams = Pick<
   'EDGE_PROFILE' | 'CHAMFER_SIZE' | 'CHAMFER_ANGLE' | 'LAYER_STEP' | 'WALL' | 'CHANNEL_DEPTH'
 >;
 
-/** Smusso effettivo, dopo la validazione. */
+/** Effective chamfer, after validation. */
 export interface ChamferPlan {
   profile: EdgeProfile;
   outer: boolean;
   inner: boolean;
-  /** Altezza verticale; 0 = spigoli vivi. */
+  /** Vertical height; 0 = sharp edges. */
   height: number;
-  /** Larghezza orizzontale = height / tan(CHAMFER_ANGLE). */
+  /** Horizontal width = height / tan(CHAMFER_ANGLE). */
   run: number;
   layerStep: number;
   warnings: string[];
@@ -90,9 +90,9 @@ export function planChamfer(p: EdgeProfileParams): ChamferPlan {
 }
 
 /**
- * Corpo pieno della parete (profilo esterno estruso fino a `totalHeight`) con lo smusso in cima.
- * Con smusso interno le fette sono già scavate dal canale allargato; il chiamante sottrae comunque
- * il canale e i fori come per il profilo "square", che restituisce esattamente `outline.extrude()`.
+ * Solid body of the wall (outer profile extruded up to `totalHeight`) with the chamfer on top.
+ * With an inner chamfer the slices are already hollowed by the widened channel; the caller still subtracts
+ * the channel and the holes as for the "square" profile, which returns exactly `outline.extrude()`.
  */
 export function profiledBody(
   wasm: ManifoldToplevel,
@@ -115,7 +115,7 @@ export function profiledBody(
     for (let i = 0; i < count; i++) {
       const zb = z0 + i * plan.layerStep;
       const zt = Math.min(z0 + (i + 1) * plan.layerStep, totalHeight);
-      // Offset a metà fetta: il volume dei gradini coincide con quello dello smusso ideale.
+      // Offset at mid slice: the volume of the steps matches that of the ideal chamfer.
       const d = ((zb + zt) / 2 - z0) * slope;
       let section = plan.outer ? tmp(outline.offset(-d, 'Round', 2, ROUND_SEGMENTS)) : outline;
       if (plan.inner) {

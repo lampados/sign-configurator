@@ -1,37 +1,37 @@
-// Composizione del testo con harfbuzzjs (SPEC §4ter), per i font con `shaper: "harfbuzz"`.
-// opentype.js mette in fila un glifo per carattere: al devanagari non basta, perché le consonanti
-// si fondono in legature (स + ् + त) e la vocale ि si disegna prima della consonante che segue nel
-// testo. harfbuzz decide quali glifi usare e dove; i contorni restano quelli letti da opentype.js
-// dallo stesso file. Niente DOM: gira nel main thread, nel worker e in Node.
+// Text shaping with harfbuzzjs (SPEC §4ter), for fonts with `shaper: "harfbuzz"`.
+// opentype.js lays out one glyph per character: not enough for Devanagari, because consonants
+// fuse into conjuncts (स + ् + त) and the vowel sign ि is drawn before the consonant that precedes it in the
+// text. harfbuzz decides which glyphs to use and where; the contours stay those read by opentype.js
+// from the same file. No DOM: it runs in the main thread, in the worker and in Node.
 import { fetchFontBytes, type FontBytesReader } from './loadFont';
 import { getFont } from './registry';
 
-/** Un glifo composto. Avanzamenti e spostamenti in unità font, Y verso l'alto. */
+/** A shaped glyph. Advances and offsets in font units, Y pointing up. */
 export interface ShapedGlyph {
   glyphIndex: number;
-  /** Indice (UTF-16) nel testo del primo carattere del gruppo a cui il glifo appartiene. */
+  /** Index (UTF-16) in the text of the first character of the group the glyph belongs to. */
   cluster: number;
   xAdvance: number;
   xOffset: number;
   yOffset: number;
 }
 
-/** Testo su una riga → glifi in ordine visivo, da sinistra a destra. */
+/** Text on one line → glyphs in visual order, from left to right. */
 export type Shaper = (text: string) => ShapedGlyph[];
 
 type Run = { start: number; end: number; devanagari: boolean };
 
-/** Devanagari, Devanagari esteso e segni vedici. */
+/** Devanagari, Devanagari Extended and Vedic marks. */
 const isDevanagari = (cp: number): boolean =>
   (cp >= 0x0900 && cp <= 0x097f) || (cp >= 0xa8e0 && cp <= 0xa8ff) || (cp >= 0x1cd0 && cp <= 0x1cff);
 
-/** Spazi, cifre, punteggiatura e i due caratteri di legatura (ZWNJ, ZWJ): restano nel tratto in corso. */
+/** Spaces, digits, punctuation and the two joining characters (ZWNJ, ZWJ): they stay in the current run. */
 const isNeutral = (cp: number): boolean =>
   cp === 0x200c || cp === 0x200d || !/\p{L}|\p{M}/u.test(String.fromCodePoint(cp));
 
 /**
- * harfbuzz compone un tratto alla volta, con una sola scrittura: «Ciao नमस्ते» va diviso, altrimenti
- * la parte hindi verrebbe composta con le regole latine, cioè non composta.
+ * harfbuzz shapes one run at a time, with a single script: "Ciao नमस्ते" must be split, otherwise
+ * the Hindi part would be shaped with the Latin rules, that is not shaped.
  */
 export function scriptRuns(text: string): Run[] {
   const runs: Run[] = [];
@@ -52,8 +52,8 @@ let engine: Promise<HarfBuzz> | undefined;
 const cache = new Map<string, Promise<Shaper>>();
 
 /**
- * Il compositore di un font del registro, o `null` se il font non lo chiede. Il modulo
- * harfbuzzjs (WASM, 440 KB) si scarica alla prima richiesta, non con la pagina.
+ * The shaper of a registry font, or `null` if the font does not ask for one. The harfbuzzjs
+ * module (WASM, 440 KB) is downloaded at the first request, not with the page.
  */
 export function loadShaper(id: string, read: FontBytesReader = fetchFontBytes): Promise<Shaper | null> {
   const entry = getFont(id);
@@ -77,7 +77,7 @@ export function loadShaper(id: string, read: FontBytesReader = fetchFontBytes): 
           } else {
             buffer.guessSegmentProperties();
           }
-          // Una vocale senza consonante non riceve il cerchio tratteggiato: su un'insegna non è una lettera.
+          // A vowel sign without a consonant gets no dotted circle: on a sign it is not a letter.
           buffer.setFlags(hb.BufferFlag.DO_NOT_INSERT_DOTTED_CIRCLE);
           hb.shape(font, buffer);
           const infos = buffer.getGlyphInfos();

@@ -21,14 +21,14 @@ export interface StripModes {
 export interface SkeletonGraphResult {
   raster: TextRaster;
   graph: SkeletonGraph;
-  /** Sempre null: l'accoppiamento dei tubi non è nella pipeline (stripMode "walls"). */
+  /** Always null: tube pairing is not in the pipeline (stripMode "walls"). */
   pairing: TubePairing | null;
-  /** Spezzoni, cerniere, validazione e BOM ([D]–[G]). */
+  /** Segments, hinges, validation and BOM ([D]–[G]). */
   strip: StripModel;
   graphMs: number;
 }
 
-// Pipeline [A]–[I] (SPEC §5). generate(order) non blocca l'interfaccia: gira qui.
+// Pipeline [A]–[I] (SPEC §5). generate(order) does not block the interface: it runs here.
 const generator = {
   version(): string {
     return GENERATOR_VERSION;

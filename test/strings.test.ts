@@ -6,7 +6,7 @@ describe('customer page texts', () => {
     expect(customerMessage('Segment 6: curve too tight, radius 6.3 mm (angle 105.3°, minimum 14.6 mm), at (250.6, 33.1) mm.')).toMatch(/too tight/);
     expect(customerMessage('Segment 4: lit length 2.2 mm, under the cut pitch 10.0 mm, at (44.6, 55.0) mm.')).toMatch(/too short/);
     expect(customerMessage('Outlines merging: distance 8.4 mm, minimum 10.8 mm, at (245.7, 31.8).')).toMatch(/very close and share a channel/);
-    // Il rimedio giusto per ogni blocco: più stretta per curve e tratti vicini, più LED al metro per i tratti corti.
+    // The right remedy for every blocker: narrower for curves and close strokes, more LEDs per metre for short strokes.
     expect(customerMessage('Segment 6: curve too tight, radius 6.3 mm.')).toMatch(/more LEDs per metre\.$/);
     expect(customerMessage('Outlines merging: distance 8.4 mm.')).toMatch(/bridged with a jumper.*thinner strip avoids it\.$/);
     expect(S.summary.assemblyValue(3, 50, 2)).toBe('3 strip cuts · 2 jumpers · 50 min');

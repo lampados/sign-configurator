@@ -1,11 +1,11 @@
-// [E] Levigatura Chaikin + ricampionamento (SPEC §5). Modulo puro.
-// Due passate al quarto classico: il raccordo cresce con la lettera, così un
-// testo più alto allenta le pieghe. Poi si ricampiona a passo costante.
+// [E] Chaikin smoothing + resampling (SPEC §5). Pure module.
+// Two passes of the classic quarter rule: the fillet grows with the letter, so a
+// taller text eases the bends. Then it is resampled at constant pitch.
 
 import type { Point } from './rasterize';
 
 export const CHAIKIN_ITERATIONS = 2;
-/** Passo del ricampionamento dopo la levigatura, mm. */
+/** Resampling pitch after smoothing, mm. */
 export const SMOOTH_STEP_MM = 1;
 
 const dist = (a: Point, b: Point): number => Math.hypot(b[0] - a[0], b[1] - a[1]);
@@ -35,7 +35,7 @@ function chaikinOnce(points: readonly Point[], closed: boolean): Point[] {
   return out.length >= 2 ? out : points.slice();
 }
 
-/** Punti a passo d'arco costante, estremi compresi. Chiuso: il primo punto è ripetuto in fondo. */
+/** Points at constant arc pitch, ends included. Closed: the first point is repeated at the end. */
 export function resampleByArcLength(points: readonly Point[], stepMm: number, closed: boolean): Point[] {
   const ring = closed ? dropClosing(points) : points.slice();
   if (ring.length === 0) return [];
@@ -62,7 +62,7 @@ export function resampleByArcLength(points: readonly Point[], stepMm: number, cl
   return out;
 }
 
-/** Chaikin (estremi fissi se aperto) e ricampionamento. */
+/** Chaikin (fixed ends if open) and resampling. */
 export function smoothPolyline(
   points: readonly Point[],
   closed: boolean,
@@ -76,7 +76,7 @@ export function smoothPolyline(
   return resampleByArcLength(cur, stepMm, closed);
 }
 
-/** Svolta oltre la quale un vertice di un font a tratto singolo è uno spigolo voluto, non una curva. */
+/** Turn beyond which a vertex of a single-stroke font is an intended cusp, not a curve. */
 export const STROKE_CORNER_DEG = 75;
 
 function turnDeg(a: Point, b: Point, c: Point): number {
@@ -91,7 +91,7 @@ function turnDeg(a: Point, b: Point, c: Point): number {
   return (Math.acos(cos) * 180) / Math.PI;
 }
 
-/** Catmull-Rom centripeta fra p1 e p2 (Barry–Goldman), parametro u in [0, 1]. */
+/** Centripetal Catmull-Rom between p1 and p2 (Barry–Goldman), parameter u in [0, 1]. */
 function catmullRom(p0: Point, p1: Point, p2: Point, p3: Point, u: number): Point {
   const knot = (a: Point, b: Point, t: number): number => t + Math.max(Math.sqrt(dist(a, b)), 1e-6);
   const t0 = 0;
@@ -111,14 +111,14 @@ function catmullRom(p0: Point, p1: Point, p2: Point, p3: Point, u: number): Poin
   return mix(b1, b2, t1, t2);
 }
 
-/** Una corsa senza spigoli: spline per tutti i vertici, campionata a ~stepMm. */
+/** A run without cusps: spline through all the vertices, sampled at ~stepMm. */
 function splineRun(run: readonly Point[], closed: boolean, stepMm: number): Point[] {
   const n = run.length;
   if (n < 3 && !closed) return run.slice();
   const at = (i: number): Point => {
     if (closed) return run[((i % n) + n) % n]!;
-    // Oltre gli estremi: estrapolazione quadratica sugli ultimi tre punti, così la prima e
-    // l'ultima campata continuano la curvatura invece di raddrizzarsi (con due punti, riflesso).
+    // Beyond the ends: quadratic extrapolation on the last three points, so the first and
+    // last spans continue the curvature instead of straightening (with two points, a reflection).
     if (i < 0) {
       const a = run[0]!;
       const b = run[1]!;
@@ -147,9 +147,9 @@ function splineRun(run: readonly Point[], closed: boolean, stepMm: number): Poin
 }
 
 /**
- * Font a tratto singolo (SPEC §4): i glifi sono spezzate grossolane. Una spline che passa per ogni
- * vertice ne ricostruisce la curva; le svolte oltre `cornerDeg` restano spigoli. Chiuso: il primo
- * punto è ripetuto in fondo, come in ingresso.
+ * Single-stroke fonts (SPEC §4): the glyphs are coarse polylines. A spline through every
+ * vertex rebuilds their curve; turns beyond `cornerDeg` stay cusps. Closed: the first
+ * point is repeated at the end, as in the input.
  */
 export function splineThroughPolyline(
   points: readonly Point[],
@@ -169,7 +169,7 @@ export function splineThroughPolyline(
     const ring = splineRun(pts, true, stepMm);
     return ring;
   }
-  // Corse fra spigoli consecutivi; chiuso: si parte dal primo spigolo e si fa il giro.
+  // Runs between consecutive cusps; closed: it starts from the first cusp and goes around.
   const out: Point[] = [];
   const order = closed ? [...corners, corners[0]! + n] : corners;
   for (let c = 0; c + 1 < order.length; c++) {

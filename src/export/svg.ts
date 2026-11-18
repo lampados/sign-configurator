@@ -1,2 +1,2 @@
-// [J] Export SVG del retro, stessi contenuti del DXF (SPEC §5).
+// [J] SVG export of the back, same content as the DXF (SPEC §5).
 export {};

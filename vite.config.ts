@@ -4,8 +4,8 @@ import type { Connect, Plugin } from 'vite';
 
 const root = import.meta.dirname;
 
-// `vite build --mode public` (npm run build:public): la pagina cliente e la pagina parts. Debug, bend test
-// e spec si usano in locale (SPEC §7).
+// `vite build --mode public` (npm run build:public): the customer page and the parts page. Debug, bend test
+// and spec are used locally (SPEC §7).
 const PUBLIC_PAGES = ['index', 'parts'];
 const ALL_PAGES: Record<string, string> = {
   index: 'index.html',
@@ -16,8 +16,8 @@ const ALL_PAGES: Record<string, string> = {
 };
 
 /**
- * `vite` e `vite preview` non eseguono le Pages Functions: il contatore (SPEC §14) risponde come un
- * sito senza database, così in locale e nei test la console resta pulita e la riga non compare.
+ * `vite` and `vite preview` do not run the Pages Functions: the counter (SPEC §14) answers like a
+ * site without a database, so locally and in the tests the console stays clean and the row does not appear.
  */
 function statsStub(): Plugin {
   const stub: Connect.NextHandleFunction = (req, res, next) => {
@@ -42,7 +42,7 @@ function statsStub(): Plugin {
 }
 
 export default defineConfig(({ command, isPreview, mode }) => ({
-  // Cloudflare Pages (CF_PAGES=1 durante il build) serve dalla radice; GitHub Pages da
+  // Cloudflare Pages (CF_PAGES=1 during the build) serves from the root; GitHub Pages from
   // https://lampados.github.io/sign-configurator/
   base: (command === 'build' || isPreview) && !process.env.CF_PAGES ? '/sign-configurator/' : '/',
   appType: 'mpa',
@@ -57,9 +57,9 @@ export default defineConfig(({ command, isPreview, mode }) => ({
       ),
     },
   },
-  // Il pre-bundling sposterebbe manifold.js in .vite/deps, rompendo il suo
-  // new URL('manifold.wasm', import.meta.url): l'URL del .wasm lo passiamo noi. harfbuzzjs trova
-  // il suo .wasm allo stesso modo, e fuori dal pre-bundling l'URL resta giusto.
+  // Pre-bundling would move manifold.js into .vite/deps, breaking its
+  // new URL('manifold.wasm', import.meta.url): we pass the URL of the .wasm ourselves. harfbuzzjs finds
+  // its .wasm the same way, and outside pre-bundling the URL stays right.
   optimizeDeps: {
     exclude: ['manifold-3d', 'harfbuzzjs'],
   },

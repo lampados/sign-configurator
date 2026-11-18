@@ -41,7 +41,7 @@ test('editor: drag a node, a tight curve blocks sending, Ctrl+Z enables it again
   await expect(page.locator('#preview-status')).toContainText('LED');
   expect(scripts.join('\n').toLowerCase()).not.toContain('paper');
 
-  // L'editor si prova con una striscia che curva: la predefinita non piega di lato e bloccherebbe sempre.
+  // The editor is tried with a strip that curves: the default one does not bend sideways and would always block.
   await page.locator('[data-tool="tech"]').click();
   await page.locator('select[name="tech-STRIP_ID"]').selectOption('cob-5mm');
 
@@ -102,7 +102,7 @@ test('editor: drag a node, a tight curve blocks sending, Ctrl+Z enables it again
   await page.keyboard.press('Control+z');
   await page.locator('#open-request').click();
   await expect(page.locator('#submit-order')).toBeEnabled();
-  // Uscita: il pulsante sopra il disegno chiude l'editor e le modifiche restano.
+  // Exit: the button above the drawing closes the editor and the edits stay.
   await page.locator('[data-tool="more"]').click();
   const edit = page.locator('#edit-paths');
   const done = page.locator('#editor-done');
@@ -114,7 +114,7 @@ test('editor: drag a node, a tight curve blocks sending, Ctrl+Z enables it again
   await expect(done).toBeHidden();
   await expect(edit).toHaveText('Edit paths');
   await expect(page.locator('#restore-paths')).toBeEnabled();
-  // Si rientra, e lo stesso pulsante del pannello richiude.
+  // Going back in, the same button of the panel closes it again.
   await edit.click();
   await expect(canvas).toHaveAttribute('data-open', 'true');
   await edit.click();

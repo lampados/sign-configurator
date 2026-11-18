@@ -11,22 +11,22 @@ import {
 } from '../src/tools/bendTestGeometry';
 
 /**
- * Queste prove riguardano la piega della striscia, quindi usano una striscia che piega: la COB.
- * La predefinita (WS2812B su circuito flessibile) non curva, e qui non direbbe nulla di utile.
+ * These tests are about the bending of the strip, so they use a strip that bends: the COB.
+ * The default one (WS2812B on a flexible circuit) does not curve, and would say nothing useful here.
  */
 const BENDABLE = resolveParams({ STRIP_ID: 'cob-5mm' });
 
 const PROFILES: EdgeProfile[] = ['square', 'outer', 'inner', 'both'];
 const KINDS = ['arcs', 'corners'] as const;
 
-/** Riferimento del profilo square, asole comprese. Gli altri profili si misurano da qui. */
+/** Reference of the square profile, slots included. The other profiles are measured from here. */
 const SQUARE_BASELINE: Record<'arcs' | 'corners', { volume: number; tris: number }> = {
   arcs: { volume: 36568.133772, tris: 26114 },
   corners: { volume: 13643.147918, tris: 5406 },
 };
 
 const base: EdgeProfileParams = BENDABLE;
-/** I pezzi di prova sono disegnati per la COB da 5 mm. */
+/** The test parts are designed for the 5 mm COB. */
 const COB = { STRIP_W: COB_5MM.STRIP_W, STRIP_T: COB_5MM.STRIP_T, CHANNEL_W: COB_5MM.CHANNEL_W, WIRE_SLOT_W: COB_5MM.CHANNEL_W, CHANNEL_DEPTH: 8 };
 const plan = (o: Partial<EdgeProfileParams>) => planChamfer({ ...base, ...o });
 
@@ -124,7 +124,7 @@ describe('edge profile on the test parts', () => {
 
           const { height, run, outer, inner } = r.chamfer;
           expect(height).toBeGreaterThan(0);
-          // Sezione triangolare h·run/2 lungo ogni spigolo smussato.
+          // Triangular section h·run/2 along every chamfered edge.
           const expected = ((height * run) / 2) * ((outer ? pOuter : 0) + (inner ? pInner : 0));
           const removed = vSquare - r.manifold.volume();
           expect(removed).toBeGreaterThan(0);

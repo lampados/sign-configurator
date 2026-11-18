@@ -1,5 +1,5 @@
-// Bitmap binaria nell'ordine (SPEC §4bis): RLE, soglia, ritaglio, layout puro.
-// Nessun DOM. La decodifica del file sta in rasterImport.ts, una volta sola nel main thread.
+// Binary bitmap in the order (SPEC §4bis): RLE, threshold, crop, pure layout.
+// No DOM. Decoding of the file is in rasterImport.ts, only once in the main thread.
 import { buildGraph, strokeWidthCv } from '../geometry/graph';
 import { RASTER_MARGIN_PX, type Point, type Raster, type TextRaster } from '../geometry/rasterize';
 import { graphFromStrokes } from '../geometry/strokeGraph';
@@ -7,7 +7,7 @@ import type { RasterImageSource, TraceMode } from '../order/schema';
 import { outlinePolylines } from './contours';
 import { regionsOf, UNEVEN_STROKE_WARNING, type SvgLayout } from './svgPaths';
 
-/** Sotto questa risoluzione lo scheletro [B] non è affidabile (SPEC §4bis). */
+/** Under this resolution the skeleton [B] is not reliable (SPEC §4bis). */
 export const MIN_BITMAP_PX_PER_MM = 8;
 
 export interface CroppedBitmap {
@@ -23,7 +23,7 @@ export interface LuminanceOptions {
   trace: TraceMode;
 }
 
-/** Soglia di Otsu sul campione di luminanza. I pixel scuri sono la classe `≤ soglia`. */
+/** Otsu threshold on the luminance sample. Dark pixels are the class `≤ threshold`. */
 export function otsuThreshold(samples: Uint8Array): number {
   const hist = new Uint32Array(256);
   for (const value of samples) hist[value]!++;
@@ -56,7 +56,7 @@ export function otsuThreshold(samples: Uint8Array): number {
   return Math.round((plateauStart + plateauEnd) / 2);
 }
 
-/** 1 = inchiostro. Senza `invert` l'inchiostro è la luminanza `≤ threshold`. */
+/** 1 = ink. Without `invert` the ink is luminance `≤ threshold`. */
 export function applyThreshold(luminance: Uint8Array, threshold: number, invert: boolean): Uint8Array {
   const tone = Math.min(255, Math.max(0, Math.round(threshold)));
   const out = new Uint8Array(luminance.length);
@@ -67,7 +67,7 @@ export function applyThreshold(luminance: Uint8Array, threshold: number, invert:
   return out;
 }
 
-/** Riquadro dei pixel a 1. `null` se non c'è inchiostro. Le righe restano dall'alto. */
+/** Box of the pixels at 1. `null` if there is no ink. Rows stay from the top. */
 export function cropInk(data: Uint8Array, width: number, height: number): CroppedBitmap | null {
   let minX = width;
   let minY = height;
@@ -93,7 +93,7 @@ export function cropInk(data: Uint8Array, width: number, height: number): Croppe
   return { data: out, width: croppedWidth, height: croppedHeight };
 }
 
-/** Soglia, ritaglio e RLE. `null` se la soglia non lascia inchiostro. */
+/** Threshold, crop and RLE. `null` if the threshold leaves no ink. */
 export function bitmapFromLuminance(
   luminance: Uint8Array,
   width: number,
@@ -118,8 +118,8 @@ export function bitmapFromLuminance(
 }
 
 /**
- * Righe dall'alto, sequenze alternate che iniziano da 0 (lo sfondo).
- * Se il primo pixel è inchiostro, la prima lunghezza è 0. Lunghezze in LEB128, poi base64.
+ * Rows from the top, alternating runs starting from 0 (the background).
+ * If the first pixel is ink, the first length is 0. Lengths in LEB128, then base64.
  */
 export function encodeRle(data: Uint8Array, width: number, height: number): string {
   const count = width * height;
@@ -139,7 +139,7 @@ export function encodeRle(data: Uint8Array, width: number, height: number): stri
   return toBase64(Uint8Array.from(bytes));
 }
 
-/** Inverso di `encodeRle`: stessi byte, 0 o 1. */
+/** Inverse of `encodeRle`: same bytes, 0 or 1. */
 export function decodeRle(rle: string, width: number, height: number): Uint8Array {
   const count = width * height;
   if (!(width > 0) || !(height > 0)) throw new Error('Invalid bitmap.');
@@ -161,7 +161,7 @@ export function decodeRle(rle: string, width: number, height: number): Uint8Arra
   return out;
 }
 
-/** `null` se l'altezza in pixel basta per almeno 8 px/mm. */
+/** `null` if the height in pixels is enough for at least 8 px/mm. */
 export function lowResolutionWarning(heightPx: number, heightMm: number): string | null {
   if (!(heightMm > 0) || !(heightPx > 0)) return null;
   if (heightPx / heightMm >= MIN_BITMAP_PX_PER_MM - 1e-9) return null;
@@ -171,7 +171,7 @@ export function lowResolutionWarning(heightPx: number, heightMm: number): string
   return `Low-resolution image for this height. Maximum height ${text} mm.`;
 }
 
-/** Dall'ordine: margine di [A], `pxPerMm` = altezza px / `heightMm`, poi centerline o contorno. */
+/** From the order: margin of [A], `pxPerMm` = height px / `heightMm`, then centerline or outline. */
 export function layoutRaster(source: RasterImageSource, heightMm: number): SvgLayout {
   if (!(heightMm > 0)) throw new Error('Invalid height.');
   const { width, height, rle } = source.bitmap;

@@ -29,7 +29,7 @@ function order(text: string, params: SignOrderV4['params'] = {}): SignOrderV4 {
   };
 }
 
-/** Quante linee centrali attraversa la retta verticale x = costante. */
+/** How many centrelines the vertical line x = constant crosses. */
 function channelsAt(centerlines: readonly { points: [number, number][] }[], x: number): number {
   let n = 0;
   for (const line of centerlines) {
@@ -56,7 +56,7 @@ function xExtent(mesh: MeshData): { min: number; max: number } {
   return { min, max };
 }
 
-/** Volume racchiuso dalla mesh, dal teorema della divergenza. */
+/** Volume enclosed by the mesh, from the divergence theorem. */
 function volume(mesh: MeshData): number {
   const v = mesh.vertProperties;
   const n = mesh.numProp;
@@ -91,14 +91,14 @@ describe('sign split for the print bed', () => {
       const { min, max } = xExtent(piece);
       expect(max - min).toBeLessThanOrEqual(DEFAULT_PARAMS.BED_W - 2 * BED_MARGIN + 1e-3);
     }
-    // Il materiale tolto è solo l'aria dei tagli: una fetta larga 2·SPLIT_CLEARANCE per taglio.
+    // The material removed is only the air of the cuts: a slice 2·SPLIT_CLEARANCE wide per cut.
     const whole = volume(result.housingMesh);
     const sum = pieces.reduce((total, piece) => total + volume(piece), 0);
     expect(sum).toBeLessThan(whole);
     expect(sum).toBeGreaterThan(whole * 0.995);
     expect(2 * SPLIT_CLEARANCE).toBeLessThan(0.5);
-    // Il taglio cade dove la striscia è già interrotta: al massimo un giunto attraversa un canale,
-    // e l'avviso lo dice. Prima della taratura dei costi li attraversavano tutti e due.
+    // The cut falls where the strip is already interrupted: at most one joint crosses a channel,
+    // and the warning says so. Before the costs were tuned both crossed them.
     const onChannel = split!.cutsX.filter((x) => channelsAt(result.centerlines, x) > 0).length;
     expect(onChannel).toBeLessThanOrEqual(1);
     const notice = result.warnings.filter((w) => w.startsWith('Print-bed split:'));

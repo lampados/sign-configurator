@@ -24,13 +24,13 @@ test('design: survives a reload, reopens from a link, Start over resets it', asy
   await waitNext(page, before);
   await expect(page.locator('#share-design')).toBeEnabled();
 
-  // Ricaricamento: testo e misura tornano dal browser.
+  // Reload: text and size come back from the browser.
   await page.reload({ waitUntil: 'load' });
   await expect(page.locator('input[name="text"]')).toHaveValue('Hey');
   await expect(page.locator('input[name="heightMm"]')).toHaveValue('180');
   await expect(page.locator('#preview-status')).toContainText('LED');
 
-  // Link: una pagina senza memoria ricostruisce lo stesso design, e l'hash sparisce dall'indirizzo.
+  // Link: a page without storage rebuilds the same design, and the hash disappears from the address.
   await page.locator('[data-tool="more"]').click();
   await page.locator('#share-design').click();
   await expect(page.locator('#design-note')).toHaveAttribute('data-link', /#o=/);
@@ -46,7 +46,7 @@ test('design: survives a reload, reopens from a link, Start over resets it', asy
   expect(other.url()).not.toContain('#o=');
   await fresh.close();
 
-  // Start over: di nuovo «Ciao».
+  // Start over: "Ciao" again.
   page.once('dialog', (dialog) => void dialog.accept());
   await page.locator('#new-design').click();
   await expect(page.locator('input[name="text"]')).toHaveValue('Ciao');

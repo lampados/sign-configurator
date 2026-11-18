@@ -1,8 +1,8 @@
-// Contatore anonimo: quante volte è stato scaricato l'STL e quante è partita una richiesta. Una riga
-// per evento, con tipo e ora: nessun IP, nessun cookie, nessun dato personale. Modulo puro: lo usano
-// le Pages Functions e i test.
+// Anonymous counter: how many times the STL was downloaded and how many a request was sent. One row
+// per event, with type and time: no IP, no cookie, no personal data. Pure module: used by
+// the Pages Functions and the tests.
 
-/** Quello che serve di un database D1 di Cloudflare: così i test usano un finto in memoria. */
+/** What is needed of a Cloudflare D1 database: this way the tests use an in-memory fake. */
 export interface StatsStatement {
   bind(...values: unknown[]): StatsStatement;
   run(): Promise<unknown>;
@@ -25,8 +25,8 @@ export function isEventType(value: unknown): value is EventType {
 }
 
 /**
- * Registra un evento. Risponde false se il tipo non è valido, se il database non è collegato o se
- * la scrittura fallisce: chi chiama non deve mai fermarsi per il contatore.
+ * Records an event. Returns false if the type is not valid, if the database is not bound or if
+ * the write fails: the caller must never stop because of the counter.
  */
 export async function recordEvent(type: unknown, db: StatsDb | undefined, now: Date): Promise<boolean> {
   if (!db || !isEventType(type)) return false;
@@ -38,7 +38,7 @@ export async function recordEvent(type: unknown, db: StatsDb | undefined, now: D
   }
 }
 
-/** I due totali, o null se il database non è collegato o non risponde. */
+/** The two totals, or null if the database is not bound or does not answer. */
 export async function readStats(db: StatsDb | undefined): Promise<Stats | null> {
   if (!db) return null;
   try {
@@ -55,8 +55,8 @@ export async function readStats(db: StatsDb | undefined): Promise<Stats | null> 
 }
 
 /**
- * L'evento arriva dalla pagina servita dallo stesso host della Function: nessun dominio scritto nel
- * codice, così vale su pages.dev, sulle anteprime e nei fork. Senza Origin si guarda il Referer.
+ * The event comes from the page served by the same host as the Function: no domain written in the
+ * code, so it works on pages.dev, on previews and in forks. Without Origin the Referer is checked.
  */
 export function sameOrigin(requestUrl: string, origin: string | null, referer: string | null): boolean {
   const source = origin && origin !== 'null' ? origin : referer;
@@ -68,7 +68,7 @@ export function sameOrigin(requestUrl: string, origin: string | null, referer: s
   }
 }
 
-/** Riga sotto i pulsanti: ogni totale compare solo da `min` in su. Stringa vuota: niente riga. */
+/** Line under the buttons: each total appears only from `min` up. Empty string: no line. */
 export function statsLine(
   stats: { downloads?: unknown; requests?: unknown } | null,
   min: number,

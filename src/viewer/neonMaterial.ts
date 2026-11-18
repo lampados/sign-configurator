@@ -1,6 +1,6 @@
-// Contributo di ogni LED sul diffusore: una gaussiana la cui larghezza è la distanza
-// fra la faccia del LED e il diffusore. Il passo largo rispetto a quella distanza
-// lascia vedere i punti; il passo fitto li fonde.
+// Contribution of every LED on the diffuser: a gaussian whose width is the distance
+// between the face of the LED and the diffuser. A pitch wide compared with that distance
+// lets the points show; a dense pitch blends them.
 import {
   AdditiveBlending,
   Color,
@@ -10,23 +10,23 @@ import {
   Vector2,
 } from 'three';
 
-/** Esposizione ACES di partenza. In admin si regola; il cliente resta qui. */
+/** Starting ACES exposure. Adjustable in admin; the customer stays here. */
 export const DEFAULT_EXPOSURE = 0.85;
-/** Alone di partenza: raggio del bloom. Resta stretto; la parete prende la gaussiana. */
+/** Starting halo: bloom radius. It stays narrow; the wall takes the gaussian. */
 export const DEFAULT_HALO = 0.16;
-/** Sopra il fondo del tratto, così il bloom non allarga l'alone oltre la gaussiana. */
+/** Above the base of the stroke, so the bloom does not widen the halo beyond the gaussian. */
 export const BLOOM_THRESHOLD = 0.85;
 const GLOW_GAIN = 0.7;
 const WALL_HALO_GAIN = 0.2;
 const GLOW_FLOOR = 0;
 
-/** Peso di un LED a (dx, dy) mm dal campione. `sigma` è la distanza LED–diffusore. */
+/** Weight of an LED at (dx, dy) mm from the sample. `sigma` is the LED–diffuser distance. */
 export function gaussianWeight(dx: number, dy: number, sigma: number): number {
   const s = Math.max(sigma, 1e-3);
   return Math.exp(-(dx * dx + dy * dy) / (2 * s * s));
 }
 
-/** Curva ACES di Narkowicz, un canale. */
+/** Narkowicz ACES curve, one channel. */
 export function acesChannel(x: number): number {
   const a = 2.51;
   const b = 0.03;
@@ -37,7 +37,7 @@ export function acesChannel(x: number): number {
   return Math.min(1, Math.max(0, y));
 }
 
-/** Colore del diffusore in un punto: somma delle gaussiane, poi ACES. */
+/** Colour of the diffuser at a point: sum of the gaussians, then ACES. */
 export function diffuserRgb(
   x: number,
   y: number,
@@ -57,7 +57,7 @@ export function diffuserRgb(
   return [acesChannel(r * exposure), acesChannel(g * exposure), acesChannel(b * exposure)];
 }
 
-/** Tinta in gradi, 0 = rosso. Un grigio restituisce 0. */
+/** Hue in degrees, 0 = red. A grey returns 0. */
 export function hueDegrees(r: number, g: number, b: number): number {
   const max = Math.max(r, g, b);
   const min = Math.min(r, g, b);
@@ -70,7 +70,7 @@ export function hueDegrees(r: number, g: number, b: number): number {
   return ((hue * 60) % 360 + 360) % 360;
 }
 
-/** Il punto copre ±3 sigma, dove la gaussiana è già trascurabile. */
+/** The point covers ±3 sigma, where the gaussian is already negligible. */
 export const GAUSSIAN_RADIUS_SIGMA = 3;
 
 export function createSplatMaterial(): ShaderMaterial {
@@ -106,7 +106,7 @@ export function createSplatMaterial(): ShaderMaterial {
   });
 }
 
-/** Diffusore acceso: la mappa è la somma delle gaussiane, già colorata. */
+/** Lit diffuser: the map is the sum of the gaussians, already coloured. */
 export function createDiffuserGlowMaterial(map: Texture): ShaderMaterial {
   return new ShaderMaterial({
     side: DoubleSide,
@@ -138,7 +138,7 @@ export function createDiffuserGlowMaterial(map: Texture): ShaderMaterial {
   });
 }
 
-/** Parete: il colore del muro più la stessa gaussiana, che si spegne a circa 3 sigma. */
+/** Wall: the colour of the wall plus the same gaussian, which fades at about 3 sigma. */
 export function createWallGlowMaterial(map: Texture, wall: Color): ShaderMaterial {
   return new ShaderMaterial({
     uniforms: {
@@ -176,7 +176,7 @@ export function createWallGlowMaterial(map: Texture, wall: Color): ShaderMateria
 
 export const WALL_GLOW_GAIN = WALL_HALO_GAIN;
 
-/** LED nudo nel canale: dischetto morbido, già del colore dello spezzone. */
+/** Bare LED in the channel: a soft small disc, already in the colour of the segment. */
 export function createEmitterMaterial(): ShaderMaterial {
   return new ShaderMaterial({
     transparent: true,

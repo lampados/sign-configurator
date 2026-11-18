@@ -21,13 +21,13 @@ describe('controllers', () => {
       'xiao-led-driver': 18,
     });
     expect(controllerOf('gl-c-616wl').model).toBe('GL-C-616WL');
-    // Tolti dal catalogo: un design che li nomina torna allo standard.
+    // Removed from the catalogue: a design that names them falls back to the standard.
     for (const gone of ['gl-c-618wl', 'gl-c-015wl', 'quinled-dig-next-2', 'quinled-dig-quad']) expect(controllerOf(gone)).toBe(CONTROLLER);
     expect(controllerOf('boh')).toBe(CONTROLLER);
   });
 
   it('the warning limits follow the chosen controller', () => {
-    // 200 LED a 60 mA, 5 V: 12 A, 15 A con il margine.
+    // 200 LEDs at 60 mA, 5 V: 12 A, 15 A with the margin.
     const small = bomAssembly([], [], 200, 60, 5);
     expect(small.supplyA).toBe(15);
     expect(small.controller).toBe('gl-c-309wl');
@@ -35,7 +35,7 @@ describe('controllers', () => {
     const uno = bomAssembly([], [], 200, 60, 5, 'quinled-dig-uno');
     expect(uno.controller).toBe('quinled-dig-uno');
     expect(uno.controllerWarnings).toEqual([]);
-    // Troppi LED per l'Ultra Mini, non per il Dig-Uno.
+    // Too many LEDs for the Ultra Mini, not for the Dig-Uno.
     expect(bomAssembly([], [], 1000, 1, 24).controllerWarnings.join(' ')).toContain('800 IC');
     expect(bomAssembly([], [], 1000, 1, 24, 'quinled-dig-uno').controllerWarnings).toEqual([]);
   });
@@ -45,13 +45,13 @@ describe('controllers', () => {
     expect(controllerAmps(xiao, 5)).toBe(3);
     expect(controllerAmps(xiao, 12)).toBe(2);
     expect(controllerAmps(CONTROLLER, 12)).toBe(10);
-    // 30 LED a 60 mA, 5 V: 1,8 A, 3 A con il margine. Ci sta.
+    // 30 LEDs at 60 mA, 5 V: 1.8 A, 3 A with the margin. It fits.
     expect(bomAssembly([], [], 30, 60, 5, 'xiao-led-driver').controllerWarnings).toEqual([]);
-    // 100 LED: 6 A, 8 A con il margine. Troppi per 3 A.
+    // 100 LEDs: 6 A, 8 A with the margin. Too many for 3 A.
     expect(bomAssembly([], [], 100, 60, 5, 'xiao-led-driver').controllerWarnings.join(' ')).toContain('over the 3 A');
-    // A 12 V il limite scende a 2 A: 100 LED sono 2,5 A, 4 A con il margine.
+    // At 12 V the limit drops to 2 A: 100 LEDs are 2.5 A, 4 A with the margin.
     expect(bomAssembly([], [], 100, 60, 12, 'xiao-led-driver').controllerWarnings.join(' ')).toContain('over the 2 A');
-    // A 24 V non si può usare, qualunque sia il numero di LED.
+    // At 24 V it cannot be used, whatever the number of LEDs.
     const at24 = bomAssembly([], [], 10, 60, 24, 'xiao-led-driver').controllerWarnings;
     expect(at24.join(' ')).toContain('takes 5–12 V');
     expect(bomAssembly([], [], 10, 60, 24).controllerWarnings).toEqual([]);

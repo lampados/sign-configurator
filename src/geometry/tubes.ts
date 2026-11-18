@@ -1,10 +1,10 @@
-// Misure dei font a tubi cavi (SPEC §4): spessore della linea e luce interna del tubo, da una
-// bitmap di riferimento. Servono a compilare il registro, una volta per font; l'accoppiamento
-// delle due linee di ogni tubo avviene in [B]/[C] (SPEC §5).
+// Measurements of hollow-tube fonts (SPEC §4): line thickness and inner gap of the tube, from a
+// reference bitmap. They are used to fill in the registry, once per font; the pairing
+// of the two lines of every tube happens in [B]/[C] (SPEC §5).
 
 import { squaredDistanceTo } from './distance';
 
-/** Larghezze (px) misurate sull'asse dei pixel con valore `value`, ordinate. */
+/** Widths (px) measured on the axis of the pixels with value `value`, sorted. */
 function ridgeWidths(data: Uint8Array, width: number, height: number, value: 0 | 1): number[] {
   const d2 = squaredDistanceTo(data, width, height, value === 1 ? 0 : 1);
   const out: number[] = [];
@@ -19,7 +19,7 @@ function ridgeWidths(data: Uint8Array, width: number, height: number, value: 0 |
       ) {
         continue;
       }
-      // Distanza fra centri di pixel: un tratto largo n px ha l'asse a (n + 1) / 2 dal bordo opposto.
+      // Distance between pixel centres: a stroke n px wide has its axis at (n + 1) / 2 from the opposite edge.
       out.push(2 * Math.sqrt(di) - 1);
     }
   }
@@ -27,9 +27,9 @@ function ridgeWidths(data: Uint8Array, width: number, height: number, value: 0 |
 }
 
 /**
- * Spessore della linea = moda delle larghezze sull'asse dei tratti pieni; luce del tubo = mediana
- * delle larghezze sull'asse dei vuoti fra 0.5 e 4 spessori (i vuoti più larghi sono occhielli e
- * spazi). La luce varia molto lungo il tubo (in Neonderthaw circa da 1.3 a 4 spessori).
+ * Line thickness = mode of the widths on the axis of the solid strokes; tube gap = median
+ * of the widths on the axis of the voids between 0.5 and 4 thicknesses (wider voids are counters and
+ * spaces). The gap varies a lot along the tube (in Neonderthaw from about 1.3 to 4 thicknesses).
  */
 export function measureTubes(data: Uint8Array, width: number, height: number): { lineWidthPx: number; gapPx: number } {
   const counts = new Map<number, number>();

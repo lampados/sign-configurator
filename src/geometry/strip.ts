@@ -1,6 +1,6 @@
-// [D]–[G] e BOM: dal grafo agli spezzoni, alla catena e alla distinta.
-// L'altezza minima è la più alta fra curve, spezzoni corti e sagome che si fondono.
-// Gli spigoli restano, e con CUSP_MODE "split" lo spezzone si taglia lì.
+// [D]–[G] and BOM: from the graph to the segments, to the chain and to the bill of materials.
+// The minimum height is the highest among curves, short segments and merging outlines.
+// Cusps stay, and with CUSP_MODE "split" the segment is cut there.
 
 import { rMin, type Params } from '../config';
 import { buildBom, bomPiece, type Bom } from '../export/bom';
@@ -14,19 +14,19 @@ import { centerlineClearance, touchPoints, validateStrip, type ValidationIssue }
 export interface SegmentSource {
   nodes: readonly GraphNode[];
   edges: readonly GraphEdge[];
-  /** Larghezza del tratto: allarga lo scheletro del puntino fino all'inchiostro. */
+  /** Stroke width: widens the skeleton of the dot out to the ink. */
   strokeWidthMm?: number;
 }
 
 export interface StripChain extends ChainPath {
   id: number;
-  /** Linea levigata [E]. Il profilo la segue; `points` sono le corde [F]. */
+  /** Smoothed line [E]. The profile follows it; `points` are the chords [F]. */
   smooth: Point[];
-  /** Spezzone del puntino: niente asole, due fori sotto le piazzole. */
+  /** Segment of the dot: no slots, two holes under the pads. */
   dot: boolean;
 }
 
-/** Puntino in rilievo, senza canale né striscia (I_DOT_MODE "unlit"). */
+/** Raised dot, without channel or strip (I_DOT_MODE "unlit"). */
 export interface UnlitDot {
   x: number;
   y: number;
@@ -35,24 +35,24 @@ export interface UnlitDot {
 }
 
 export interface HeightSuggestion {
-  /** null se non c'è uno spezzone. Altrimenti l'altezza che azzera le curve. */
+  /** null if there is no segment. Otherwise the height that removes the curves. */
   heightMm: number | null;
   limitMm: number;
-  /** Ci sono curve troppo strette all'altezza richiesta. */
+  /** There are curves too tight at the requested height. */
   hasErrors: boolean;
   empty: boolean;
-  /** Curve rimaste all'altezza suggerita. */
+  /** Curves left at the suggested height. */
   remainingErrors: number;
-  /** Curve all'altezza richiesta. Gli spigoli non contano. */
+  /** Curves at the requested height. Cusps do not count. */
   currentErrors: number;
-  /** Spigoli all'altezza richiesta: la scala non li toglie. */
+  /** Cusps at the requested height: scale does not remove them. */
   cuspCount: number;
 }
 
 export interface StripPath {
   points: Point[];
   closed: boolean;
-  /** false per il trattino sostitutivo: non entra nella lunghezza di riferimento. */
+  /** false for the substitute dash: it does not enter the reference length. */
   reference: boolean;
 }
 
@@ -63,11 +63,11 @@ export interface StripModel {
   unlit: UnlitDot[];
   bom: Bom;
   suggestion: HeightSuggestion;
-  /** Polilinea prima della levigatura, stesso ordine degli spezzoni. */
+  /** Polyline before smoothing, same order as the segments. */
   paths: StripPath[];
-  /** Tratti tolti agli incroci. */
+  /** Stretches removed at crossings. */
   gaps: { points: Point[]; lengthMm: number }[];
-  /** Anelli sotto R_MIN, anche quando diventano un trattino o un rilievo. */
+  /** Loops under R_MIN, even when they become a dash or a raised shape. */
   excluded: { points: Point[] }[];
 }
 
@@ -77,9 +77,9 @@ const MAX_HEIGHT_MM = 2000;
 interface Piece {
   points: Point[];
   closed: boolean;
-  /** false solo per il pezzo che sostituisce un anello: il riferimento resta l'anello. */
+  /** false only for the piece that replaces a loop: the reference stays the loop. */
   reference: boolean;
-  /** Puntino: spezzone proprio, senza asole. */
+  /** Dot: a segment of its own, without slots. */
   dot: boolean;
 }
 
@@ -167,7 +167,7 @@ function sliceBetween(points: readonly Point[], from: number, to: number): Point
   return out;
 }
 
-/** DIN = estremità con x minore, poi y minore. */
+/** DIN = end with the smaller x, then the smaller y. */
 function orientOpen(points: readonly Point[]): Point[] {
   if (points.length < 2) return points.map((p) => [p[0], p[1]]);
   const a = points[0]!;
@@ -234,7 +234,7 @@ function weld(a: readonly Point[], b: readonly Point[], join: { aEnd: boolean; b
   return [...left, ...right.slice(1)];
 }
 
-/** Uno spezzone sotto la luce minima si attacca al capo vicino, se ce n'è uno. */
+/** A segment under the minimum lit length attaches to the neighbouring end, if there is one. */
 function joinShort(pieces: readonly Piece[], minOpen: number): Piece[] {
   let list = pieces.map((piece) => ({
     points: piece.points.slice(),
@@ -270,7 +270,7 @@ function joinShort(pieces: readonly Piece[], minOpen: number): Piece[] {
   return list;
 }
 
-/** Tagli che lasciano ogni pezzo almeno a `minLen`. Gli altri spigoli restano interi. */
+/** Cuts that leave every piece at least `minLen`. The other cusps stay whole. */
 function safeCuts(points: readonly Point[], cuts: readonly Point[], minLen: number, pitch: number): Point[] {
   const total = lengthOf(points);
   const located = cuts
@@ -303,7 +303,7 @@ function orderPieces(pieces: readonly Piece[]): Piece[] {
 }
 
 function chainOf(points: readonly Point[], closed: boolean, params: Params, id: number, smooth = true): StripChain {
-  // I tracciati congelati sono già la curva del cliente: niente Chaikin.
+  // Frozen paths already are the customer's curve: no Chaikin.
   const curve = smooth ? smoothPolyline(points, closed) : points.map((point): Point => [point[0], point[1]]);
   const chain = resampleChain(curve, {
     hingePitch: params.HINGE_PITCH,
@@ -318,7 +318,7 @@ function chainsFrom(pieces: readonly Piece[], params: Params, smooth = true): St
   return pieces.map((piece, index) => ({ ...chainOf(piece.points, piece.closed, params, index + 1, smooth), dot: piece.dot }));
 }
 
-/** Catene a scala ×2: posizioni riportate all'originale, raggi nella scala doppia. */
+/** Chains at ×2 scale: positions brought back to the original, radii in the double scale. */
 function scaledChains(pieces: readonly Piece[], params: Params, smooth = true): StripChain[] {
   return pieces.map((piece, index) => {
     const grown = piece.points.map(([x, y]): Point => [x * 2, y * 2]);
@@ -394,7 +394,7 @@ function circlePoints(cx: number, cy: number, radius: number): Point[] {
   return pts;
 }
 
-/** Il trattino, con la sua parete, sta nel puntino allargato al massimo di WALL. */
+/** The dash, with its wall, fits in the dot widened by at most WALL. */
 function dashFits(center: Point, dir: Point, params: Params, poly: readonly Point[]): boolean {
   if (poly.length < 3) return false;
   const outer = params.CHANNEL_W / 2 + params.WALL;
@@ -422,8 +422,8 @@ function dashFits(center: Point, dir: Point, params: Params, poly: readonly Poin
 }
 
 /**
- * Scheletro del puntino → contorno dell'inchiostro. Il tratto è circa costante:
- * ogni punto si allontana dal centro di mezzo spessore.
+ * Skeleton of the dot → outline of the ink. The stroke is about constant:
+ * every point moves away from the centre by half the stroke width.
  */
 function inkOutline(poly: readonly Point[], center: Point, strokeWidthMm: number): Point[] {
   const extra = Math.max(0, strokeWidthMm) / 2;
@@ -438,9 +438,9 @@ function inkOutline(poly: readonly Point[], center: Point, strokeWidthMm: number
 }
 
 /**
- * Quanto il rettangolo della striscia (lungo CUT_PITCH, largo canale + pareti)
- * esce dall'ingombro. Le calotte tonde stanno oltre la striscia e non entrano
- * in questo conto: la striscia si taglia a CUT_PITCH, non più corta.
+ * How far the rectangle of the strip (CUT_PITCH long, channel + walls wide)
+ * sticks out of the footprint. The round caps are beyond the strip and do not enter
+ * this count: the strip is cut at CUT_PITCH, not shorter.
  */
 function bodyOverhang(poly: readonly Point[], center: Point, dir: Point, params: Params): number {
   if (poly.length < 3) return Infinity;
@@ -473,7 +473,7 @@ function scaleAround(poly: readonly Point[], center: Point, k: number): Point[] 
   return poly.map((p): Point => [center[0] + (p[0] - center[0]) * k, center[1] + (p[1] - center[1]) * k]);
 }
 
-/** Altezza a cui il puntino, scalato, contiene la striscia entro DOT_OVERHANG_MM. */
+/** Height at which the dot, scaled, contains the strip within DOT_OVERHANG_MM. */
 function dotLitHeight(poly: readonly Point[], center: Point, dir: Point, params: Params, heightMm: number): number {
   const limit = params.DOT_OVERHANG_MM;
   const over = (k: number): number => bodyOverhang(scaleAround(poly, center, k), center, dir, params);
@@ -529,10 +529,10 @@ function distanceToPiece(p: Point, piece: Piece): number {
 }
 
 /**
- * Segni isolati (l'accento di «ì», «è»…): un tratto aperto che non tocca nessun altro e che è troppo
- * corto per avere due asole e la luce minima. Come il puntino (I_DOT_MODE «dot») diventa uno
- * spezzone a sé senza asole, con i fori sotto le piazzole e un LED; sotto il passo di taglio si
- * allunga a CUT_PITCH, centrato e orientato come il tratto.
+ * Isolated marks (the accent of "ì", "è"…): an open stroke that touches no other and is too
+ * short to have two slots and the minimum lit length. Like the dot (I_DOT_MODE "dot") it becomes a
+ * segment of its own without slots, with the holes under the pads and one LED; under the cut pitch it
+ * is lengthened to CUT_PITCH, centred and oriented like the stroke.
  */
 function markPieces(pieces: readonly Piece[], params: Params, minOpen: number): Piece[] {
   if (params.I_DOT_MODE !== 'dot') return pieces.slice();
@@ -568,9 +568,9 @@ function applyDots(segments: Piece[], notices: SegmentNotice[], params: Params, 
   pieces: Piece[];
   notices: SegmentNotice[];
   unlit: UnlitDot[];
-  /** Puntini ripiegati su un rilievo, con l'altezza a cui si accenderebbero. */
+  /** Dots that fell back to a raised shape, with the height at which they would light. */
   fallback: { loop: SegmentNotice; heightMm: number | null }[];
-  /** Puntini accesi la cui pillola esce dal disegno più di DOT_OVERHANG_MM. */
+  /** Lit dots whose pill sticks out of the drawing by more than DOT_OVERHANG_MM. */
   oversize: { loop: SegmentNotice; overhangMm: number }[];
 } {
   const loops = notices.filter((notice) => notice.kind === 'excluded');
@@ -585,8 +585,8 @@ function applyDots(segments: Piece[], notices: SegmentNotice[], params: Params, 
       const center: Point = [loop.x, loop.y];
       const poly = inkOutline(dotPoly(loop), center, strokeWidthMm);
       const asDot = params.I_DOT_MODE === 'dot';
-      // Il puntino è sempre un LED: se la pillola esce dal disegno lo si dice, ma resta acceso.
-      // Se tocca l'asta, la fusione (§5 [G]) blocca l'invio e indica l'altezza che li separa.
+      // The dot is always an LED: if the pill sticks out of the drawing it is reported, but it stays lit.
+      // If it touches the stem, the merge (§5 [G]) blocks sending and gives the height that separates them.
       if (asDot) {
         const overhangMm = bodyOverhang(poly, center, dir, params);
         if (overhangMm > params.DOT_OVERHANG_MM) oversize.push({ loop, overhangMm });
@@ -809,20 +809,20 @@ function finishModel(model: Computed, source: SegmentSource, params: Params, hei
       y: clash.y,
       message: `Outlines merging: distance ${clash.distance.toFixed(1)} mm, minimum ${clash.limit.toFixed(1)} mm, at (${clash.x.toFixed(1)}, ${clash.y.toFixed(1)}). Minimum height ${clearanceH.toFixed(0)} mm. Jumpers: ${clash.overlaps}.`,
     });
-    // Dove due strisce non stanno affiancate, una si taglia e si scavalca: è lavoro, non un blocco.
+    // Where two strips do not fit side by side, one is cut and bridged: it is work, not a blocker.
     model.bom.assembly.jumpers = clash.overlaps;
   }
   return { ...model, suggestion: suggest(source, params, heightMm, model, clearanceH) };
 }
 
-/** Segmenta, leviga, simula la catena, valida e compila la BOM. */
+/** Segments, smooths, simulates the chain, validates and compiles the BOM. */
 export function buildStrip(source: SegmentSource, params: Params, heightMm: number): StripModel {
   return finishModel(compute(source, params, heightMm), source, params, heightMm);
 }
 
 /**
- * Catena e BOM da polilinee già pronte (tracciati congelati).
- * `smooth` resta falso: la curva del cliente non passa da Chaikin.
+ * Chain and BOM from ready-made polylines (frozen paths).
+ * `smooth` stays false: the customer's curve does not go through Chaikin.
  */
 export function buildStripFromPieces(
   input: readonly { points: readonly Point[]; closed: boolean; dot?: boolean }[],

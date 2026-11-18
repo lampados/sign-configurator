@@ -1,5 +1,5 @@
-// Diffusore a pressione in cima al canale (SPEC §3): canale meno DIFFUSER_CLEARANCE,
-// estruso di DIFFUSER_T e appoggiato a filo del bordo superiore.
+// Press-fit diffuser on top of the channel (SPEC §3): channel minus DIFFUSER_CLEARANCE,
+// extruded by DIFFUSER_T and resting flush with the top edge.
 import type { CrossSection, Manifold, ManifoldToplevel } from 'manifold-3d';
 import { totalHeight, type Params } from '../config';
 
@@ -13,7 +13,7 @@ export function diffuserSection(
   return channel.offset(-clearance, 'Round', 2, ROUND_SEGMENTS);
 }
 
-/** Solido del diffusore. Non libera `channel`. */
+/** Solid of the diffuser. It does not free `channel`. */
 export function buildDiffuser(
   wasm: ManifoldToplevel,
   channel: CrossSection,

@@ -15,13 +15,13 @@ test('Tech: the strip menu rewrites the measurements', async ({ page }) => {
   const channelD = page.locator('input[name="tech-CHANNEL_DEPTH"]');
   const density = page.locator('select[name="tech-LED_PER_M"]');
 
-  // Il modello è la prima voce del gruppo, con il disegno della striscia subito sotto.
+  // The model is the first entry of the group, with the drawing of the strip right below.
   const group = page.locator('fieldset.tech-group', { has: strip });
   await expect(group.locator('input, select').first()).toHaveAttribute('name', 'tech-STRIP_ID');
   const figure = page.locator('#strip-figure svg');
   await expect(figure).toBeVisible();
 
-  // La COB da 5 mm: misure più piccole, canale stretto, 160 LED/m fuori scala → resta il default.
+  // The 5 mm COB: smaller measurements, narrow channel, 160 LED/m off the scale → the default stays.
   await strip.selectOption('cob-5mm');
   await expect(stripW).toHaveValue('5');
   await expect(stripT).toHaveValue('2');
@@ -30,7 +30,7 @@ test('Tech: the strip menu rewrites the measurements', async ({ page }) => {
   await expect(figure.locator('[data-led]')).toHaveCount(11);
   await expect(figure).toContainText('bends sideways');
 
-  // Una WS2812B normale: 10 × 2, 60 LED/m, e il menu avvisa che non segue le curve.
+  // A normal WS2812B: 10 × 2, 60 LED/m, and the menu warns that it does not follow curves.
   await strip.selectOption('ws2812b-60');
   await expect(stripW).toHaveValue('10');
   await expect(channelW).toHaveValue('10.4');
@@ -39,7 +39,7 @@ test('Tech: the strip menu rewrites the measurements', async ({ page }) => {
   await expect(figure.locator('[data-led]')).toHaveCount(4);
   await expect(figure).toContainText('bends 30° per LED, cut beyond');
 
-  // Su un corsivo la striscia si taglia a ogni curva: il riepilogo conta i tagli e il tempo.
+  // On a cursive the strip is cut at every curve: the summary counts the cuts and the time.
   const status = page.locator('#preview-status');
   await expect.poll(async () => Number(await status.getAttribute('data-cuts')), { timeout: 90_000 }).toBeGreaterThan(0);
   const cuts = Number(await status.getAttribute('data-cuts'));
@@ -48,7 +48,7 @@ test('Tech: the strip menu rewrites the measurements', async ({ page }) => {
   await expect(page.locator('#summary')).toContainText('Assembly');
   await page.locator('[data-tool="tech"]').click();
 
-  // La COB segue le curve: nessun taglio.
+  // The COB follows the curves: no cuts.
   await strip.selectOption('cob-5mm');
   await expect.poll(async () => Number(await status.getAttribute('data-cuts')), { timeout: 90_000 }).toBe(0);
 

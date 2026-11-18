@@ -1,6 +1,6 @@
-// [H]+[I] Profilo esterno a larghezza costante sulla linea levigata [E] (SPEC §5).
-// La freccia della catena allarga solo il lato interno, fino a WALL_MIN.
-// Agli incroci il canale prosegue; la striscia no. La sagoma non si allunga oltre il capo.
+// [H]+[I] Constant-width outer profile on the smoothed line [E] (SPEC §5).
+// The chain sagitta widens only the inner side, down to WALL_MIN.
+// At crossings the channel continues; the strip does not. The outline does not extend beyond the end.
 import type { CrossSection, Manifold, ManifoldToplevel, Vec2 } from 'manifold-3d';
 import { HOLE_CLEARANCE_MM, cornerJoints, crossingAhead, type CornerJoint } from '../export/bom';
 import { totalHeight, type Params } from '../config';
@@ -24,24 +24,24 @@ import {
 
 const RIBBON_HALF = 0.05;
 const ROUND_SEGMENTS = 32;
-/** Fondo che resta fra un foro del percorso e qualsiasi altro foro, mm. */
+/** Floor left between a path hole and any other hole, mm. */
 const PATH_HOLE_GAP_MM = 1.5;
-/** Segmenti per giro degli offset di chiusura e apertura: archi da poco più di 1 mm. */
+/** Segments per turn of the closing and opening offsets: arcs of just over 1 mm. */
 const SMOOTH_SEGMENTS = 16;
 
 export interface HousingPath extends Pick<ChainPath, 'closed' | 'lengthMm' | 'hinges'> {
   id: number;
-  /** Corde [F]: servono alla freccia. */
+  /** Chords [F]: needed for the sagitta. */
   points: Vec2[];
-  /** Linea levigata [E]. Il profilo e il canale la seguono. */
+  /** Smoothed line [E]. The profile and the channel follow it. */
   smooth?: Vec2[];
-  /** Puntino: canale a pillola, due fori al posto delle asole. */
+  /** Dot: pill-shaped channel, two holes instead of the slots. */
   dot?: boolean;
 }
 
 export interface HousingRequest {
   paths: readonly HousingPath[];
-  /** Nodi di incrocio: il canale li attraversa, la striscia no. */
+  /** Crossing nodes: the channel goes through them, the strip does not. */
   crossings: readonly Vec2[];
   unlit: readonly { x: number; y: number; radiusMm: number; points: Vec2[] }[];
   params: Params;
@@ -58,7 +58,7 @@ export interface HousingSlot {
   segmentId: number;
   role: 'DIN' | 'DOUT';
   points: [number, number][];
-  /** Diametro, se l'apertura è un foro tondo (`WIRE_HOLE_D`); assente se è un'asola. */
+  /** Diameter, if the opening is a round hole (`WIRE_HOLE_D`); absent if it is a slot. */
   d?: number;
 }
 
@@ -68,12 +68,12 @@ export interface HousingPocket {
   segments: [number, number];
   wireMm: 0;
   points: [number, number][];
-  /** Diametro, se l'apertura è un foro tondo; assente se è una tasca. */
+  /** Diameter, if the opening is a round hole; absent if it is a pocket. */
   d?: number;
 }
 
 export interface HousingModel {
-  /** Da liberare con delete(), insieme a `diffuser`. */
+  /** To be freed with delete(), together with `diffuser`. */
   solid: Manifold;
   diffuser: Manifold;
   holes: {
@@ -82,7 +82,7 @@ export interface HousingModel {
     wireSlots: HousingSlot[];
     cornerPockets: HousingPocket[];
     dotWires: { segmentId: number; x: number; y: number; d: number }[];
-    /** Fori piccoli lungo il percorso (`PATH_HOLE_D`), sul fondo del canale. */
+    /** Small holes along the path (`PATH_HOLE_D`), in the channel floor. */
     pathHoles: { segmentId: number; x: number; y: number; d: number }[];
   };
   outline: [number, number][][];
@@ -126,7 +126,7 @@ const unit = (a: Vec2): Vec2 => {
 const left = (v: Vec2): Vec2 => [-v[1], v[0]];
 
 interface Run {
-  /** Linea del canale: la sagoma, più un ponte verso l'incrocio. */
+  /** Line of the channel: the outline, plus a bridge towards the crossing. */
   channelLine: Vec2[];
   ends: SlotEnd[];
 }
@@ -185,11 +185,11 @@ function innerDir(points: readonly Vec2[], index: number): Vec2 | null {
 }
 
 /**
- * Allargamento del canale verso l'interno delle curve, per la freccia della catena (SPEC §5 [H]):
- * fra due cerniere la striscia rigida taglia la curva e il suo bordo interno esce dal canale di
- * `sagittaMm`. Lungo la linea levigata l'allargamento vale la freccia entro mezzo passo da ogni
- * cerniera e scende a zero in un passo di rampa: nessun gradino né lente chiusa sul bordo.
- * Restituisce poligoni da unire al canale, uno per ogni tratto continuo e per lato.
+ * Widening of the channel towards the inside of curves, for the chain sagitta (SPEC §5 [H]):
+ * between two hinges the stiff strip cuts the curve and its inner edge leaves the channel by
+ * `sagittaMm`. Along the smoothed line the widening equals the sagitta within half a pitch of every
+ * hinge and drops to zero over one pitch of ramp: no step and no closed lens on the edge.
+ * Returns polygons to join to the channel, one per continuous stretch and per side.
  */
 function innerWidening(
   path: HousingPath,
@@ -244,7 +244,7 @@ function innerWidening(
           const prev = line[Math.max(i - 1, 0)]!;
           const next = line[Math.min(i + 1, line.length - 1)]!;
           const n = scale(left(unit(sub(next, prev))), side);
-          // Parte un po' dentro il canale, così il poligono si salda senza fessure.
+          // It starts a little inside the channel, so the polygon welds without slits.
           inner.push(add(line[i]!, scale(n, halfW - 0.3)));
           outer.push(add(line[i]!, scale(n, halfW + extraAt[i]!)));
         }
@@ -261,7 +261,7 @@ function innerWidening(
   return polys;
 }
 
-/** Nastro sottile attorno alla polilinea, poi gonfiato con offset. */
+/** Thin ribbon around the polyline, then inflated with an offset. */
 function ribbon(points: readonly Vec2[], ribbonHalf: number): Vec2[] {
   const right: Vec2[] = [];
   const leftSide: Vec2[] = [];
@@ -281,7 +281,7 @@ function ribbon(points: readonly Vec2[], ribbonHalf: number): Vec2[] {
   return [...right, ...leftSide.reverse()];
 }
 
-/** Offset a giunzioni e terminazioni arrotondate della linea centrale. */
+/** Offset with rounded joins and ends of the centreline. */
 export function offsetCenterline(wasm: ManifoldToplevel, points: readonly Vec2[], radius: number): CrossSection {
   const { CrossSection } = wasm;
   const band = new CrossSection([ribbon(points, RIBBON_HALF)], 'NonZero');
@@ -291,16 +291,16 @@ export function offsetCenterline(wasm: ManifoldToplevel, points: readonly Vec2[]
 }
 
 /**
- * Chiusura morfologica del canale: riempie buchi e tacche più stretti di `minWidth`, cioè le
- * punte e le isole di parete troppo sottili per essere stampate.
- * - Sulle curve strette una banda interna limitata dal budget di parete tocca il canale alle
- *   estremità della corda ma non nel mezzo: resta chiusa una lente sottile (pilastrino nel canale,
- *   fessura nel diffusore).
- * - Agli incroci e alle giunzioni i due canali lasciano fra loro spicchi di parete appuntiti, che
- *   nel diffusore si vedono come tacche scure.
- * Una parete vera fra due canali non contigui è larga almeno 2·WALL + MIN_GAP (sotto, l'invio è
- * già bloccato per fusione), molto più di `minWidth`; la parete esterna confina con il fuori, che
- * è largo, e la chiusura non la tocca. Il risultato resta dentro `outline`. Non libera gli ingressi.
+ * Morphological closing of the channel: fills holes and notches narrower than `minWidth`, that is the
+ * tips and islands of wall too thin to be printed.
+ * - On tight curves an inner band limited by the wall budget touches the channel at the
+ *   ends of the chord but not in the middle: a thin lens stays closed (a pillar in the channel,
+ *   a slit in the diffuser).
+ * - At crossings and junctions the two channels leave pointed wedges of wall between them, which
+ *   show in the diffuser as dark notches.
+ * A real wall between two non-adjacent channels is at least 2·WALL + MIN_GAP wide (under that, sending is
+ * already blocked for merging), much more than `minWidth`; the outer wall borders the outside, which
+ * is wide, and the closing does not touch it. The result stays inside `outline`. It does not free the inputs.
  */
 export function closeChannel(
   wasm: ManifoldToplevel,
@@ -310,9 +310,9 @@ export function closeChannel(
 ): CrossSection {
   const r = minWidth / 2;
   if (!(r > 0) || section.isEmpty()) return section;
-  // Chiusura (+r, −r) e apertura (−r, +r) di seguito: i due −r centrali diventano uno solo di 2r.
-  // L'apertura arrotonda gli spigoli in fuori, così l'inizio e la fine di un allargamento non
-  // lasciano gradini. Il canale è largo almeno CHANNEL_W, molto più di `minWidth`.
+  // Closing (+r, −r) and opening (−r, +r) in a row: the two central −r become a single one of 2r.
+  // The opening rounds outward corners, so the start and end of a widening leave no
+  // steps. The channel is at least CHANNEL_W wide, much more than `minWidth`.
   const grown = section.offset(r, 'Round', 2, SMOOTH_SEGMENTS);
   const shrunk = grown.offset(-2 * r, 'Round', 2, SMOOTH_SEGMENTS);
   grown.delete();
@@ -327,7 +327,7 @@ function contoursOf(section: CrossSection): [number, number][][] {
   return section.toPolygons().map((poly) => poly.map((p) => [p[0], p[1]] as [number, number]));
 }
 
-/** Nonzero, come la sezione manifold: il punto è dentro l'ingombro cresciuto delle aperture. */
+/** Nonzero, like the manifold cross-section: the point is inside the grown footprint of the openings. */
 function insideOpenings(polys: readonly Vec2[][], x: number, y: number): boolean {
   let winding = 0;
   for (const poly of polys) {
@@ -346,7 +346,7 @@ function insideOpenings(polys: readonly Vec2[][], x: number, y: number): boolean
   return winding !== 0;
 }
 
-/** true se (x, y) cade nei 10 mm attorno ad asole o tasche. Da liberare con delete(). */
+/** true if (x, y) falls in the 10 mm around slots or pockets. To be freed with delete(). */
 function openingOccupies(wasm: ManifoldToplevel, openings: readonly Vec2[][]): { hits(x: number, y: number): boolean; delete(): void } {
   const polys = openings.filter((poly) => poly.length >= 3);
   if (polys.length === 0) return { hits: () => false, delete: () => {} };
@@ -366,7 +366,7 @@ function openingOccupies(wasm: ManifoldToplevel, openings: readonly Vec2[][]): {
 
 function pocketSection(wasm: ManifoldToplevel, channel: CrossSection, joint: CornerJoint, p: Params): CrossSection {
   const { CrossSection } = wasm;
-  // Con i fori tondi il giunto d'angolo ne ha uno solo, nel vertice: i due capi si saldano lì.
+  // With round holes the corner joint has a single one, at the vertex: the two ends are soldered there.
   const holeD = wireHoleD(p);
   if (holeD > 0) return wireHoleSection(wasm, channel, [joint.x, joint.y], holeD);
   const wide = { ...p, WIRE_SLOT_W: p.CHANNEL_W };
@@ -536,13 +536,13 @@ export function buildHousing(wasm: ManifoldToplevel, request: HousingRequest): H
 
     const first = request.paths.find((path) => path.id === firstId && path.points.length > 0);
     if (first) cableAt = first.points[0] ?? null;
-    // Se il primo spezzone comincia con un foro grande almeno quanto quello del cavo, il cavo
-    // passa di lì: un secondo foro accanto farebbe solo un'asola a forma di otto.
+    // If the first segment starts with a hole at least as large as that of the cable, the cable
+    // goes through it: a second hole next to it would only make a figure-eight slot.
     const firstEnd = freeSlots.find((slot) => slot.segmentId === firstId && slot.role === 'DIN');
     if (cableAt && firstEnd && wireHoleD(p) >= p.CABLE_HOLE_D) cableAt = wireHoleCenter(firstEnd.end, p.WIRE_SLOT_L);
 
-    // Fori piccoli lungo tutto il percorso. Vengono dopo gli altri e gli lasciano il posto: non
-    // stanno addosso ai fori grandi dei capi, agli ancoraggi, al cavo, agli incroci, né fra loro.
+    // Small holes along the whole path. They come after the others and give way to them: they do not
+    // crowd the large holes at the ends, the anchors, the cable, the crossings, or each other.
     const pathHoles: { segmentId: number; x: number; y: number; d: number }[] = [];
     const pathD = p.PATH_HOLE_D > 0 && p.PATH_HOLE_PITCH > 0 ? Math.min(p.PATH_HOLE_D, p.CHANNEL_W) : 0;
     if (pathD > 0) {
@@ -565,7 +565,7 @@ export function buildHousing(wasm: ManifoldToplevel, request: HousingRequest): H
         const line = silhouette[i];
         if (!line || line.length < 2 || path.dot) continue;
         const length = lengthOf(line);
-        // Un percorso aperto comincia e finisce con il foro grande: i piccoli stanno in mezzo.
+        // An open path starts and ends with the large hole: the small ones sit in between.
         const margin = path.closed ? 0 : p.WIRE_SLOT_L;
         const usable = length - 2 * margin;
         const count = path.closed ? Math.round(length / p.PATH_HOLE_PITCH) : Math.floor(usable / p.PATH_HOLE_PITCH);

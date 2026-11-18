@@ -1,5 +1,5 @@
-// GET /api/design/<codice> — il negozio chiede il riepilogo del design, da server a server.
-// Con ?full=1 risponde anche l'ordine: lo usa il configuratore per riaprire il design (?d=<codice>).
+// GET /api/design/<code> — the shop asks for the summary of the design, server to server.
+// With ?full=1 it also returns the order: the configurator uses it to reopen the design (?d=<code>).
 import { readDesign, type DesignKv } from '../../../src/api/designStore';
 
 interface Env {

@@ -8,9 +8,9 @@ const isNode =
   'string';
 
 /**
- * Istanza condivisa di manifold-3d, usabile nel main thread, nel worker e in vitest.
- * Nel browser l'URL del .wasm arriva da Vite (`?url`), così funziona sia in dev sia nel build;
- * in Node il modulo legge il file da node_modules da solo.
+ * Shared instance of manifold-3d, usable in the main thread, in the worker and in vitest.
+ * In the browser the URL of the .wasm comes from Vite (`?url`), so it works both in dev and in the build;
+ * in Node the module reads the file from node_modules by itself.
  */
 export function getManifold(): Promise<ManifoldToplevel> {
   instance ??= (async () => {
@@ -21,7 +21,7 @@ export function getManifold(): Promise<ManifoldToplevel> {
   return instance;
 }
 
-/** Vertici e triangoli di un cubo. Un cubo manifold ne ha 8 e 12. */
+/** Vertices and triangles of a cube. A manifold cube has 8 and 12. */
 export async function cubeCounts(size = 10): Promise<{ vertices: number; triangles: number }> {
   const { Manifold } = await getManifold();
   const cube = Manifold.cube([size, size, size], true);
@@ -32,7 +32,7 @@ export async function cubeCounts(size = 10): Promise<{ vertices: number; triangl
   }
 }
 
-/** Smoke test: vertici di un cubo (8 attesi). */
+/** Smoke test: vertices of a cube (8 expected). */
 export async function cubeVertexCount(size = 10): Promise<number> {
   return (await cubeCounts(size)).vertices;
 }

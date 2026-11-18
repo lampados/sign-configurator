@@ -1,5 +1,5 @@
-// Validazione dal vivo, nel main thread, solo sugli spezzoni toccati (SPEC §5bis).
-// Catena [F] e distanza fra linee centrali. Niente Chaikin e niente mesh.
+// Live validation, in the main thread, only on the touched segments (SPEC §5bis).
+// Chain [F] and distance between centrelines. No Chaikin and no mesh.
 
 import type { Params } from '../config';
 import { resampleChain } from '../geometry/chain';
@@ -10,7 +10,7 @@ export interface LiveSegment {
   id: string;
   points: readonly Point[];
   closed: boolean;
-  /** Il puntino non è una curva: niente cerniere né luce minima. */
+  /** The dot is not a curve: no hinges or minimum lit length. */
   dot?: boolean;
 }
 
@@ -23,7 +23,7 @@ export interface LiveMarker {
 
 export interface LiveReport {
   markers: LiveMarker[];
-  /** Curve sotto R_MIN, fusioni, spezzoni sotto CUT_PITCH. Lo spigolo non blocca. */
+  /** Curves under R_MIN, merges, segments under CUT_PITCH. The cusp does not block. */
   blocked: boolean;
 }
 
@@ -58,9 +58,9 @@ function scaledChain(points: readonly Point[], closed: boolean, params: Params, 
 }
 
 /**
- * Controlla gli spezzoni in `touched`. `touched` vuoto controlla tutti.
- * La fusione usa la griglia di `centerlineClearance` sull'insieme intero,
- * ma entra nel referto solo se coinvolge uno spezzone toccato.
+ * Checks the segments in `touched`. An empty `touched` checks them all.
+ * The merge uses the grid of `centerlineClearance` on the whole set,
+ * but enters the report only if it involves a touched segment.
  */
 export function liveCheck(
   segments: readonly LiveSegment[],

@@ -103,6 +103,6 @@ describe('order v4', () => {
       expect(migrated.bom.plate).toBeNull();
       expect(migrated.bom).toEqual({ ...geometryBom(raw.bom), plate: null });
     }
-    // Sei generazioni complete: oltre i 5 s di default.
+    // Six full generations: beyond the 5 s default.
   }, 30_000);
 });

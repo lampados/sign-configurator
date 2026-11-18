@@ -1,15 +1,15 @@
-// Spina dell'alimentatore (SPEC §6 `customer.plug`, §12.2). Gli alimentatori sono universali,
-// 100–240 V in ingresso: cambia solo la forma della spina, non la tensione di rete.
+// Plug of the power supply (SPEC §6 `customer.plug`, §12.2). The power supplies are universal,
+// 100–240 V input: only the shape of the plug changes, not the mains voltage.
 
 import type { PlugType } from '../order/schema';
 
 export interface PlugOption {
   value: PlugType;
-  /** Sigla sulla pillola. */
+  /** Code on the pill. */
   short: string;
-  /** Paesi e tipo IEC, per il riepilogo e il title. */
+  /** Countries and IEC type, for the summary and the title. */
   label: string;
-  /** Icona 24×24: la faccia della spina vista di fronte. */
+  /** 24×24 icon: the face of the plug seen from the front. */
   icon: string;
 }
 

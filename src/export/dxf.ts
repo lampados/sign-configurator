@@ -1,12 +1,12 @@
-// [J] DXF visto dal retro, specchiato in X (SPEC §5).
-// I layer di §5 sono LWPOLYLINE e CIRCLE: il file è AC1015, che le contiene.
-// WIRE_SLOTS è il contorno reale dell'asola, non uno stadio approssimato.
+// [J] DXF seen from the back, mirrored in X (SPEC §5).
+// The layers of §5 are LWPOLYLINE and CIRCLE: the file is AC1015, which contains them.
+// WIRE_SLOTS is the real outline of the slot, not an approximated stadium.
 
 export type DxfLayer = 'ANCHOR_HOLES' | 'WIRE_SLOTS' | 'CORNER_POCKETS' | 'CABLE_HOLE' | 'OUTLINE';
 
 export interface DxfPolyline {
   layer: 'WIRE_SLOTS' | 'CORNER_POCKETS' | 'OUTLINE';
-  /** Contorno in vista frontale, lo stesso dell'STL. Il DXF nega X. */
+  /** Outline in front view, the same as the STL. The DXF negates X. */
   points: readonly (readonly [number, number])[];
 }
 
@@ -33,7 +33,7 @@ function ring(points: readonly (readonly [number, number])[]): readonly (readonl
   return points;
 }
 
-/** DXF del retro. Le coordinate in ingresso sono quelle frontali dell'STL. */
+/** DXF of the back. The input coordinates are the front ones of the STL. */
 export function toDxf(model: { polylines?: readonly DxfPolyline[]; circles?: readonly DxfCircle[] } = {}): string {
   const lines = [
     '0', 'SECTION',

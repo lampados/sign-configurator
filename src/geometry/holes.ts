@@ -1,8 +1,8 @@
-// Fori di ancoraggio, fili e cavo (SPEC §5 "Fori").
-// I fili escono da un foro tondo (WIRE_HOLE_D) a ogni estremità di spezzone, a metà degli ultimi
-// WIRE_SLOT_L: sta dentro il canale, quindi il fondo resta sotto le pareti e il pezzo è intero.
-// Con WIRE_HOLE_D 0 torna l'asola di prima: occupa gli ultimi WIRE_SLOT_L dello spezzone e la
-// terminazione arrotondata, stessa forma del fondo, passante, con uno smusso a 45° sul labbro.
+// Anchor, wire and cable holes (SPEC §5 "Holes").
+// The wires leave through a round hole (WIRE_HOLE_D) at each end of a segment, halfway along the last
+// WIRE_SLOT_L: it sits inside the channel, so the floor stays under the walls and the part is in one piece.
+// With WIRE_HOLE_D 0 the slot of before comes back: it takes the last WIRE_SLOT_L of the segment and the
+// rounded end, same shape as the floor, through, with a 45° chamfer on the lip.
 import type { CrossSection, Manifold, ManifoldToplevel, Mat4, Vec2 } from 'manifold-3d';
 import type { Params } from '../config';
 import { HOLE_CLEARANCE_MM, anchorStations } from '../export/bom';
@@ -14,18 +14,18 @@ export type WireSlotParams = Pick<
 
 const WIRE_HOLE_SEGMENTS = 32;
 
-/** Diametro del foro tondo per i fili: 0 se si usa l'asola. Mai più largo del canale. */
+/** Diameter of the round wire hole: 0 if the slot is used. Never wider than the channel. */
 export function wireHoleD(p: { WIRE_HOLE_D?: number; CHANNEL_W: number }): number {
   const d = p.WIRE_HOLE_D ?? 0;
   return d > 0 ? Math.min(d, p.CHANNEL_W) : 0;
 }
 
-/** Centro del foro per i fili: a metà del tratto senza striscia, fra il labbro e l'estremità. */
+/** Centre of the wire hole: halfway along the stretch without strip, between the lip and the end. */
 export function wireHoleCenter(end: SlotEnd, slotL: number): Vec2 {
   return add(end.at, scale(end.outward, -Math.max(slotL, 0) / 2));
 }
 
-/** Disco di diametro `d` in `at`, ritagliato sul canale. */
+/** Disc of diameter `d` at `at`, clipped to the channel. */
 export function wireHoleSection(wasm: ManifoldToplevel, channel: CrossSection, at: Vec2, d: number): CrossSection {
   const disk = wasm.CrossSection.circle(d / 2, WIRE_HOLE_SEGMENTS).translate(at);
   const hole = channel.intersect(disk);
@@ -33,7 +33,7 @@ export function wireHoleSection(wasm: ManifoldToplevel, channel: CrossSection, a
   return hole;
 }
 
-/** Estremità di uno spezzone. `outward` è unitario e punta verso la parete di testa. */
+/** End of a segment. `outward` is a unit vector and points towards the end wall. */
 export interface SlotEnd {
   at: Vec2;
   outward: Vec2;
@@ -43,14 +43,14 @@ const add = (a: Vec2, b: Vec2): Vec2 => [a[0] + b[0], a[1] + b[1]];
 const scale = (a: Vec2, k: number): Vec2 => [a[0] * k, a[1] * k];
 const left = (v: Vec2): Vec2 => [-v[1], v[0]];
 
-/** Labbro interno: dove finisce la parte illuminata, WIRE_SLOT_L indietro dall'estremità. */
+/** Inner lip: where the lit part ends, WIRE_SLOT_L back from the end. */
 export function slotLip(end: SlotEnd, slotL: number): Vec2 {
   return add(end.at, scale(end.outward, -slotL));
 }
 
 /**
- * Finestra sull'estremità, non un semipiano: il resto del percorso può ripiegare
- * dalla stessa parte senza entrare nell'asola.
+ * A window on the end, not a half-plane: the rest of the path can fold back
+ * on the same side without entering the slot.
  */
 function endWindow(lip: Vec2, outward: Vec2, reach: number, halfWidth: number): Vec2[] {
   const side = scale(left(outward), halfWidth);
@@ -67,7 +67,7 @@ function widthStrip(lip: Vec2, outward: Vec2, width: number, reach: number): Vec
   return endWindow(add(lip, scale(outward, -1)), outward, reach + 1, width / 2);
 }
 
-/** Contorno in pianta dell'asola: canale ∩ finestra sull'estremità. */
+/** Plan outline of the slot: channel ∩ window on the end. */
 export function wireSlotSection(
   wasm: ManifoldToplevel,
   channel: CrossSection,
@@ -94,12 +94,12 @@ export function wireSlotSection(
 }
 
 /**
- * Prisma dello smusso a 45° sul labbro, lato spezzone.
- * In pianta X locale = verso lo spezzone, Y locale = Z mondo. Toglie solo il ciglio
- * superiore del fondo: il foro passante in pianta resta il contorno dell'asola.
+ * Prism of the 45° chamfer on the lip, segment side.
+ * In plan local X = towards the segment, local Y = world Z. It removes only the top
+ * rim of the floor: the through hole in plan stays the outline of the slot.
  */
 export function lipChamferSolid(wasm: ManifoldToplevel, end: SlotEnd, p: WireSlotParams): Manifold | null {
-  // Con il foro tondo la striscia non scende dal fondo: non c'è un labbro da smussare.
+  // With the round hole the strip does not go down from the floor: there is no lip to chamfer.
   if (wireHoleD(p) > 0) return null;
   const size = Math.min(Math.max(p.SLOT_LIP_CHAMFER, 0), p.FLOOR);
   if (size < 1e-6) return null;
@@ -108,7 +108,7 @@ export function lipChamferSolid(wasm: ManifoldToplevel, end: SlotEnd, p: WireSlo
   const inward = scale(end.outward, -1);
   const across = left(inward);
   const span = Math.min(p.WIRE_SLOT_W, p.CHANNEL_W) + 0.2;
-  // −0.05 verso l'asola e +0.05 sopra il fondo: le facce coincidenti non restano nel booleano.
+  // −0.05 towards the slot and +0.05 above the floor: coincident faces do not stay in the boolean.
   const eps = 0.05;
   const z0 = p.FLOOR - size;
   const profile: Vec2[] = [
@@ -121,7 +121,7 @@ export function lipChamferSolid(wasm: ManifoldToplevel, end: SlotEnd, p: WireSlo
   const section = new CrossSection([profile], 'NonZero');
   const extruded = section.extrude(span);
   section.delete();
-  // translate restituisce un nuovo solido: senza usarlo il prisma resta da una parte sola e fora la parete.
+  // translate returns a new solid: without using it the prism stays on one side only and pierces the wall.
   const centered = extruded.translate([0, 0, -span / 2]);
   if (centered !== extruded) extruded.delete();
   const m: Mat4 = [
@@ -138,7 +138,7 @@ export function lipChamferSolid(wasm: ManifoldToplevel, end: SlotEnd, p: WireSlo
 export interface AnchorHole {
   x: number;
   y: number;
-  /** Distanza dal DIN lungo lo spezzone, mm. */
+  /** Distance from the DIN along the segment, mm. */
   along: number;
 }
 
@@ -174,20 +174,20 @@ export interface AnchorPlacement {
 }
 
 /**
- * Fori di ancoraggio sulla linea centrale. Se una stazione interseca un'asola, una tasca
- * o un incrocio, il foro si sposta lungo il percorso verso il punto valido più vicino
- * (sempre a ≥ 10 mm da estremi, ostacoli e altri fori). Se ne restano meno di
- * ANCHOR_MIN_PER_SEGMENT, l'avviso porta la posizione dello spezzone.
+ * Anchor holes on the centreline. If a station intersects a slot, a pocket
+ * or a crossing, the hole moves along the path to the nearest valid point
+ * (always ≥ 10 mm from ends, obstacles and other holes). If fewer than
+ * ANCHOR_MIN_PER_SEGMENT are left, the warning carries the position of the segment.
  */
 export function placeAnchorHoles(
   points: readonly Vec2[],
   params: Pick<Params, 'ANCHOR_SPACING' | 'ANCHOR_MIN_PER_SEGMENT' | 'WIRE_SLOT_L'>,
   opts: {
     crossings?: readonly Vec2[];
-    /** true se (x, y) è a meno di 10 mm da un'asola o da una tasca. */
+    /** true if (x, y) is less than 10 mm from a slot or a pocket. */
     occupies?: (x: number, y: number) => boolean;
     segmentId?: number;
-    /** Mm di asola da lasciare in più ai capi. 0 su un anello chiuso. */
+    /** Mm of slot to leave extra at the ends. 0 on a closed loop. */
     endClear?: number;
   } = {},
 ): AnchorPlacement {
@@ -237,12 +237,12 @@ export function placeAnchorHoles(
   return { holes, warnings };
 }
 
-/** Stazioni della BOM, spostate se cadono su un incrocio o su un punto da evitare. */
+/** Stations of the BOM, moved if they fall on a crossing or on a point to avoid. */
 export function anchorHolesAlong(
   points: readonly Vec2[],
   crossings: readonly Vec2[],
   params: Pick<Params, 'ANCHOR_SPACING' | 'ANCHOR_MIN_PER_SEGMENT' | 'WIRE_SLOT_L'>,
-  /** Labbra di tasche e altri punti da cui restare ad almeno 10 mm. */
+  /** Lips of pockets and other points to stay at least 10 mm from. */
   avoid: readonly Vec2[] = [],
 ): AnchorHole[] {
   return placeAnchorHoles(points, params, { crossings: [...crossings, ...avoid] }).holes;
@@ -250,7 +250,7 @@ export function anchorHolesAlong(
 
 const HOLE_SEGMENTS = 20;
 
-/** Cilindro cieco dal retro. Con i boss parte dal retro del distanziale. */
+/** Blind cylinder from the back. With bosses it starts from the back of the standoff. */
 export function anchorHoleSolid(
   wasm: ManifoldToplevel,
   hole: AnchorHole,
@@ -265,7 +265,7 @@ export function anchorHoleSolid(
   return Manifold.cylinder(height, radius, radius, HOLE_SEGMENTS).translate([hole.x, hole.y, from - 0.1]);
 }
 
-/** Distanziale sul retro, centrato sul foro. */
+/** Standoff on the back, centred on the hole. */
 export function anchorBossSolid(
   wasm: ManifoldToplevel,
   hole: AnchorHole,
@@ -277,7 +277,7 @@ export function anchorBossSolid(
   return Manifold.cylinder(height + 0.15, radius, radius, HOLE_SEGMENTS).translate([hole.x, hole.y, -height]);
 }
 
-/** Foro passante del cavo, all'inizio del primo spezzone. */
+/** Through hole of the cable, at the start of the first segment. */
 export function cableHoleSolid(
   wasm: ManifoldToplevel,
   at: Vec2,
@@ -288,7 +288,7 @@ export function cableHoleSolid(
   return Manifold.cylinder(p.FLOOR + 2, radius, radius, HOLE_SEGMENTS).translate([at[0], at[1], -1]);
 }
 
-/** Solidi da sottrarre al fondo: asola passante e smusso del labbro, per ogni estremità. */
+/** Solids to subtract from the floor: through slot and lip chamfer, for every end. */
 export function wireSlotCuts(
   wasm: ManifoldToplevel,
   channel: CrossSection,

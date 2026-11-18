@@ -2,8 +2,8 @@ import { expect, test, type Page } from '@playwright/test';
 import { expectClean, trackPage } from './guard';
 
 /**
- * «Ciao» in Sacramento con la striscia predefinita non è inviabile a nessuna misura (sagome che si
- * fondono, curve strette): la prova usa Beon a 18 cm, che passa.
+ * "Ciao" in Sacramento with the default strip cannot be sent at any size (merging
+ * outlines, tight curves): the test uses Beon at 18 cm, which passes.
  */
 async function sendable(page: Page): Promise<void> {
   const status = page.locator('#preview-status');
@@ -46,7 +46,7 @@ test('Send request: saves the design without personal data and goes to the shop 
   expect(posted!.order?.source?.text).toBe('Ciao');
   const labels = posted!.summary!.map(([label]) => label);
   expect(labels).toContain('Assembly');
-  // Il riepilogo resta corto: i prezzi non sono righe di testo, viaggiano nella stima.
+  // The summary stays short: prices are not text rows, they travel in the estimate.
   expect(labels.some((label) => label.startsWith('Price'))).toBe(false);
   const quote = posted!.quote!;
   expect(quote.lines[0]).toMatchObject({ id: 'controller', label: 'Controller', amount: 35 });
@@ -56,7 +56,7 @@ test('Send request: saves the design without personal data and goes to the shop 
   expect(quote.shipping).toBe(20);
   const sum = quote.lines.reduce((total, line) => total + (line.amount ?? 0), 0);
   expect(Math.abs(sum - quote.total)).toBeLessThan(0.02);
-  // La foto: un JPEG 4:3 in vista standard, leggero.
+  // The photo: a 4:3 JPEG in the standard view, light.
   expect(posted!.image).toMatch(/^data:image\/jpeg;base64,\/9j\//);
   expect(posted!.image!.length).toBeGreaterThan(8_000);
   expect(posted!.image!.length).toBeLessThan(500_000);
@@ -67,7 +67,7 @@ test('Send request: saves the design without personal data and goes to the shop 
     return [image.naturalWidth, image.naturalHeight];
   }, posted!.image!);
   expect(size).toEqual([1000, 750]);
-  // Nessun campo di contatto parte dal configuratore.
+  // No contact field leaves the configurator.
   expect(Object.keys(posted!).sort()).toEqual(['image', 'order', 'quote', 'summary']);
   expectClean(track.problems);
 });

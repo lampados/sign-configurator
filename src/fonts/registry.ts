@@ -1,72 +1,72 @@
-// Registro estendibile dei font (SPEC §4): per aggiungerne uno basta il TTF in public/fonts e una voce qui.
-// Le misure sono in unità del font (font.unitsPerEm per em) e si ricavano una volta per font con
-// measureFontMetrics (rasterize.ts) e measureTubes (tubes.ts); test/rasterize.test.ts verifica che
-// corrispondano al TTF.
+// Extensible font registry (SPEC §4): to add one, the TTF in public/fonts and an entry here are enough.
+// Measurements are in font units (font.unitsPerEm per em) and are taken once per font with
+// measureFontMetrics (rasterize.ts) and measureTubes (tubes.ts); test/rasterize.test.ts checks that
+// they match the TTF.
 
 export interface TubeGeometry {
-  /** Spessore di una linea del tubo. */
+  /** Thickness of one line of the tube. */
   lineWidth: number;
-  /** Luce interna del tubo, mediana: varia molto lungo il tubo. */
+  /** Inner gap of the tube, median: it varies a lot along the tube. */
   gap: number;
 }
 
 /**
- * centerline: lo scheletro è già la linea della striscia (Sacramento).
- * walls: ogni parete del tubo è una striscia a sé (Neonderthaw). L'accoppiamento in
- * una mediana è disattivato: gli occhielli piccoli non si accoppiano in modo affidabile.
+ * centerline: the skeleton already is the line of the strip (Sacramento).
+ * walls: every wall of the tube is a strip of its own (Neonderthaw). Pairing into
+ * a median is disabled: small counters do not pair reliably.
  */
 export type StripMode = 'centerline' | 'walls';
 
-/** outline: TTF, pipeline [A]–[B]. stroke: tratto singolo, si entra in [C]. */
+/** outline: TTF, pipeline [A]–[B]. stroke: single stroke, entering at [C]. */
 export type FontKind = 'outline' | 'stroke';
 
-/** Scrittura del font (SPEC §4ter): decide il glifo che dà l'altezza chiesta dal cliente. */
+/** Script of the font (SPEC §4ter): it decides the glyph that gives the height the customer asks for. */
 export type FontScript = 'latin' | 'han' | 'japanese' | 'cyrillic' | 'devanagari';
 
 export interface FontEntry {
   id: string;
   name: string;
   kind: FontKind;
-  /** Percorso relativo a `public/` */
+  /** Path relative to `public/` */
   file: string;
   defaultTracking: number;
   /**
-   * Sommità di `heightGlyph` sopra la linea di base: è l'altezza richiesta dal cliente.
-   * Le metriche dichiarate (OS/2) non si usano: sui corsivi sono inaffidabili.
+   * Top of `heightGlyph` above the baseline: it is the height the customer asks for.
+   * The declared metrics (OS/2) are not used: on cursives they are unreliable.
    */
   capHeightMeasured: number;
-  /** Sommità del glifo "x". */
+  /** Top of the "x" glyph. */
   xHeightMeasured: number;
-  /** Lettere disegnate come tubi cavi: la bitmap ha due linee e la luce non si riempie. */
+  /** Letters drawn as hollow tubes: the bitmap has two lines and the gap is not filled. */
   hollowTubes: boolean;
-  /** Obbligatorio con `hollowTubes`. */
+  /** Required with `hollowTubes`. */
   tube?: TubeGeometry;
-  /** Come lo scheletro diventa la striscia. Vedi `StripMode`. */
+  /** How the skeleton becomes the strip. See `StripMode`. */
   stripMode: StripMode;
-  /** Scrittura. Assente: latina. */
+  /** Script. Absent: Latin. */
   script?: FontScript;
   /**
-   * Chi mette in fila i glifi. Assente: opentype.js, un glifo per carattere. `harfbuzz` per le
-   * scritture che fondono e riordinano le lettere (devanagari): vedi `src/fonts/shaper.ts`.
+   * Who lays out the glyphs. Absent: opentype.js, one glyph per character. `harfbuzz` for
+   * scripts that fuse and reorder letters (Devanagari): see `src/fonts/shaper.ts`.
    */
   shaper?: 'harfbuzz';
   /**
-   * Glifo che definisce l'altezza. Assente: "H" (ripiego "I"). Per cinese e giapponese è 永, il
-   * carattere di riferimento dei font CJK: la "H" lì è un glifo latino di servizio. Per l'hindi è क:
-   * la sua sommità è la linea orizzontale (shirorekha) da cui pendono tutte le lettere.
+   * Glyph that defines the height. Absent: "H" (fallback "I"). For Chinese and Japanese it is 永, the
+   * reference character of CJK fonts: the "H" there is a service Latin glyph. For Hindi it is क:
+   * its top is the horizontal line (shirorekha) from which all the letters hang.
    */
   heightGlyph?: string;
   /**
-   * Il file si scarica solo quando il cliente sceglie il font, e non entra nel precaricamento
-   * della pagina: i font CJK pesano qualche MB anche da sottoinsieme.
+   * The file is downloaded only when the customer picks the font, and does not enter the preloading
+   * of the page: CJK fonts weigh a few MB even as a subset.
    */
   lazy?: boolean;
-  /** Testo della miniatura quando il campione latino non direbbe nulla del font. */
+  /** Text of the thumbnail when the Latin sample would say nothing about the font. */
   sample?: string;
   notes: string;
 }
 
-/** Il glifo da cui si misura l'altezza del font. */
+/** The glyph from which the height of the font is measured. */
 export function heightGlyphOf(entry: Pick<FontEntry, 'heightGlyph'>): string {
   return entry.heightGlyph ?? 'H';
 }
@@ -260,8 +260,8 @@ export const FONTS: readonly FontEntry[] = [
 ];
 
 /**
- * Errore del generatore quando nessuna lettera del testo è nel font scelto. La pagina cliente lo
- * riconosce da questo messaggio e dice di cambiare font.
+ * Generator error when no letter of the text is in the chosen font. The customer page
+ * recognizes it by this message and says to change font.
  */
 export const NO_LETTERS = 'None of the letters in the text is in the font.';
 

@@ -1,5 +1,5 @@
-// GET /api/design/<codice>/image — la foto dell'insegna scattata al momento di «Send request».
-// Il negozio la mostra nel carrello e ne tiene una copia nell'ordine. Sempre e solo un JPEG.
+// GET /api/design/<code>/image — the photo of the sign taken at "Send request".
+// The shop shows it in the cart and keeps a copy in the order. Always and only a JPEG.
 import { readDesignImage, type DesignKv } from '../../../../src/api/designStore';
 
 interface Env {
@@ -16,7 +16,7 @@ export async function onRequestGet(context: { env: Env; params: { code?: string 
       'Content-Type': 'image/jpeg',
       'Content-Length': String(result.bytes.length),
       'X-Content-Type-Options': 'nosniff',
-      // La foto di un codice non cambia mai: il browser del cliente la può tenere.
+      // The photo of a code never changes: the customer's browser may keep it.
       'Cache-Control': 'public, max-age=86400, immutable',
     },
   });

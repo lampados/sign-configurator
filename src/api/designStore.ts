@@ -1,40 +1,40 @@
-// Design salvati per il negozio (Richiedi): il configuratore salva il design e riceve un codice, il
-// negozio lo rilegge da server a server, con la stima dei prezzi e una foto dell'insegna. Qui non passa mai un dato personale: nome, email e indirizzo
-// si inseriscono solo nel negozio. Modulo puro: lo usano le Pages Functions e i test.
+// Designs saved for the shop (Request): the configurator saves the design and receives a code, the
+// shop reads it back server to server, with the price estimate and a photo of the sign. No personal data ever passes here: name, email and address
+// are entered only in the shop. Pure module: used by the Pages Functions and the tests.
 
 import { decodeShare, encodeShare } from '../order/share';
 
-/** Quello che serve di un KV di Cloudflare: così i test usano una mappa. */
+/** What is needed of a Cloudflare KV: this way the tests use a map. */
 export interface DesignKv {
   get(key: string): Promise<string | null>;
   put(key: string, value: string, options?: { expirationTtl?: number }): Promise<void>;
 }
 
-/** Riga del riepilogo, come la vede il cliente: etichetta e valore. */
+/** A summary row, as the customer sees it: label and value. */
 export type SummaryRow = [label: string, value: string];
 
-/** Una voce della stima: che cosa è (`detail`: modello, metri, minuti) e quanto costa. */
+/** A line of the estimate: what it is (`detail`: model, metres, minutes) and what it costs. */
 export interface QuoteLine {
-  /** Id della voce di `priceOrder`: `controller`, `strip`, `print`… */
+  /** Id of the `priceOrder` line: `controller`, `strip`, `print`… */
   id: string;
   label: string;
   detail: string;
-  /** €, IVA esclusa. `null`: voce senza prezzo (una striscia non ancora a listino). */
+  /** €, excluding VAT. `null`: line without a price (a strip not yet in the price list). */
   amount: number | null;
 }
 
 /**
- * Distinta con i prezzi, com'è nel pannello Order (SPEC §12.5). La calcola il browser del cliente:
- * è una **stima**, il negozio la mostra come tale e non la usa per far pagare.
+ * Bill of materials with prices, as in the Order panel (SPEC §12.5). Computed by the customer's browser:
+ * it is an **estimate**, the shop shows it as such and does not use it to charge.
  */
 export interface StoredQuote {
   pricingVersion: string;
-  /** `false`: almeno una voce è senza prezzo e il totale non la comprende. */
+  /** `false`: at least one line has no price and the total does not include it. */
   complete: boolean;
   lines: QuoteLine[];
-  /** €, IVA esclusa, spedizione esclusa. */
+  /** €, excluding VAT, excluding shipping. */
   total: number;
-  /** Spedizione stimata, €, fuori dal totale. */
+  /** Estimated shipping, €, outside the total. */
   shipping: number;
 }
 
@@ -42,12 +42,12 @@ export interface StoredDesign {
   v: 1;
   code: string;
   createdAt: string;
-  /** Ordine normalizzato (JSON di `encodeShare`): riapre il design nel configuratore. */
+  /** Normalized order (`encodeShare` JSON): reopens the design in the configurator. */
   order: string;
   summary: SummaryRow[];
-  /** Assente nei design salvati prima del 17 novembre 2026, o senza negozio. */
+  /** Absent in designs saved before 17 November 2026, or without a shop. */
   quote?: StoredQuote;
-  /** C'è una foto dell'insegna, salvata a parte con la chiave `image:<codice>`. */
+  /** There is a photo of the sign, saved separately under the key `image:<code>`. */
   image?: boolean;
 }
 
@@ -56,7 +56,7 @@ export interface DesignResult {
   body: Record<string, unknown>;
 }
 
-/** Senza 0/O, 1/I/L: il codice si legge e si detta senza errori. */
+/** Without 0/O, 1/I/L: the code can be read and dictated without mistakes. */
 export const CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
 export const CODE_PATTERN = /^[A-HJ-NP-Z2-9]{4}-[A-HJ-NP-Z2-9]{4}$/;
 export const DESIGN_MAX_BYTES = 1_500_000;
@@ -64,10 +64,10 @@ export const SUMMARY_MAX_ROWS = 60;
 export const SUMMARY_MAX_CHARS = 240;
 export const QUOTE_MAX_LINES = 20;
 export const QUOTE_MAX_EUR = 100_000;
-/** La foto è un JPEG di circa 1000 px: 400 kB bastano e avanzano. */
+/** The photo is a JPEG of about 1000 px: 400 kB is more than enough. */
 export const IMAGE_MAX_BYTES = 400_000;
 const IMAGE_PREFIX = 'data:image/jpeg;base64,';
-/** Un design resta 180 giorni: il tempo di una trattativa, non un archivio. */
+/** A design stays 180 days: the time of a negotiation, not an archive. */
 export const DESIGN_TTL_SECONDS = 180 * 24 * 60 * 60;
 
 export function newCode(random: (n: number) => Uint8Array): string {
@@ -98,7 +98,7 @@ const euro = (value: unknown): number | null =>
 
 const shortText = (value: unknown, max: number): string | null => (typeof value === 'string' && value.length <= max ? value : null);
 
-/** La stima, ricopiata campo per campo: quello che non è previsto non entra nel KV. */
+/** The estimate, copied field by field: what is not expected does not enter the KV. */
 function quoteOf(input: unknown): StoredQuote | null {
   if (typeof input !== 'object' || input === null) return null;
   const { pricingVersion, complete, lines, total, shipping } = input as Record<string, unknown>;
@@ -123,8 +123,8 @@ function quoteOf(input: unknown): StoredQuote | null {
 }
 
 /**
- * La foto arriva come data URL JPEG. Si tiene solo il base64, dopo aver controllato che sia
- * davvero base64, che non superi il peso massimo e che cominci come un JPEG (FF D8 FF).
+ * The photo arrives as a JPEG data URL. Only the base64 is kept, after checking that it really
+ * is base64, that it does not exceed the maximum size and that it starts like a JPEG (FF D8 FF).
  */
 function imageOf(input: unknown): string | null {
   if (typeof input !== 'string' || !input.startsWith(IMAGE_PREFIX)) return null;
@@ -132,11 +132,11 @@ function imageOf(input: unknown): string | null {
   if (base64.length === 0 || base64.length % 4 !== 0 || !/^[A-Za-z0-9+/]+={0,2}$/.test(base64)) return null;
   const padding = base64.endsWith('==') ? 2 : base64.endsWith('=') ? 1 : 0;
   if ((base64.length / 4) * 3 - padding > IMAGE_MAX_BYTES) return null;
-  // «/9j/» è FF D8 FF in base64: l'inizio di ogni JPEG.
+  // "/9j/" is FF D8 FF in base64: the start of every JPEG.
   return base64.startsWith('/9j/') ? base64 : null;
 }
 
-/** I byte di una foto salvata. */
+/** The bytes of a saved photo. */
 export function imageBytes(base64: string): Uint8Array<ArrayBuffer> {
   const binary = atob(base64);
   const bytes = new Uint8Array(new ArrayBuffer(binary.length));
@@ -144,7 +144,7 @@ export function imageBytes(base64: string): Uint8Array<ArrayBuffer> {
   return bytes;
 }
 
-/** POST: `{ order, summary, quote?, image? }` → `{ code }`. L'ordine passa dallo stesso controllo dei link condivisi. */
+/** POST: `{ order, summary, quote?, image? }` → `{ code }`. The order goes through the same check as shared links. */
 export async function createDesign(
   raw: string,
   kv: DesignKv | undefined,
@@ -165,13 +165,13 @@ export async function createDesign(
   if (!read.order) return { status: 400, body: { error: 'bad_order' } };
   const rows = summaryOf(summary);
   if (!rows) return { status: 400, body: { error: 'bad_summary' } };
-  // Stima e foto sono facoltative, ma se ci sono devono essere a posto: niente salvataggi a metà.
+  // Estimate and photo are optional, but if present they must be right: no half saves.
   const quote = rawQuote === undefined ? null : quoteOf(rawQuote);
   if (rawQuote !== undefined && !quote) return { status: 400, body: { error: 'bad_quote' } };
   const image = rawImage === undefined ? null : imageOf(rawImage);
   if (rawImage !== undefined && !image) return { status: 400, body: { error: 'bad_image' } };
 
-  // Otto simboli su 31: una collisione è rarissima, ma un codice occupato non si sovrascrive.
+  // Eight symbols out of 31: a collision is very rare, but a taken code is not overwritten.
   for (let attempt = 0; attempt < 5; attempt += 1) {
     const code = newCode(random);
     if ((await kv.get(`design:${code}`)) !== null) continue;
@@ -184,7 +184,7 @@ export async function createDesign(
       ...(quote ? { quote } : {}),
       ...(image ? { image: true } : {}),
     };
-    // Prima la foto: se il design c'è, c'è anche lei.
+    // The photo first: if the design is there, so is the photo.
     if (image) await kv.put(`image:${code}`, image, { expirationTtl: DESIGN_TTL_SECONDS });
     await kv.put(`design:${code}`, JSON.stringify(stored), { expirationTtl: DESIGN_TTL_SECONDS });
     return { status: 201, body: { code } };
@@ -193,8 +193,8 @@ export async function createDesign(
 }
 
 /**
- * GET: il riepilogo per il negozio, con il link che riapre il design. Con `full` anche l'ordine,
- * che serve al configuratore per riaprirlo.
+ * GET: the summary for the shop, with the link that reopens the design. With `full` the order too,
+ * which the configurator needs to reopen it.
  */
 export async function readDesign(
   code: string,
@@ -225,7 +225,7 @@ export async function readDesign(
   return { status: 200, body };
 }
 
-/** GET della foto: i byte del JPEG, oppure null se il codice è sbagliato o la foto non c'è. */
+/** GET of the photo: the bytes of the JPEG, or null if the code is wrong or there is no photo. */
 export async function readDesignImage(code: string, kv: DesignKv | undefined): Promise<{ status: number; bytes: Uint8Array<ArrayBuffer> | null }> {
   if (!kv) return { status: 503, bytes: null };
   const clean = code.trim().toUpperCase();

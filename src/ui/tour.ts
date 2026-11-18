@@ -1,12 +1,12 @@
-// Giro guidato della pagina cliente: lo schermo si scurisce e resta illuminato un elemento alla
-// volta, con una frase accanto. Parte da solo alla prima visita e si riapre dal tasto «?».
+// Guided tour of the customer page: the screen darkens and one element at a time stays
+// highlighted, with a sentence next to it. It starts by itself at the first visit and reopens from the "?" button.
 
 export interface TourStep {
   title?: string;
   body: string;
-  /** Elementi da illuminare (il riquadro li contiene tutti). Assente o vuoto: scheda al centro. */
+  /** Elements to highlight (the box contains them all). Absent or empty: card in the centre. */
   targets?: () => (Element | null)[];
-  /** Prepara la pagina prima di mostrare il passo (apre un pannello, lo chiude…). */
+  /** Prepares the page before showing the step (opens a panel, closes it…). */
   before?: () => void;
 }
 
@@ -22,7 +22,7 @@ const SEEN_KEY = 'ciao-tour-seen';
 const PAD = 6;
 const GAP = 12;
 
-/** true se il giro è già stato visto (o chiuso) in questo browser. */
+/** true if the tour has already been seen (or closed) in this browser. */
 export function tourSeen(): boolean {
   try {
     return window.localStorage.getItem(SEEN_KEY) === '1';
@@ -35,7 +35,7 @@ function markSeen(): void {
   try {
     window.localStorage.setItem(SEEN_KEY, '1');
   } catch {
-    // Senza memoria del browser il giro si ripresenta alla prossima visita: va bene così.
+    // Without browser storage the tour shows again at the next visit: that is fine.
   }
 }
 
@@ -82,7 +82,7 @@ export function startTour(steps: readonly TourStep[], labels: TourLabels): void 
     const cardW = Math.min(320, vw - 2 * GAP);
     card.style.width = `${cardW}px`;
     if (rects.length === 0) {
-      // Nessun elemento: buio uniforme e scheda al centro.
+      // No element: uniform dark and card in the centre.
       hole.style.cssText = `left:${vw / 2}px;top:${vh / 2}px;width:0;height:0`;
       card.style.left = `${(vw - cardW) / 2}px`;
       card.style.top = `${Math.max(GAP, (vh - card.offsetHeight) / 2)}px`;
@@ -93,7 +93,7 @@ export function startTour(steps: readonly TourStep[], labels: TourLabels): void 
     const right = Math.min(vw, Math.max(...rects.map((r) => r.right)) + PAD);
     const bottom = Math.min(vh, Math.max(...rects.map((r) => r.bottom)) + PAD);
     hole.style.cssText = `left:${left}px;top:${top}px;width:${right - left}px;height:${bottom - top}px`;
-    // La scheda va dove c'è più posto: sotto, sopra, oppure di fianco a un elemento alto e stretto.
+    // The card goes where there is most room: below, above, or beside a tall narrow element.
     const cardH = card.offsetHeight;
     const clampX = (x: number): number => Math.max(GAP, Math.min(x, vw - cardW - GAP));
     const clampY = (y: number): number => Math.max(GAP, Math.min(y, vh - cardH - GAP));
@@ -123,7 +123,7 @@ export function startTour(steps: readonly TourStep[], labels: TourLabels): void 
     next.textContent = index === steps.length - 1 ? labels.done : labels.next;
     skip.hidden = index === steps.length - 1;
     place();
-    // Un pannello che si apre o scorre sposta l'elemento: si rimisura a pagina ferma.
+    // A panel that opens or scrolls moves the element: it is measured again once the page is still.
     window.setTimeout(place, 350);
     next.focus({ preventScroll: true });
   };

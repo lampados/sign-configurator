@@ -5,8 +5,8 @@ import { sourceFromPaths } from '../src/geometry/segment';
 import { buildStrip } from '../src/geometry/strip';
 
 /**
- * Queste prove riguardano la piega della striscia, quindi usano una striscia che piega: la COB.
- * La predefinita (WS2812B su circuito flessibile) non curva, e qui non direbbe nulla di utile.
+ * These tests are about the bending of the strip, so they use a strip that bends: the COB.
+ * The default one (WS2812B on a flexible circuit) does not curve, and would say nothing useful here.
  */
 const BENDABLE = resolveParams({ STRIP_ID: 'cob-5mm' });
 
@@ -20,7 +20,7 @@ function arc(radius: number, sweepDeg: number): Point[] {
   return pts;
 }
 
-/** V a 90° campionata ogni millimetro: il raccordo di Chaikin resta piccolo rispetto al passo. */
+/** V at 90° sampled every millimetre: the Chaikin fillet stays small compared with the pitch. */
 function vee(scale: number): Point[] {
   const arm = 40 * scale;
   const pts: Point[] = [];

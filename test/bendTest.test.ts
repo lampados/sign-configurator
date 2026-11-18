@@ -18,12 +18,12 @@ import {
   type BendTestKind,
 } from '../src/tools/bendTestGeometry';
 
-/** Marcature 1+2+3+4+5 più le 2 asole. Lo smusso del labbro non è un foro in più. */
+/** Markers 1+2+3+4+5 plus the 2 slots. The lip chamfer is not an extra hole. */
 const HOLES = 15 + 2;
 
 /**
- * I pezzi di prova sono disegnati per la COB da 5 mm (archi fino a R7): i test li controllano con
- * quella striscia, qualunque sia la striscia standard.
+ * The test parts are designed for the 5 mm COB (arcs down to R7): the tests check them with
+ * that strip, whatever the standard strip is.
  */
 const COB = {
   STRIP_W: COB_5MM.STRIP_W,
@@ -41,7 +41,7 @@ const sub = (a: Vec2, b: Vec2): Vec2 => [a[0] - b[0], a[1] - b[1]];
 const scale = (a: Vec2, k: number): Vec2 => [a[0] * k, a[1] * k];
 const left = (t: Vec2): Vec2 => [-t[1], t[0]];
 
-/** Area della parte di `poly` che resta fuori dal canale. */
+/** Area of the part of `poly` that stays outside the channel. */
 async function areaOutside(channel: Awaited<ReturnType<typeof makeChannel>>, poly: Vec2[] | Vec2[][], grow = 0) {
   const { CrossSection } = await getManifold();
   const raw = new CrossSection(poly, 'NonZero');
@@ -89,7 +89,7 @@ function dxfVertices(dxf: string, layer: string): [number, number][] {
   return found;
 }
 
-/** Area di materiale nel quadratino, sulla fetta a quota z. */
+/** Area of material in the small square, on the slice at height z. */
 async function sliceArea(solid: Manifold, z: number, poly: Vec2[]): Promise<number> {
   const { CrossSection } = await getManifold();
   const slice = solid.slice(z);
@@ -132,7 +132,7 @@ describe('bend test: channel', () => {
       for (const bend of bendTestPath('arcs').bends) {
         const { center, radius } = bend.arc!;
         const s = sagitta(P.HINGE_PITCH, radius);
-        // Metà di un arco da 180°: direzione radiale = tangente d'ingresso.
+        // Half of a 180° arc: radial direction = entry tangent.
         const radial = bend.heading;
         const at = (r: number): Vec2 => add(center, scale(radial, r));
         const inner = radius - P.CHANNEL_W / 2 - s;
@@ -157,7 +157,7 @@ describe('bend test: channel', () => {
           const n2 = left(bend.headingOut);
           const cos = n1[0] * n2[0] + n1[1] * n2[1];
           for (const p of [-P.STRIP_W / 2, 0, P.STRIP_W / 2]) {
-            // Perno X a distanza laterale p da entrambe le linee centrali.
+            // Pivot X at lateral distance p from both centrelines.
             const X = add(bend.start, scale(add(n1, n2), p / (1 + cos)));
             const end1 = add(X, scale(n1, -p));
             const start2 = add(X, scale(n2, -p));
@@ -293,7 +293,7 @@ describe('bend test: solids', () => {
       expect(r.expectedHoles).toBe(HOLES);
       expect(r.pieces[0]!.genus).toBe(HOLES);
       const { min, max } = r.bounds;
-      // X: dritti a x=0 e x=2·(40+25+15+10+7)=194; Y: da −25 (arco R25) a 30+40 (arco R40).
+      // X: straights at x=0 and x=2·(40+25+15+10+7)=194; Y: from −25 (arc R25) to 30+40 (arc R40).
       expect(min[0]).toBeCloseTo(-outerHalf, 2);
       expect(max[0]).toBeCloseTo(194 + outerHalf, 2);
       expect(min[1]).toBeCloseTo(-25 - outerHalf, 2);
@@ -312,7 +312,7 @@ describe('bend test: solids', () => {
       expect(await wall(2, 3, P.CHANNEL_W / 2 + 0.25)).toBe(true);
       expect(await hole(2, cap + 0.15)).toBe(true);
       expect(await wall(2, cap - 0.25)).toBe(true);
-      // Smusso 45° sul labbro: a z = FLOOR − 0.2 il materiale manca finché non si entra di ~0.8 mm.
+      // 45° chamfer on the lip: at z = FLOOR − 0.2 the material is missing until ~0.8 mm in.
       expect(await hole(P.FLOOR - 0.2, lip + 0.05)).toBe(true);
       expect(await wall(P.FLOOR - 0.2, lip + 0.92)).toBe(true);
       expect(await wall(P.FLOOR - P.SLOT_LIP_CHAMFER - 0.5, lip + 0.05)).toBe(true);

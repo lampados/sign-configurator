@@ -18,9 +18,9 @@ describe('boxes', () => {
   });
 
   it('the smallest one that is enough, rotated if needed', () => {
-    // 109 × 137 × 40: entra nella 150 × 110 girata, non nella 120 × 80 × 50.
+    // 109 × 137 × 40: it fits the 150 × 110 rotated, not the 120 × 80 × 50.
     expect(pickBox([lrs35, mini]).box?.model).toBe('GW44206');
-    // Solo il controller (adattatore con spina fuori): basta una scatola piccola alta almeno 30 mm.
+    // Only the controller (plug-in adapter outside): a small box at least 30 mm high is enough.
     const small = pickBox([mini]);
     expect(small.box).not.toBeNull();
     expect(small.box!.innerMm[2]).toBeGreaterThanOrEqual(30);
@@ -35,11 +35,11 @@ describe('boxes', () => {
   });
 
   it('in the bill of materials: the plug-in adapter stays outside, an LRS goes in', () => {
-    // 100 LED a 12 V: GST60A12, fuori dalla scatola; dentro solo il controller.
+    // 100 LEDs at 12 V: GST60A12, outside the box; inside only the controller.
     const adapter = bomAssembly([], [], 100, 60, 12);
     expect(adapter.supply?.family).toBe('gst60a');
     expect(adapter.box?.contents).toEqual(['GL-C-309WL']);
-    // 200 LED a 5 V, 15 A: LRS-100-5 nella scatola insieme al controller.
+    // 200 LEDs at 5 V, 15 A: LRS-100-5 in the box together with the controller.
     const lrs = bomAssembly([], [], 200, 60, 5);
     expect(lrs.box?.contents).toEqual(['LRS-100-5', 'GL-C-309WL']);
     expect(lrs.box?.auto).toBe(true);

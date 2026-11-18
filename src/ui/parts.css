@@ -111,7 +111,7 @@ dl {
 dt { color: var(--muted); }
 dd { margin: 0; }
 
-/* Telefono: ogni riga diventa una scheda. */
+/* Phone: every row becomes a card. */
 @media (max-width: 640px) {
   #power-supplies table, #power-supplies tbody, #power-supplies tr, #power-supplies th, #power-supplies td { display: block; }
   #power-supplies thead { display: none; }

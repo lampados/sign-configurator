@@ -1,9 +1,9 @@
-// Distance transform euclidea esatta su griglia (Felzenszwalb & Huttenlocher, 2012), separabile:
-// prima le colonne, poi le righe. Modulo puro, deterministico.
+// Exact Euclidean distance transform on a grid (Felzenszwalb & Huttenlocher, 2012), separable:
+// first the columns, then the rows. Pure, deterministic module.
 
 const INF = 1e20;
 
-/** Inviluppo inferiore di parabole: d[q] = min_p (q − p)² + f[p]. */
+/** Lower envelope of parabolas: d[q] = min_p (q − p)² + f[p]. */
 function dt1d(f: Float64Array, n: number, d: Float64Array, v: Int32Array, z: Float64Array): void {
   let first = 0;
   while (first < n && f[first]! >= INF) first++;
@@ -38,9 +38,9 @@ function dt1d(f: Float64Array, n: number, d: Float64Array, v: Int32Array, z: Flo
 }
 
 /**
- * Distanza al quadrato (in pixel²) da ogni pixel al più vicino pixel "sito" (`mask[i] === site`).
- * Senza siti tutti i valori valgono 1e20. Float32 per stare nella memoria con 40 Mpx: i valori sono
- * interi, esatti fino a 2²⁴ px² (oltre 4000 px di distanza, ben sopra ogni soglia usata).
+ * Squared distance (in pixels²) from every pixel to the nearest "site" pixel (`mask[i] === site`).
+ * Without sites all the values are 1e20. Float32 to fit in memory with 40 Mpx: the values are
+ * integers, exact up to 2²⁴ px² (over 4000 px of distance, well above every threshold used).
  */
 export function squaredDistanceTo(mask: Uint8Array, width: number, height: number, site: 0 | 1): Float32Array {
   const out = new Float32Array(width * height);

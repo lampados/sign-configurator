@@ -1,9 +1,9 @@
-// Incroci senza grafo (SPEC §5bis): intersezione di polilinee, scelta entro 2 mm, gap sulla striscia sotto.
+// Crossings without a graph (SPEC §5bis): intersection of polylines, choice within 2 mm, gap on the strip below.
 
 import type { Point } from '../geometry/rasterize';
 import type { OrderCrossing } from '../order/schema';
 
-/** Una scelta si lega all'incrocio più vicino se dista al più così. */
+/** A choice is tied to the nearest crossing if it is at most this far. */
 export const CROSSING_MATCH_MM = 2;
 
 export interface CrossingCurve {
@@ -24,7 +24,7 @@ export interface AppliedCrossing {
   at: Point;
   under: string;
   over: string;
-  /** Ascissa curvilinea, sul percorso che passa sotto. */
+  /** Arc length, on the path that passes under. */
   underArc: number;
 }
 
@@ -59,7 +59,7 @@ function pathNumber(id: string): number {
   return Number.isFinite(value) ? value : Number.POSITIVE_INFINITY;
 }
 
-/** Passa sopra l'id minore (p2 prima di p10). A parità di numero, vince la stringa minore. */
+/** The smaller id passes over (p2 before p10). With equal numbers, the smaller string wins. */
 function overId(a: string, b: string): string {
   if (a === b) return a;
   const na = pathNumber(a);
@@ -93,8 +93,8 @@ function cross(ax: number, ay: number, bx: number, by: number): number {
 }
 
 /**
- * Incrocio proprio. Un estremo che cade in mezzo all'altro segmento conta;
- * due estremi coincidenti sono una giunzione, non un incrocio.
+ * Proper crossing. An endpoint that falls in the middle of the other segment counts;
+ * two coincident endpoints are a junction, not a crossing.
  */
 function segmentHit(left: Seg, right: Seg): { at: Point; t: number; u: number } | null {
   const rx = left.b[0] - left.a[0];
@@ -121,7 +121,7 @@ function samePair(left: PathIntersection, right: PathIntersection): boolean {
   return (left.a === right.a && left.b === right.b) || (left.a === right.b && left.b === right.a);
 }
 
-/** Intersezioni fra spezzoni distinti e di uno spezzone con sé stesso. */
+/** Intersections between distinct segments and of a segment with itself. */
 export function intersectPaths(paths: readonly CrossingCurve[]): PathIntersection[] {
   const usable = paths.filter((path) => path.points.length >= 2);
   const hits: PathIntersection[] = [];
@@ -170,8 +170,8 @@ function applyHit(hit: PathIntersection, under: string): AppliedCrossing {
 }
 
 /**
- * Associa ogni scelta all'incrocio libero più vicino, entro 2 mm.
- * Senza scelta, passa sotto l'id maggiore. Una scelta orfana diventa un avviso.
+ * Matches every choice to the nearest free crossing, within 2 mm.
+ * Without a choice, the larger id passes under. An orphan choice becomes a warning.
  */
 export function resolveCrossings(hits: readonly PathIntersection[], choices: readonly OrderCrossing[]): ResolvedCrossings {
   const taken = new Set<number>();
@@ -320,8 +320,8 @@ function spanPoints(seq: readonly Point[], span: Span, length: number): Point[] 
 }
 
 /**
- * Interrompe solo il percorso sotto, di `gap` mm per lato lungo la curva.
- * I due capi restano staccati: la distanza è il doppio del gap, più della saldatura degli spezzoni corti.
+ * Interrupts only the path below, by `gap` mm per side along the curve.
+ * The two ends stay apart: the distance is twice the gap, more than the welding of short segments.
  */
 export function cutCrossingGaps(paths: readonly CrossingCurve[], applied: readonly AppliedCrossing[], gap: number): CutGaps {
   const pieces: CutPiece[] = [];

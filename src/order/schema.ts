@@ -1,5 +1,5 @@
-// Ordine v4 (SPEC §6). v1 → v2 → v3 → v4. Sugli ordini vecchi `plate` è null:
-// stessi STL e la BOM di prima più "plate": null.
+// Order v4 (SPEC §6). v1 → v2 → v3 → v4. On old orders `plate` is null:
+// same STLs and the previous BOM plus "plate": null.
 import type { Params } from '../config';
 
 export interface OrderV1 {
@@ -51,7 +51,7 @@ export interface RasterImageSource {
 
 export type OrderSource = TextSource | SvgImageSource | RasterImageSource;
 
-/** Nodo di una Bézier cubica, maniglie relative al punto, mm (SPEC §5bis). */
+/** Node of a cubic Bézier, handles relative to the point, mm (SPEC §5bis). */
 export interface CurveNode {
   p: [number, number];
   in: [number, number];
@@ -78,7 +78,7 @@ export interface OrderCrossing {
   under: string;
 }
 
-/** Ordine v2: geometria, senza le scelte del cliente. */
+/** Order v2: geometry, without the customer's choices. */
 export interface SignOrder {
   schemaVersion: 2;
   generatorVersion: string;
@@ -86,7 +86,7 @@ export interface SignOrder {
   heightMm: number;
   color: string;
   params: Partial<Params>;
-  /** null finché il cliente non congela i tracciati. */
+  /** null until the customer freezes the paths. */
   paths: OrderPath[] | null;
   crossings: OrderCrossing[];
 }
@@ -96,7 +96,7 @@ export type SizePreset = 'S' | 'M' | 'L' | 'XL';
 export type PlateShape = 'rect' | 'pill' | 'contour';
 export type PlateMaterial = 'clear' | 'black' | 'wood';
 
-/** Fondale scelto dal cliente. Spessore e kerf stanno in config, non qui (SPEC §6, §13). */
+/** Backdrop chosen by the customer. Thickness and kerf are in config, not here (SPEC §6, §13). */
 export interface PlateChoice {
   shape: PlateShape;
   material: PlateMaterial;
@@ -106,10 +106,10 @@ export interface PlateChoice {
 
 export type LightEffect = 'colore fisso' | 'arcobaleno';
 
-/** Spina dell'alimentatore (universale 100–240 V): cambia solo la forma. */
+/** Plug of the power supply (universal 100–240 V): only the shape changes. */
 export type PlugType = 'EU' | 'UK' | 'CH' | 'US';
 
-/** Scelte che non cambiano la geometria (SPEC §6). */
+/** Choices that do not change the geometry (SPEC §6). */
 export interface CustomerChoices {
   effect: LightEffect;
   diffuser: boolean;
@@ -126,7 +126,7 @@ export const DEFAULT_CUSTOMER: Readonly<CustomerChoices> = Object.freeze({
   proof: true,
 });
 
-/** Ordine v3. `sizePreset` è informativo: fa fede `heightMm`. */
+/** Order v3. `sizePreset` is informative: `heightMm` is what counts. */
 export interface SignOrderV3 {
   schemaVersion: 3;
   generatorVersion: string;
@@ -141,7 +141,7 @@ export interface SignOrderV3 {
   customer: CustomerChoices;
 }
 
-/** Ordine v4. `plate` è null senza fondale. */
+/** Order v4. `plate` is null without a backdrop. */
 export interface SignOrderV4 {
   schemaVersion: 4;
   generatorVersion: string;
@@ -245,7 +245,7 @@ function asV2(order: AnyOrder): SignOrder {
   };
 }
 
-/** v1 → v2 → v3 → v4. I campi mancanti prendono i default; la geometria non cambia. */
+/** v1 → v2 → v3 → v4. Missing fields take the defaults; the geometry does not change. */
 export function migrateOrder(order: AnyOrder): SignOrderV4 {
   const geometry = asV2(order);
   const carried = order.schemaVersion === 3 || order.schemaVersion === 4;

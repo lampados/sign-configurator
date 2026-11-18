@@ -1,7 +1,7 @@
-// [C] Grafo dello scheletro (SPEC §5): nodi = estremi (grado 1) e giunzioni (grado ≥ 3), archi =
-// polilinee in mm. Potatura dei rami spuri più corti della larghezza del tratto e fusione delle
-// giunzioni vicine (un incrocio esce dal thinning come due giunzioni a Y unite da un arco corto).
-// Modulo puro, deterministico. Con stripMode "walls" ogni polilinea e' gia' una striscia.
+// [C] Graph of the skeleton (SPEC §5): nodes = endpoints (degree 1) and junctions (degree ≥ 3), edges =
+// polylines in mm. Pruning of spurious branches shorter than the stroke width and merging of
+// close junctions (a crossing leaves thinning as two Y junctions joined by a short edge).
+// Pure, deterministic module. With stripMode "walls" every polyline already is a strip.
 
 import { squaredDistanceTo } from './distance';
 import { pxToMm, type Point, type PxToMm } from './rasterize';
@@ -9,7 +9,7 @@ import { crossings, ring, ringCount, ringOffsets, skeletonize } from './skeleton
 
 export interface GraphNode {
   id: number;
-  /** Posizione in mm (Y in su). */
+  /** Position in mm (Y up). */
   x: number;
   y: number;
   degree: number;
@@ -19,7 +19,7 @@ export interface GraphEdge {
   id: number;
   a: number;
   b: number;
-  /** Polilinea in mm da a a b, estremi compresi. a === b: anello chiuso. */
+  /** Polyline in mm from a to b, endpoints included. a === b: closed loop. */
   points: Point[];
   lengthMm: number;
 }
@@ -27,11 +27,11 @@ export interface GraphEdge {
 export interface SkeletonGraph {
   nodes: GraphNode[];
   edges: GraphEdge[];
-  /** Larghezza del tratto stimata con la distance transform sull'asse (mediana), mm. */
+  /** Stroke width estimated with the distance transform on the axis (median), mm. */
   strokeWidthMm: number;
-  /** Scheletro di [B], stessa griglia della bitmap. */
+  /** Skeleton of [B], same grid as the bitmap. */
   skeleton: Uint8Array;
-  /** Forellini (area < (HOLE_FILL_MAX_W · tratto)²) riempiti prima del thinning. */
+  /** Pinholes (area < (HOLE_FILL_MAX_W · stroke)²) filled before thinning. */
   filledHoles: number;
   prunedSpurs: number;
   mergedJunctions: number;
@@ -45,13 +45,13 @@ export interface GraphInput {
   pxToMm: PxToMm;
 }
 
-/** Tolleranza di Douglas-Peucker sulle polilinee degli archi, in pixel. */
+/** Douglas-Peucker tolerance on the edge polylines, in pixels. */
 export const POLYLINE_TOLERANCE_PX = 0.75;
 
 /**
- * Buchi con area < (HOLE_FILL_MAX_W · tratto)² vengono riempiti. In Sacramento i forellini da
- * contorni sovrapposti stanno sotto 0,1 mm² a 100 mm; i buchi veri (puntino della i, occhielli)
- * partono da ~2 mm². Con tratto 4,8 mm la soglia è ~0,64 mm².
+ * Holes with area < (HOLE_FILL_MAX_W · stroke)² are filled. In Sacramento the pinholes from
+ * overlapping contours stay under 0.1 mm² at 100 mm; real holes (dot of the i, counters)
+ * start from ~2 mm². With a 4.8 mm stroke the threshold is ~0.64 mm².
  */
 export const HOLE_FILL_MAX_W = 1 / 6;
 
@@ -61,7 +61,7 @@ const polylineLength = (pts: readonly Point[]): number => {
   return l;
 };
 
-/** Larghezza del tratto: mediana di 2·d − 1 px sull'asse, con d = distanza dal vuoto. */
+/** Stroke width: median of 2·d − 1 px on the axis, with d = distance from the void. */
 export function strokeWidthPx(data: Uint8Array, skeleton: Uint8Array, width: number, height: number): number {
   const widths = strokeWidths(data, skeleton, width, height);
   if (widths.length === 0) return 0;
@@ -70,8 +70,8 @@ export function strokeWidthPx(data: Uint8Array, skeleton: Uint8Array, width: num
 }
 
 /**
- * Coefficiente di variazione dello spessore sull'asse. Sopra 0,35 la traccia centrale
- * di un'area non è un tratto uniforme (SPEC §4bis).
+ * Coefficient of variation of the thickness on the axis. Above 0.35 the centre trace
+ * of an area is not a uniform stroke (SPEC §4bis).
  */
 export function strokeWidthCv(data: Uint8Array, skeleton: Uint8Array, width: number, height: number): number {
   const widths = strokeWidths(data, skeleton, width, height);
@@ -95,14 +95,14 @@ function strokeWidths(data: Uint8Array, skeleton: Uint8Array, width: number, hei
   return widths;
 }
 
-// ---------------------------------------------------------------- tracciamento
+// ---------------------------------------------------------------- tracing
 
 interface RawGraph {
   nodes: Point[];
   edges: { a: number; b: number; points: Point[] }[];
 }
 
-/** Douglas-Peucker: toglie i gradini della catena di pixel, che allungherebbero gli archi del 5–8%. */
+/** Douglas-Peucker: removes the steps of the pixel chain, which would lengthen the edges by 5–8%. */
 function simplifyPolyline(pts: readonly Point[], tol: number): Point[] {
   if (pts.length <= 2) return [...pts];
   const keep = new Uint8Array(pts.length);
@@ -133,10 +133,10 @@ function simplifyPolyline(pts: readonly Point[], tol: number): Point[] {
   return pts.filter((_, i) => keep[i]);
 }
 
-/** Scheletro → nodi e archi, in mm. Nodi: gruppi 8-connessi di pixel che non sono "di passaggio". */
+/** Skeleton → nodes and edges, in mm. Nodes: 8-connected groups of pixels that are not "pass-through". */
 function trace(skel: Uint8Array, width: number, height: number, t: PxToMm): RawGraph {
   const off = ringOffsets(width);
-  // Prima i 4 vicini, poi le diagonali: il percorso passa per gli angoli dei gradini.
+  // First the 4 neighbours, then the diagonals: the path goes through the corners of the steps.
   const order = [0, 2, 4, 6, 1, 3, 5, 7].map((k) => off[k]!);
   const four = new Set([off[0]!, off[2]!, off[4]!, off[6]!]);
   const n = new Uint8Array(8);
@@ -144,8 +144,8 @@ function trace(skel: Uint8Array, width: number, height: number, t: PxToMm): RawG
   for (let i = 0; i < skel.length; i++) {
     if (!skel[i]) continue;
     ring(skel, i, off, n);
-    // ≠ 2 vicini: estremo o giunzione. Il solo crossing number non basta: all'incrocio di due
-    // diagonali resta un blocco 2×2 i cui pixel hanno crossing number 2.
+    // ≠ 2 neighbours: endpoint or junction. The crossing number alone is not enough: at the crossing of two
+    // diagonals a 2×2 block is left whose pixels have crossing number 2.
     if (ringCount(n) !== 2 || crossings(n) !== 2) isNodePx[i] = 1;
   }
 
@@ -216,7 +216,7 @@ function trace(skel: Uint8Array, width: number, height: number, t: PxToMm): RawG
         return;
       }
       if (nextPath < 0) {
-        // Vicolo cieco (non dovrebbe capitare dopo la pulizia): l'ultimo pixel diventa un estremo.
+        // Dead end (should not happen after cleanup): the last pixel becomes an endpoint.
         const id = nodes.length;
         nodes.push(center(cur));
         edges.push({ a: start, b: id, points: pts });
@@ -235,7 +235,7 @@ function trace(skel: Uint8Array, width: number, height: number, t: PxToMm): RawG
       }
     }
   }
-  // Anelli senza nodi (es. "o"): il primo pixel non visitato diventa un nodo di grado 2.
+  // Loops without nodes (e.g. "o"): the first unvisited pixel becomes a degree-2 node.
   for (let s = 0; s < skel.length; s++) {
     if (!skel[s] || nodeOf[s]! >= 0 || visited[s]) continue;
     const id = nodes.length;
@@ -253,7 +253,7 @@ function trace(skel: Uint8Array, width: number, height: number, t: PxToMm): RawG
   return { nodes, edges };
 }
 
-// ---------------------------------------------------------------- semplificazione
+// ---------------------------------------------------------------- simplification
 
 interface MNode {
   p: Point;
@@ -276,17 +276,17 @@ function degreeOf(edges: readonly MEdge[], id: number): number {
   return d;
 }
 
-/** Un incrocio a X stretto esce dal thinning come due Y unite da un arco lungo fino a ~5 tratti. */
+/** A narrow X crossing leaves thinning as two Ys joined by an edge up to ~5 strokes long. */
 export const CROSSING_MAX_LENGTH_W = 5;
-/** Ogni ramo esterno deve formare con l'arco centrale almeno 180° − questo angolo. */
+/** Every outer branch must form with the central edge at least 180° − this angle. */
 const CROSSING_ARM_MAX_DEG = 60;
-/** Tolleranza sulla continuità rettilinea fra un ramo di un lato e quello opposto. */
+/** Tolerance on straight continuity between a branch on one side and the opposite one. */
 const CROSSING_STRAIGHT_MAX_DEG = 35;
-/** Giunzioni più vicine di questi tratti: criterio rilassato (solo continuità, con questa tolleranza). */
+/** Junctions closer than these strokes: relaxed criterion (continuity only, with this tolerance). */
 const CROSSING_NEAR_W = 2;
 const CROSSING_NEAR_STRAIGHT_MAX_DEG = 60;
 
-/** Punto a distanza `s` lungo la polilinea dall'inizio (l'ultimo punto se è più corta). */
+/** Point at distance `s` along the polyline from the start (the last point if it is shorter). */
 function pointAt(pts: readonly Point[], s: number): Point {
   let acc = 0;
   for (let i = 1; i < pts.length; i++) {
@@ -302,7 +302,7 @@ function pointAt(pts: readonly Point[], s: number): Point {
   return pts[pts.length - 1]!;
 }
 
-/** Direzione (versore) di una polilinea che parte dal nodo, misurata sulla corda lunga `s`. */
+/** Direction (unit vector) of a polyline leaving the node, measured on the chord `s` long. */
 function direction(pts: readonly Point[], s: number): Point {
   const [x0, y0] = pts[0]!;
   const [x1, y1] = pointAt(pts, s);
@@ -310,7 +310,7 @@ function direction(pts: readonly Point[], s: number): Point {
   return [(x1 - x0) / l, (y1 - y0) / l];
 }
 
-/** Rami di `id` diversi da `skip`, orientati in uscita dal nodo (un anello conta due volte). */
+/** Branches of `id` other than `skip`, oriented out of the node (a loop counts twice). */
 function armsOf(edges: readonly MEdge[], id: number, skip: MEdge): Point[][] {
   const arms: Point[][] = [];
   for (const f of edges) {
@@ -322,10 +322,10 @@ function armsOf(edges: readonly MEdge[], id: number, skip: MEdge): Point[][] {
 }
 
 /**
- * L'arco `e` fra due giunzioni di grado 3 è il tratto centrale di un incrocio? Per una X stretta,
- * a entrambi i capi i due rami esterni tornano indietro rispetto all'arco, e ognuno prosegue quasi
- * in linea retta in un ramo dell'altro capo. Due T a più di 2 tratti (come nella "H") non passano:
- * lì i rami esterni sono perpendicolari all'arco.
+ * Is the edge `e` between two degree-3 junctions the central stretch of a crossing? For a narrow X,
+ * at both ends the two outer branches turn back with respect to the edge, and each continues almost
+ * in a straight line into a branch of the other end. Two Ts more than 2 strokes apart (as in the "H") do not pass:
+ * there the outer branches are perpendicular to the edge.
  */
 function isCrossing(edges: readonly MEdge[], e: MEdge, w: number): boolean {
   const len = polylineLength(e.points);
@@ -344,20 +344,20 @@ function isCrossing(edges: readonly MEdge[], e: MEdge, w: number): boolean {
       (opposite(dA[0]!, dB[0]!) && opposite(dA[1]!, dB[1]!)) || (opposite(dA[0]!, dB[1]!) && opposite(dA[1]!, dB[0]!))
     );
   };
-  // Entro 2 tratti le due giunzioni stanno nella stessa macchia: basta che i quattro rami formino
-  // due percorsi passanti plausibili (es. la "e" di Sacramento, dove il tratto d'attacco arriva sul
-  // fianco dell'asola e la diagonale riparte poco sotto).
+  // Within 2 strokes the two junctions are in the same blob: it is enough that the four branches form
+  // two plausible through paths (e.g. the "e" of Sacramento, where the lead-in stroke lands on the
+  // side of the loop and the diagonal leaves again just below).
   if (len < CROSSING_NEAR_W * w && paired(CROSSING_NEAR_STRAIGHT_MAX_DEG)) return true;
-  // Più lontane: X stretta vera, i rami di A puntano all'indietro (−m), quelli di B in avanti (+m).
+  // Farther apart: a real narrow X, the branches of A point backwards (−m), those of B forwards (+m).
   const back = Math.cos(((180 - CROSSING_ARM_MAX_DEG) * Math.PI) / 180);
   if (dA.some(([x, y]) => x * mx + y * my > back) || dB.some(([x, y]) => -(x * mx + y * my) > back)) return false;
   return paired(CROSSING_STRAIGHT_MAX_DEG);
 }
 
 /**
- * Potatura dei rami spuri (estremo–giunzione più corti di `minLen`), dei piccoli anelli spuri,
- * scioglimento dei nodi di grado 2, fusione delle giunzioni unite da un arco più corto di `minLen`.
- * Ripete finché il grafo cambia.
+ * Pruning of spurious branches (endpoint–junction shorter than `minLen`), of small spurious loops,
+ * dissolving of degree-2 nodes, merging of junctions joined by an edge shorter than `minLen`.
+ * Repeats while the graph changes.
  */
 function simplify(raw: RawGraph, minLen: number): { nodes: MNode[]; edges: MEdge[]; pruned: number; merged: number } {
   const nodes: MNode[] = raw.nodes.map((p) => ({ p, alive: true }));
@@ -369,7 +369,7 @@ function simplify(raw: RawGraph, minLen: number): { nodes: MNode[]; edges: MEdge
   for (let changed = true; changed; ) {
     changed = false;
 
-    // Rami spuri: un estremo libero attaccato a una giunzione, più corto della larghezza del tratto.
+    // Spurious branches: a free endpoint attached to a junction, shorter than the stroke width.
     for (const e of edges) {
       if (!e.alive || e.a === e.b) continue;
       const da = deg(e.a);
@@ -381,7 +381,7 @@ function simplify(raw: RawGraph, minLen: number): { nodes: MNode[]; edges: MEdge
       pruned++;
       changed = true;
     }
-    // Anelli spuri: un piccolo occhiello chiuso su una giunzione.
+    // Spurious loops: a small closed loop on a junction.
     for (const e of edges) {
       if (!e.alive || e.a !== e.b || deg(e.a) <= 2) continue;
       if (polylineLength(e.points) >= Math.PI * minLen) continue;
@@ -389,7 +389,7 @@ function simplify(raw: RawGraph, minLen: number): { nodes: MNode[]; edges: MEdge
       pruned++;
       changed = true;
     }
-    // Bolle spurie: due archi corti fra gli stessi nodi (un forellino nel tratto): resta il più corto.
+    // Spurious bubbles: two short edges between the same nodes (a pinhole in the stroke): the shorter one stays.
     for (const e of edges) {
       if (!e.alive || e.a === e.b) continue;
       for (const f of edges) {
@@ -403,7 +403,7 @@ function simplify(raw: RawGraph, minLen: number): { nodes: MNode[]; edges: MEdge
         if (!e.alive) break;
       }
     }
-    // Giunzioni vicine: contrazione dell'arco corto, il nodo va a metà dell'arco.
+    // Close junctions: contraction of the short edge, the node goes to the middle of the edge.
     for (const e of edges) {
       if (!e.alive || e.a === e.b || deg(e.a) < 3 || deg(e.b) < 3) continue;
       if (polylineLength(e.points) >= minLen && !isCrossing(edges, e, minLen)) continue;
@@ -427,7 +427,7 @@ function simplify(raw: RawGraph, minLen: number): { nodes: MNode[]; edges: MEdge
       merged++;
       changed = true;
     }
-    // Nodi di grado 2 fra due archi diversi: si uniscono gli archi.
+    // Degree-2 nodes between two different edges: the edges are joined.
     for (let id = 0; id < nodes.length; id++) {
       if (!nodes[id]!.alive) continue;
       const inc = edges.filter((e) => e.alive && (e.a === id || e.b === id));
@@ -465,8 +465,8 @@ function pointAtHalf(pts: readonly Point[]): Point {
 }
 
 /**
- * Riempie i buchi (vuoto non collegato al bordo) con area < `maxAreaPx`: forellini dove i contorni
- * del font si sovrappongono, che il thinning trasformerebbe in piccoli anelli.
+ * Fills the holes (void not connected to the border) with area < `maxAreaPx`: pinholes where the font
+ * contours overlap, which thinning would turn into small loops.
  */
 export function fillSmallHoles(
   data: Uint8Array,
@@ -527,7 +527,7 @@ export function fillSmallHoles(
   return { data: out, filled };
 }
 
-/** Larghezza del tratto dalla cresta della distance transform, senza scheletro: serve a sapere quali buchi riempire prima dell'unico thinning. */
+/** Stroke width from the ridge of the distance transform, without a skeleton: it tells which holes to fill before the single thinning. */
 function medialWidthPx(data: Uint8Array, width: number, height: number): number {
   const d2 = squaredDistanceTo(data, width, height, 0);
   const w: number[] = [];
@@ -547,7 +547,7 @@ function medialWidthPx(data: Uint8Array, width: number, height: number): number 
   return w[w.length >> 1]!;
 }
 
-/** [B] + [C]: bitmap di [A] → scheletro → grafo semplificato. */
+/** [B] + [C]: bitmap of [A] → skeleton → simplified graph. */
 export function buildGraph(r: GraphInput): SkeletonGraph {
   const widthPx = medialWidthPx(r.data, r.width, r.height);
   const holes = fillSmallHoles(r.data, r.width, r.height, (widthPx * HOLE_FILL_MAX_W) ** 2);

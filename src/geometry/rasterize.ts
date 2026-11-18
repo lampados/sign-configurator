@@ -1,6 +1,6 @@
-// [A] Rasterizzazione (SPEC §5): path del testo da opentype.js → poligoni → bitmap binaria.
-// Modulo puro, senza DOM né canvas: scanline scritta a mano, regole nonzero ed evenodd, un campione
-// al centro di ogni pixel, nessun antialiasing. Stesso input → stessi byte, in browser, worker e Node.
+// [A] Rasterization (SPEC §5): text path from opentype.js → polygons → binary bitmap.
+// Pure module, without DOM or canvas: hand-written scanline, nonzero and evenodd rules, one sample
+// at the centre of every pixel, no antialiasing. Same input → same bytes, in browser, worker and Node.
 import type { Font, PathCommand } from 'opentype.js';
 import { loadShaper, type Shaper } from '../fonts/shaper';
 import { getFont, type FontEntry, type StripMode } from '../fonts/registry';
@@ -11,9 +11,9 @@ export const FLATTEN_TOLERANCE_MM = 0.02;
 export const RASTER_MARGIN_PX = 5;
 export const MAX_RASTER_PIXELS = 40_000_000;
 
-/** Punto in mm, Y verso l'alto (piano dell'insegna, SPEC §1). */
+/** Point in mm, Y pointing up (plane of the sign, SPEC §1). */
 export type Point = [number, number];
-/** Contorno chiuso implicitamente. */
+/** Implicitly closed contour. */
 export type Contour = Point[];
 
 export interface BBoxMm {
@@ -24,8 +24,8 @@ export interface BBoxMm {
 }
 
 /**
- * Trasformazione px → mm. Coordinate pixel continue: la colonna i copre [i, i+1), la riga j copre
- * [j, j+1), con le righe che scendono. xMm = originX + px·mmPerPx, yMm = originY − py·mmPerPx.
+ * px → mm transform. Continuous pixel coordinates: column i covers [i, i+1), row j covers
+ * [j, j+1), with rows going down. xMm = originX + px·mmPerPx, yMm = originY − py·mmPerPx.
  */
 export interface PxToMm {
   mmPerPx: number;
@@ -34,11 +34,11 @@ export interface PxToMm {
 }
 
 export interface Raster {
-  /** 1 = pieno, 0 = vuoto; riga per riga dall'alto, `width` byte per riga. */
+  /** 1 = filled, 0 = empty; row by row from the top, `width` bytes per row. */
   data: Uint8Array;
   width: number;
   height: number;
-  /** Risoluzione effettiva (ridotta se si supera MAX_RASTER_PIXELS). */
+  /** Effective resolution (reduced if MAX_RASTER_PIXELS is exceeded). */
   pxPerMm: number;
   pxToMm: PxToMm;
   warnings: string[];
@@ -46,14 +46,14 @@ export interface Raster {
 
 export interface GlyphInfo {
   glyphIndex: number;
-  /** Carattere del glifo, se il font lo dichiara (le legature possono non averlo). */
+  /** Character of the glyph, if the font declares it (ligatures may not have one). */
   char: string | null;
-  /** Origine del glifo sulla linea di base, in mm. */
+  /** Origin of the glyph on the baseline, in mm. */
   x: number;
   bbox: BBoxMm | null;
 }
 
-/** Misure del tubo (registro) alla scala del testo, per l'accoppiamento delle linee in [B]/[C]. */
+/** Measurements of the tube (registry) at the scale of the text, for pairing the lines in [B]/[C]. */
 export interface TubeMm {
   lineWidthMm: number;
   gapMm: number;
@@ -62,23 +62,23 @@ export interface TubeMm {
 export interface TextRaster extends Raster {
   text: string;
   fontSizeMm: number;
-  /** = altezza richiesta: sommità misurata del glifo "H" (registro, capHeightMeasured). */
+  /** = requested height: measured top of the "H" glyph (registry, capHeightMeasured). */
   capHeightMm: number;
-  /** Sommità misurata del glifo "x". */
+  /** Measured top of the "x" glyph. */
   xHeightMm: number;
-  /** Ingombro reale dell'inchiostro (dai contorni), mm, Y in su, linea di base a y = 0. */
+  /** Real footprint of the ink (from the contours), mm, Y up, baseline at y = 0. */
   bbox: BBoxMm | null;
-  /** Avanzamento totale (con kerning), mm. */
+  /** Total advance (with kerning), mm. */
   advanceMm: number;
   glyphs: GlyphInfo[];
-  /** Caratteri senza glifo nel font, ignorati. */
+  /** Characters without a glyph in the font, ignored. */
   missing: string[];
-  /** Font a tubi cavi: la bitmap ha due linee per tubo e la luce non si riempie. */
+  /** Hollow-tube font: the bitmap has two lines per tube and the gap is not filled. */
   hollowTubes: boolean;
   tube: TubeMm | null;
-  /** centerline: lo scheletro è la striscia. walls: ogni parete del tubo è una striscia. */
+  /** centerline: the skeleton is the strip. walls: every wall of the tube is a strip. */
   stripMode: StripMode;
-  /** Tratto singolo: le linee del font, al posto della bitmap. `null` per i font a contorno. */
+  /** Single stroke: the font lines, instead of the bitmap. `null` for outline fonts. */
   strokes: Point[][] | null;
 }
 
@@ -93,13 +93,13 @@ export interface RasterOptions {
   pxPerMm?: number;
   marginPx?: number;
   maxPixels?: number;
-  /** Default `nonzero`. Le aree SVG possono chiedere `evenodd` (SPEC §4bis). */
+  /** Default `nonzero`. SVG areas can ask for `evenodd` (SPEC §4bis). */
   fillRule?: 'nonzero' | 'evenodd';
-  /** Allarga la griglia oltre i contorni, per esempio per i tratti accanto alle aree. */
+  /** Widens the grid beyond the contours, for example for strokes next to areas. */
   bounds?: BBoxMm;
 }
 
-/** Un gruppo di contorni con la propria regola di riempimento. Più gruppi si uniscono in OR. */
+/** A group of contours with its own fill rule. Several groups are joined with OR. */
 export interface ContourLayer {
   contours: readonly Contour[];
   fillRule?: 'nonzero' | 'evenodd';
@@ -113,14 +113,14 @@ export function mmToPx(t: PxToMm, x: number, y: number): Point {
   return [(x - t.originX) / t.mmPerPx, (t.originY - y) / t.mmPerPx];
 }
 
-// ---------------------------------------------------------------- appiattimento
+// ---------------------------------------------------------------- flattening
 
 /**
- * Numero di segmenti per una curva con |B''| ≤ m: l'errore della spezzata uniforme è ≤ m / (8n²).
+ * Number of segments for a curve with |B''| ≤ m: the error of the uniform polyline is ≤ m / (8n²).
  */
 const segmentsFor = (m: number, tol: number): number => Math.max(1, Math.ceil(Math.sqrt(m / (8 * tol))));
 
-/** Path opentype.js → contorni, con le curve appiattite entro `tol` (nelle unità di `map`). */
+/** opentype.js path → contours, with the curves flattened within `tol` (in the units of `map`). */
 export function flattenCommands(
   commands: readonly PathCommand[],
   tol = FLATTEN_TOLERANCE_MM,
@@ -216,13 +216,13 @@ export function contoursBBox(contours: readonly Contour[]): BBoxMm | null {
   return minX <= maxX ? { minX, minY, maxX, maxY } : null;
 }
 
-// ---------------------------------------------------------------- riempimento
+// ---------------------------------------------------------------- fill
 
 interface Edge {
-  /** Riga del primo e dell'ultimo centro pixel attraversato. */
+  /** Row of the first and of the last pixel centre crossed. */
   rowStart: number;
   rowEnd: number;
-  /** x (px) all'altezza del centro della prima riga, e incremento per riga. */
+  /** x (px) at the height of the centre of the first row, and increment per row. */
   x: number;
   dxPerRow: number;
   winding: 1 | -1;
@@ -239,7 +239,7 @@ function unionBox(a: BBoxMm | null, b: BBoxMm | null): BBoxMm | null {
   };
 }
 
-/** Contorni in mm → bitmap binaria. `fillRule` di default è nonzero. I pixel si campionano al centro. */
+/** Contours in mm → binary bitmap. The default `fillRule` is nonzero. Pixels are sampled at the centre. */
 export function rasterizeContours(contours: readonly Contour[], options: RasterOptions = {}): Raster {
   const layer: ContourLayer = { contours };
   if (options.fillRule) layer.fillRule = options.fillRule;
@@ -247,8 +247,8 @@ export function rasterizeContours(contours: readonly Contour[], options: RasterO
 }
 
 /**
- * Più gruppi di contorni, ognuno con la sua regola, sulla stessa griglia. L'inchiostro si unisce:
- * un gruppo non cancella i pixel già pieni.
+ * Several groups of contours, each with its rule, on the same grid. The ink is joined:
+ * a group does not erase pixels already filled.
  */
 export function rasterizeContourGroups(layers: readonly ContourLayer[], options: RasterOptions = {}): Raster {
   const margin = options.marginPx ?? RASTER_MARGIN_PX;
@@ -259,7 +259,7 @@ export function rasterizeContourGroups(layers: readonly ContourLayer[], options:
   for (const layer of layers) box = unionBox(box, contoursBBox(layer.contours));
   box ??= { minX: 0, minY: 0, maxX: 0, maxY: 0 };
 
-  // Griglia allineata all'origine in mm: la linea di base (y = 0) cade su un bordo di pixel.
+  // Grid aligned to the origin in mm: the baseline (y = 0) falls on a pixel edge.
   let res = requested;
   let ix0 = 0;
   let iy1 = 0;
@@ -297,7 +297,7 @@ export function rasterizeContourGroups(layers: readonly ContourLayer[], options:
   };
 }
 
-/** Scrive 1 sui pixel interni. Non azzera il resto: più chiamate sulla stessa bitmap si uniscono. */
+/** Writes 1 on inner pixels. It does not clear the rest: several calls on the same bitmap are joined. */
 function paintLayer(
   data: Uint8Array,
   width: number,
@@ -320,7 +320,7 @@ function paintLayer(
       const by = offY - b[1] * res;
       if (ay === by) continue;
       const [tx, ty, bx2, by2] = ay < by ? [ax, ay, bx, by] : [bx, by, ax, ay];
-      // Righe il cui centro cy = j + 0.5 sta in [ty, by2): estremi semiaperti, nessun doppio conteggio.
+      // Rows whose centre cy = j + 0.5 is in [ty, by2): half-open ends, no double counting.
       const rowStart = Math.max(0, Math.ceil(ty - 0.5));
       const rowEnd = Math.min(height - 1, Math.ceil(by2 - 0.5) - 1);
       if (rowStart > rowEnd) continue;
@@ -362,7 +362,7 @@ function paintLayer(
       winding += ws[order[k]!]!;
       const inside = evenodd ? (winding & 1) !== 0 : winding !== 0;
       if (!inside) continue;
-      // Pixel i pieno se il suo centro i + 0.5 sta in [xa, xb).
+      // Pixel i is filled if its centre i + 0.5 is in [xa, xb).
       const from = Math.max(0, Math.ceil(xs[order[k]!]! - 0.5));
       const to = Math.min(width, Math.ceil(xs[order[k + 1]!]! - 0.5));
       if (to > from) data.fill(1, base + from, base + to);
@@ -371,12 +371,12 @@ function paintLayer(
   }
 }
 
-// ---------------------------------------------------------------- testo
+// ---------------------------------------------------------------- text
 
 const describeChar = (ch: string): string =>
   `"${ch}" (U+${ch.codePointAt(0)!.toString(16).toUpperCase().padStart(4, '0')})`;
 
-/** Altezza del glifo di `ch` in unità font, se esiste. */
+/** Height of the glyph of `ch` in font units, if it exists. */
 function glyphTop(font: Font, ch: string): number | null {
   if (!font.hasChar(ch)) return null;
   const bb = font.charToGlyph(ch).getBoundingBox();
@@ -384,9 +384,9 @@ function glyphTop(font: Font, ch: string): number | null {
 }
 
 /**
- * Misure reali dal contorno dei glifi, in unità font: sommità di "H" (ripiego "I") e di "x" sopra la
- * linea di base. Le metriche dichiarate (OS/2) dei font script sono spesso inaffidabili. Servono a
- * compilare il registro, una volta per font.
+ * Real measurements from the glyph outline, in font units: top of "H" (fallback "I") and of "x" above the
+ * baseline. The declared metrics (OS/2) of script fonts are often unreliable. They are used to
+ * fill in the registry, once per font.
  */
 export function measureFontMetrics(
   font: Font,
@@ -396,9 +396,9 @@ export function measureFontMetrics(
 }
 
 /**
- * Testo su una riga → bitmap. `heightMm` è la sommità misurata della "H" (registro). La bitmap è
- * fedele al font: con `hollowTubes` contiene due linee per tubo. Con `stripMode` `"walls"`
- * ognuna diventa una striscia, senza accoppiarle in una mediana.
+ * Text on one line → bitmap. `heightMm` is the measured top of the "H" (registry). The bitmap is
+ * faithful to the font: with `hollowTubes` it contains two lines per tube. With `stripMode` `"walls"`
+ * each becomes a strip, without pairing them into a median.
  */
 export function rasterizeText(
   font: Font,
@@ -413,11 +413,11 @@ export function rasterizeText(
     text = text.replace(/\r\n|[\r\n]/g, ' ');
     warnings.push('The text goes on a single line: line breaks became spaces.');
   }
-  // Senza compositore un font come Poppins darebbe lettere staccate e nell'ordine sbagliato:
-  // un'insegna illeggibile, non un errore visibile. Meglio fermarsi.
+  // Without a shaper a font like Poppins would give unjoined letters in the wrong order:
+  // an unreadable sign, not a visible error. Better to stop.
   if (entry.shaper === 'harfbuzz' && !shaper) throw new Error(`${fontName} must be shaped with harfbuzz: the shaper is missing.`);
 
-  // ZWNJ e ZWJ guidano le legature e non hanno un disegno: non sono caratteri mancanti.
+  // ZWNJ and ZWJ guide the joining and have no drawing: they are not missing characters.
   const invisible = (ch: string): boolean => /\s/.test(ch) || (shaper != null && /[\u200c\u200d]/.test(ch));
   const missing = [...new Set(Array.from(text).filter((ch) => !invisible(ch) && !font.hasChar(ch)))];
   for (const ch of missing) warnings.push(`Character ${describeChar(ch)} missing from ${fontName}: ignored.`);
@@ -431,9 +431,9 @@ export function rasterizeText(
   const glyphs: GlyphInfo[] = [];
   let advanceMm: number;
   if (shaper) {
-    // Glifi e posizioni da harfbuzz, contorni da opentype.js (SPEC §4ter). Un gruppo (sillaba) può
-    // avere più glifi, o un glifo solo per più caratteri: il suo nome è il testo del gruppo, sul
-    // glifo più a sinistra.
+    // Glyphs and positions from harfbuzz, contours from opentype.js (SPEC §4ter). A group (syllable) can
+    // have several glyphs, or a single glyph for several characters: its name is the text of the group, on the
+    // leftmost glyph.
     const shaped = shaper(text);
     const starts = [...new Set(shaped.map((g) => g.cluster))].sort((a, b) => a - b);
     const named = new Map<number, GlyphInfo>();
@@ -441,7 +441,7 @@ export function rasterizeText(
     for (const g of shaped) {
       const gx = (pen + g.xOffset) * mmPerUnit;
       pen += g.xAdvance;
-      if (g.glyphIndex === 0) continue; // .notdef: il carattere è già segnalato come mancante
+      if (g.glyphIndex === 0) continue; // .notdef: the character is already reported as missing
       const path = font.glyphs.get(g.glyphIndex).getPath(gx, -g.yOffset * mmPerUnit, fontSizeMm);
       const own = flattenCommands(path.commands, FLATTEN_TOLERANCE_MM, flip);
       if (own.length === 0) continue;
@@ -458,7 +458,7 @@ export function rasterizeText(
     advanceMm = pen * mmPerUnit;
   } else {
     advanceMm = font.forEachGlyph(text, 0, 0, fontSizeMm, options, (glyph, gx, gy, size) => {
-      if (glyph.index === 0) return; // .notdef: il carattere è già segnalato come mancante
+      if (glyph.index === 0) return; // .notdef: the character is already reported as missing
       const own = flattenCommands(glyph.getPath(gx, gy, size, options, font).commands, FLATTEN_TOLERANCE_MM, flip);
       if (own.length === 0) return;
       contours.push(...own);
@@ -495,7 +495,7 @@ export function rasterizeText(
   };
 }
 
-/** Comodità per main thread e worker: carica il font dal registro e rasterizza. I tratti singoli non hanno bitmap. */
+/** Convenience for main thread and worker: loads the font from the registry and rasterizes. Single strokes have no bitmap. */
 export async function rasterize(input: RasterizeInput, read?: FontBytesReader): Promise<TextRaster> {
   const entry = getFont(input.fontId);
   if (!entry) throw new Error(`Unknown font: "${input.fontId}"`);

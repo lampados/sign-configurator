@@ -15,7 +15,7 @@ describe('power supply and controller', () => {
     expect(at(12).supplyA).toBe(4);
     expect(at(24).supplyA).toBe(2);
     expect(at(12).voltageV).toBe(12);
-    // Una tensione sconosciuta vale 5 V.
+    // An unknown voltage counts as 5 V.
     expect(at(9).voltageV).toBe(5);
   });
 
@@ -27,7 +27,7 @@ describe('power supply and controller', () => {
     expect(amps.controllerWarnings.join(' ')).toContain(`${CONTROLLER.maxA} A`);
     const leds = bomAssembly([], [], 900, DEFAULT_PARAMS.LED_MAX_MA, 24);
     expect(leds.controllerWarnings.join(' ')).toContain(`${CONTROLLER.maxIcs} IC`);
-    // A 24 V gli stessi 200 LED restano sotto il limite di corrente.
+    // At 24 V the same 200 LEDs stay under the current limit.
     expect(bomAssembly([], [], 200, DEFAULT_PARAMS.LED_MAX_MA, 24).controllerWarnings).toEqual([]);
   });
 

@@ -1,5 +1,5 @@
--- Contatore anonimo dei click (SPEC §14): una riga per evento, senza IP, cookie o dati personali.
--- Si esegue una volta nella console del database D1 collegato a Pages con il nome STATS.
+-- Anonymous click counter (SPEC §14): one row per event, without IP, cookies or personal data.
+-- Run once in the console of the D1 database bound to Pages with the name STATS.
 CREATE TABLE IF NOT EXISTS events (
   id INTEGER PRIMARY KEY,
   type TEXT NOT NULL CHECK (type IN ('stl', 'request')),

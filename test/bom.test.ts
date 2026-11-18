@@ -3,8 +3,8 @@ import { resolveParams } from '../src/config';
 import { anchorHoleCount, buildBom } from '../src/export/bom';
 
 /**
- * Queste prove riguardano la piega della striscia, quindi usano una striscia che piega: la COB.
- * La predefinita (WS2812B su circuito flessibile) non curva, e qui non direbbe nulla di utile.
+ * These tests are about the bending of the strip, so they use a strip that bends: the COB.
+ * The default one (WS2812B on a flexible circuit) does not curve, and would say nothing useful here.
  */
 const BENDABLE = resolveParams({ STRIP_ID: 'cob-5mm' });
 

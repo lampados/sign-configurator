@@ -1,5 +1,5 @@
-// Lettura SVG nel main thread (SPEC §4bis). DOMParser una volta sola: l'ordine riceve
-// la forma normalizzata, e da lì la pipeline è pura.
+// Reading SVG in the main thread (SPEC §4bis). DOMParser only once: the order receives
+// the normalized form, and from there the pipeline is pure.
 import type { SvgImageSource, TraceMode } from '../order/schema';
 import {
   geometryToD,
@@ -14,7 +14,7 @@ import {
   type RawShape,
 } from './svgPaths';
 
-/** File immagine massimo, come SPEC §4bis. */
+/** Maximum image file, as in SPEC §4bis. */
 export const IMAGE_MAX_BYTES = 10 * 1024 * 1024;
 
 export interface SvgImportOptions {
@@ -88,7 +88,7 @@ const INITIAL_PAINT: Paint = {
 
 const PAINT_ATTRS = ['fill', 'stroke', 'fill-rule', 'fill-opacity', 'stroke-opacity', 'stroke-width', 'opacity', 'display', 'visibility'];
 
-/** SVG → sorgente dell'ordine. I tratti sono `stroke`, le aree `fill` con `fillRule`. */
+/** SVG → source of the order. Strokes are `stroke`, areas `fill` with `fillRule`. */
 export function importSvg(svgText: string, options: SvgImportOptions): SvgImportResult {
   if (!(options.heightMm > 0)) throw new Error('Invalid image height.');
   const doc = new DOMParser().parseFromString(svgText.replace(/^\uFEFF/, ''), 'image/svg+xml');

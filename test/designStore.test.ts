@@ -122,7 +122,7 @@ const QUOTE: StoredQuote = {
   total: 255,
   shipping: 20,
 };
-// Un JPEG finto: comincia come uno vero (FF D8 FF), poi byte qualunque.
+// A fake JPEG: it starts like a real one (FF D8 FF), then any bytes.
 const jpeg = (bytes: number): string => `data:image/jpeg;base64,${Buffer.from(Uint8Array.from({ length: bytes }, (_, i) => [0xff, 0xd8, 0xff, 0xe0][i] ?? i % 251)).toString('base64')}`;
 
 describe('estimate and photo for the shop (SPEC §12.7)', () => {
@@ -186,7 +186,7 @@ describe('estimate and photo for the shop (SPEC §12.7)', () => {
     ]) {
       expect(await post(bad), JSON.stringify(bad).slice(0, 60)).toEqual({ error: 'bad_quote', saved: 0 });
     }
-    // Campi in più non passano nel KV.
+    // Extra fields do not get into the KV.
     const kv = memoryKv();
     const made = await createDesign(JSON.stringify({ order: ORDER, summary: SUMMARY, quote: { ...QUOTE, email: 'a@example.test' } }), kv, NOW, counter(3));
     expect(kv.data.get(`design:${String(made.body.code)}`)).not.toContain('example.test');
@@ -205,7 +205,7 @@ describe('estimate and photo for the shop (SPEC §12.7)', () => {
       'data:image/svg+xml;base64,PHN2Zz48L3N2Zz4=',
       'data:image/jpeg;base64,',
       'data:image/jpeg;base64,/9j/not base64!',
-      // Dichiarato JPEG, ma i byte dicono HTML.
+      // Declared JPEG, but the bytes say HTML.
       `data:image/jpeg;base64,${Buffer.from('<html><script>alert(1)</script></html>').toString('base64')}`,
       'https://example.test/sign.jpg',
       42,

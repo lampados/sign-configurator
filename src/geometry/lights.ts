@@ -1,15 +1,15 @@
-// Punti luce lungo la linea centrale. Il passo viene dai parametri (oggi 160 LED/m
-// della striscia COB); un pixel a passo libero userà lo stesso risultato.
+// Light points along the centreline. The pitch comes from the parameters (today 160 LED/m
+// of the COB strip); a free-pitch pixel will use the same result.
 import type { Params } from '../config';
 import type { Point } from './rasterize';
 
 export interface LightPoint {
-  /** Faccia emittente, mm. Z verso chi guarda. */
+  /** Emitting face, mm. Z towards the viewer. */
   pos: [number, number, number];
-  /** Tangente DIN → DOUT, nel piano dell'insegna. */
+  /** Tangent DIN → DOUT, in the plane of the sign. */
   dir: [number, number, number];
   segment: number;
-  /** 0 al DIN, poi in ordine verso il DOUT. */
+  /** 0 at the DIN, then in order towards the DOUT. */
   index: number;
 }
 
@@ -17,14 +17,14 @@ export interface LightChain {
   id: number;
   points: readonly Point[];
   closed: boolean;
-  /** Puntino: la luce è tutto lo spezzone, senza asole. */
+  /** Dot: the lit length is the whole segment, without slots. */
   dot?: boolean;
 }
 
-/** Un puntino porta un solo LED, al centro, qualunque sia la sua lunghezza (SPEC §5, I_DOT_MODE «dot»). */
+/** A dot carries a single LED, in the centre, whatever its length (SPEC §5, I_DOT_MODE "dot"). */
 export const DOT_LED_COUNT = 1;
 
-/** Distanza fra la faccia del LED e il diffusore: profondità del canale meno lo spessore della striscia. */
+/** Distance between the face of the LED and the diffuser: channel depth minus strip thickness. */
 export function ledToDiffuserMm(params: Pick<Params, 'CHANNEL_DEPTH' | 'STRIP_T'>): number {
   return Math.max(0.4, params.CHANNEL_DEPTH - params.STRIP_T);
 }
@@ -58,8 +58,8 @@ function sample(points: readonly Point[], distance: number): { at: Point; dir: [
 }
 
 /**
- * LED sulla parte illuminata di ogni spezzone: dopo l'asola d'ingresso, prima di quella
- * d'uscita. Il numero è lo stesso della BOM, `round(luce · LED_PER_M / 1000)`; un puntino ne ha uno.
+ * LEDs on the lit part of every segment: after the entry slot, before the exit
+ * one. The number is the same as the BOM, `round(lit · LED_PER_M / 1000)`; a dot has one.
  */
 export function lightPointsFromChains(
   chains: readonly LightChain[],

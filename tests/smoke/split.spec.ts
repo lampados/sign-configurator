@@ -1,7 +1,7 @@
 import { expect, test, type Download } from '@playwright/test';
 import { expectClean, trackPage } from './guard';
 
-/** Nomi dei file di uno ZIP senza compressione, letti dalla directory centrale. */
+/** File names of a ZIP without compression, read from the central directory. */
 function zipNames(bytes: Buffer): string[] {
   const names: string[] = [];
   let at = bytes.readUInt32LE(bytes.length - 6);
@@ -28,7 +28,7 @@ test('print bed: "Ciao Torino" is split into pieces, one ZIP holds them all', as
   await page.goto('index.html', { waitUntil: 'load' });
   await expect(page.locator('#preview-status')).toContainText('LED');
   const button = page.locator('#download-stl');
-  // «Ciao» a 12 cm è largo 29 cm: sta sul piatto da 35 in un pezzo.
+  // "Ciao" at 12 cm is 29 cm wide: it fits the 35 cm bed in one piece.
   await expect(button).toHaveAttribute('data-parts', '1');
 
   await page.locator('input[name="text"]').fill('Ciao Torino');

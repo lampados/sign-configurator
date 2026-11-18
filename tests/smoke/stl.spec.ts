@@ -24,7 +24,7 @@ test('index: Download STL of Ciao Torino, housing and diffuser', async ({ page }
   const track = trackPage(page);
   await page.goto('index.html', { waitUntil: 'load' });
   const button = page.locator('#download-stl');
-  // Piatto largo: «Ciao Torino» resta in un pezzo (la suddivisione ha il suo test, split.spec.ts).
+  // Wide bed: "Ciao Torino" stays in one piece (splitting has its own test, split.spec.ts).
   await page.locator('[data-tool="tech"]').click();
   await page.locator('input[name="tech-BED_W"]').fill('1000');
   await page.locator('[data-tool="text"]').click();
@@ -77,9 +77,9 @@ test('index: with the backdrop the download adds the plate as STL and the laser 
   await expect.poll(() => downloads.length).toBe(4);
   const names = downloads.map((d) => d.suggestedFilename()).sort();
   expect(names).toEqual([
-    'ciao-120mm-diffuser.stl',
     'ciao-120mm-backdrop.stl',
     'ciao-120mm-backdrop.svg',
+    'ciao-120mm-diffuser.stl',
     'ciao-120mm-housing.stl',
   ]);
   const svg = downloads.find((d) => d.suggestedFilename().endsWith('.svg'))!;

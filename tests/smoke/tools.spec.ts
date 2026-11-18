@@ -42,7 +42,7 @@ for (const viewport of [
     if (viewport.mobile) {
       await expect(page.locator('.pane:visible')).toHaveCount(0);
     } else {
-      // Tutti gli strumenti in chiaro, uno sotto l'altro.
+      // All the tools in the open, one below the other.
       await expect(page.locator('.pane:visible')).toHaveCount(TOOLS.length);
       await expect(page.locator('.section[open]')).toHaveCount(TOOLS.length);
     }
@@ -57,7 +57,7 @@ for (const viewport of [
       await expectNoScroll(page);
     }
 
-    // Una sezione chiusa si riapre dalla barra.
+    // A closed section reopens from the bar.
     await page.locator('.section[data-section="font"] > summary').click();
     await expect(page.locator('.section[data-section="font"]')).not.toHaveAttribute('open', '');
     await page.locator('[data-tool="font"]').click();
@@ -93,7 +93,7 @@ test('guided tour: six steps, the fourth highlights the Backdrop tool', async ({
   for (let i = 0; i < 3; i++) await card.locator('.tour-next').click();
   await expect(card.locator('.tour-count')).toHaveText('4 / 6');
   await expect(card.locator('.tour-title')).toHaveText('Backdrop');
-  // Il riquadro illuminato sta sopra il tasto Backdrop della barra.
+  // The highlighted box sits over the Backdrop button of the bar.
   const [hole, button] = await Promise.all([page.locator('.tour-hole').boundingBox(), page.locator('[data-tool="plate"]').boundingBox()]);
   expect(hole!.x).toBeLessThanOrEqual(button!.x);
   expect(hole!.y).toBeLessThanOrEqual(button!.y);

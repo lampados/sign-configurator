@@ -1,11 +1,11 @@
-// Disegni degli alimentatori per la pagina parts: vista obliqua, tutti alla stessa scala
-// (`ART_SCALE` px per mm), dalle misure del catalogo. Nessuna foto: niente diritti di terzi.
+// Drawings of the power supplies for the parts page: oblique view, all at the same scale
+// (`ART_SCALE` px per mm), from the catalogue measurements. No photos: no third-party rights.
 
 import type { SupplyFamily } from './supplies';
 
-/** px per mm: il più lungo del catalogo (215 mm) resta sotto i 140 px. */
+/** px per mm: the longest in the catalogue (215 mm) stays under 140 px. */
 export const ART_SCALE = 0.6;
-const DEPTH = 0.45; // la profondità obliqua è accorciata
+const DEPTH = 0.45; // the oblique depth is shortened
 const COS = Math.cos(Math.PI / 6);
 const SIN = Math.sin(Math.PI / 6);
 const VIEW_W = 175;
@@ -27,14 +27,14 @@ const PALETTES: Record<SupplyFamily['kind'], Palette> = {
 const f = (n: number): string => n.toFixed(1);
 const pts = (list: [number, number][]): string => list.map(([x, y]) => `${f(x)},${f(y)}`).join(' ');
 
-/** SVG di una famiglia: scatola L×W×H in obliquo, con i dettagli del tipo. */
+/** SVG of a family: box L×W×H in oblique view, with the details of the type. */
 export function supplyArt(family: SupplyFamily): string {
   const [L, W, H] = family.sizeMm;
   const l = L * ART_SCALE;
   const h = H * ART_SCALE;
   const dx = W * DEPTH * COS * ART_SCALE;
   const dy = W * DEPTH * SIN * ART_SCALE;
-  // Centrata in orizzontale, appoggiata in basso.
+  // Centred horizontally, resting at the bottom.
   const x0 = (VIEW_W - l - dx) / 2;
   const y0 = VIEW_H - 8;
   const p = PALETTES[family.kind];
@@ -44,7 +44,7 @@ export function supplyArt(family: SupplyFamily): string {
   const off = (q: [number, number]): [number, number] => [q[0] + dx, q[1] - dy];
   const parts: string[] = [];
 
-  // Cavi dietro la scatola (escono dalle teste).
+  // Cables behind the box (they leave from the ends).
   if (family.kind === 'adapter') {
     const sx = x0 + l + dx / 2;
     const sy = y0 - h / 2 - dy / 2;
@@ -56,13 +56,13 @@ export function supplyArt(family: SupplyFamily): string {
     parts.push(`<path d="M${f(x0 + l + dx / 2)} ${f(sy)} h 9" stroke="#222" stroke-width="2.4" stroke-linecap="round"/>`);
   }
 
-  // Facce: lato destro, sopra, davanti.
+  // Faces: right side, top, front.
   parts.push(`<polygon points="${pts([ftr, off(ftr), off(fbr), fbr])}" fill="${p.side}" stroke="${p.edge}" stroke-width="0.6" stroke-linejoin="round"/>`);
   parts.push(`<polygon points="${pts([ftl, ftr, off(ftr), off(ftl)])}" fill="${p.top}" stroke="${p.edge}" stroke-width="0.6" stroke-linejoin="round"/>`);
   parts.push(`<rect x="${f(x0)}" y="${f(y0 - h)}" width="${f(l)}" height="${f(h)}" fill="${p.front}" stroke="${p.edge}" stroke-width="0.6"/>`);
 
   if (family.kind === 'enclosed') {
-    // Feritoie sul coperchio e morsettiera sul davanti, a sinistra.
+    // Vents on the lid and terminal block on the front, on the left.
     const term = Math.min(l * 0.32, 26);
     for (let i = 1; i <= 4; i++) {
       const t = i / 5;
@@ -80,7 +80,7 @@ export function supplyArt(family: SupplyFamily): string {
     }
   }
   if (family.kind === 'adapter') {
-    // Presa IEC C14 sul davanti e logo in rilievo sul coperchio.
+    // IEC C14 socket on the front and embossed logo on the lid.
     const iw = Math.min(10, l * 0.12);
     const ih = h * 0.55;
     parts.push(`<rect x="${f(x0 + 3)}" y="${f(y0 - h / 2 - ih / 2)}" width="${f(iw)}" height="${f(ih)}" rx="1.2" fill="#0b0b0d" stroke="#4a4a50" stroke-width="0.5"/>`);
@@ -88,7 +88,7 @@ export function supplyArt(family: SupplyFamily): string {
     parts.push(`<rect x="${f(c[0] - dx / 2 - 9)}" y="${f(c[1] + dy / 2 - 2)}" width="18" height="4" rx="2" fill="#4a4a52"/>`);
   }
   if (family.kind === 'waterproof') {
-    // Etichetta sul coperchio.
+    // Label on the lid.
     const a = off([x0 + l * 0.2, y0 - h]);
     parts.push(`<polygon points="${pts([
       [a[0] - dx * 0.75, a[1] + dy * 0.75],

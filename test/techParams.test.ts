@@ -34,7 +34,7 @@ describe('technical parameters of the customer page', () => {
 
   it('every technical parameter survives the shared link', () => {
     const numbers = Object.fromEntries(
-      // Un passo sopra il default, o sotto se il default è già il massimo.
+      // One step above the default, or below if the default is already the maximum.
       TECH_FIELDS.map((f) => [f.key, String(DEFAULT_PARAMS[f.key] + f.step <= f.max ? DEFAULT_PARAMS[f.key] + f.step : DEFAULT_PARAMS[f.key] - f.step)]),
     );
     const params = { WALL: 2.2, ...techParams({ numbers, edgeProfile: 'both' }) };
@@ -59,13 +59,13 @@ describe('technical parameters of the customer page', () => {
     const options = ledDensityOptions();
     expect(options.map((o) => o.value)).toEqual([30, 60, 74, 96, 144]);
     expect(options.filter((o) => o.isDefault).map((o) => o.value)).toEqual([DEFAULT_LED_DENSITY]);
-    // La densità predefinita è quella della striscia predefinita.
+    // The default density is that of the default strip.
     expect(DEFAULT_LED_DENSITY).toBe(DEFAULT_PARAMS.LED_PER_M);
     expect(DEFAULT_LED_DENSITY).toBe(144);
     expect(techParams({ numbers: {}, edgeProfile: 'square', ledPerM: '60' })).toEqual({ LED_PER_M: 60 });
-    // 144 è la densità della striscia predefinita: uguale al default, non va nell'ordine.
+    // 144 is the density of the default strip: equal to the default, it does not go into the order.
     expect(techParams({ numbers: {}, edgeProfile: 'square', ledPerM: '144' })).toEqual({});
-    // Un valore fuori scala torna alla predefinita.
+    // An out-of-scale value falls back to the default.
     expect(techParams({ numbers: {}, edgeProfile: 'square', ledPerM: '160' })).toEqual({});
     expect(techParams({ numbers: {}, edgeProfile: 'square' })).toEqual({});
   });
@@ -87,7 +87,7 @@ describe('strip model', () => {
     const options = stripOptions();
     expect(options.map((o) => o.value)).toEqual(STRIP_PROFILES.map((s) => s.id));
     expect(options.filter((o) => o.isDefault).map((o) => o.value)).toEqual([DEFAULT_PARAMS.STRIP_ID]);
-    // Le strisce che non seguono le curve lo dicono già nell'etichetta.
+    // Strips that do not follow curves already say so in the label.
     expect(options[0]!.value).toBe(DEFAULT_PARAMS.STRIP_ID);
     const plain = options.find((o) => o.value === 'ws2812b-60')!;
     expect(plain.label).toMatch(/cut over 30°/);
@@ -107,11 +107,11 @@ describe('strip model', () => {
     expect(p.CHANNEL_W).toBe(10.4);
     expect(p.CHANNEL_DEPTH).toBe(8);
     expect(p.LED_PER_M).toBe(60);
-    // In curva si taglia: il limite è quello di due pezzi accostati, non della striscia.
+    // On a bend it is cut: the limit is that of two pieces side by side, not of the strip.
     expect(p.HINGE_MAX_DEG).toBe(90);
     expect(p.MIN_LETTER_H).toBeLessThan(30);
     expect(resolveParams({ STRIP_ID: 'ws2812b-60', CHANNEL_W: 12 }).CHANNEL_W).toBe(12);
-    // Una striscia sconosciuta torna alla predefinita invece di lasciare misure a caso.
+    // An unknown strip falls back to the default instead of leaving random measurements.
     expect(resolveParams({ STRIP_ID: 'inventata' }).STRIP_W).toBe(DEFAULT_PARAMS.STRIP_W);
   });
 

@@ -1,7 +1,7 @@
-// Font a tratto singolo, senza raster (SPEC §4). Due formati, niente DOM:
-// - SVG 1.1 `<font><glyph d="...">` (EMS / Evil Mad Scientist, e gli Hershey in SVG)
-// - JSON: glifi con `advance` e Y verso l'alto, oppure l'array `chars` di hersheytextjs
-//   (indice 0 = spazio, avanzamento `o`, Y verso il basso).
+// Single-stroke fonts, without raster (SPEC §4). Two formats, no DOM:
+// - SVG 1.1 `<font><glyph d="...">` (EMS / Evil Mad Scientist, and the Hersheys in SVG)
+// - JSON: glyphs with `advance` and Y pointing up, or the `chars` array of hersheytextjs
+//   (index 0 = space, advance `o`, Y pointing down).
 import type { Point } from '../geometry/rasterize';
 
 export interface StrokePath {
@@ -11,7 +11,7 @@ export interface StrokePath {
 
 export interface StrokeGlyph {
   unicode: string;
-  /** Avanzamento in unità del font. */
+  /** Advance in font units. */
   advance: number;
   strokes: StrokePath[];
 }
@@ -21,7 +21,7 @@ export interface StrokeFont {
   unitsPerEm: number;
   defaultAdvance: number;
   glyphs: Map<string, StrokeGlyph>;
-  /** Quanto togliere fra due caratteri, in unità del font. Chiave `prev\\0next`. */
+  /** How much to remove between two characters, in font units. Key `prev\\0next`. */
   kerning: Map<string, number>;
 }
 
@@ -31,7 +31,7 @@ export function kerningOf(font: StrokeFont, prev: string, next: string): number 
   return font.kerning.get(kernKey(prev, next)) ?? 0;
 }
 
-/** Sommità del glifo sopra la linea di base, in unità del font. */
+/** Top of the glyph above the baseline, in font units. */
 export function strokeTop(font: StrokeFont, ch: string): number | null {
   const glyph = font.glyphs.get(ch);
   if (!glyph) return null;
@@ -111,7 +111,7 @@ function parseSvgFont(text: string): StrokeFont {
   };
 }
 
-/** `u1="A,V"` sono alternative; un token di più lettere è una sequenza di glifi. */
+/** `u1="A,V"` are alternatives; a token of several letters is a sequence of glyphs. */
 function splitKern(value: string): string[] {
   const out: string[] = [];
   for (const part of value.split(',')) {
@@ -180,9 +180,9 @@ function flip(strokes: StrokePath[], yDown: boolean): StrokePath[] {
   }));
 }
 
-// ---------------------------------------------------------------- path SVG
+// ---------------------------------------------------------------- SVG path
 
-/** `d` → spezzate. `tol` è l'errore massimo di una curva, nelle unità del path. */
+/** `d` → polylines. `tol` is the maximum error of a curve, in the units of the path. */
 export function svgPath(d: string, tol: number): StrokePath[] {
   const tokens = tokenize(d);
   const strokes: StrokePath[] = [];

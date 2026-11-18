@@ -1,6 +1,6 @@
-// Parametri tecnici della pagina cliente (SPEC §12.2, strumento «Tecnica»): gli stessi del bend test,
-// senza BANK_TRANSITION_L (non usato da [H]/[I]) e senza WALL, che sta sulla barra dell'anteprima.
-// Modulo puro: nessun DOM.
+// Technical parameters of the customer page (SPEC §12.2, "Tech" tool): the same as the bend test,
+// without BANK_TRANSITION_L (not used by [H]/[I]) and without WALL, which is on the preview bar.
+// Pure module: no DOM.
 
 import { BOX_AUTO, BOX_NONE, BOXES } from '../parts/boxes';
 import { STRIP_PROFILES } from '../config';
@@ -102,10 +102,10 @@ export const EDGE_PROFILES: readonly { value: EdgeProfile; label: string }[] = [
 ];
 
 /**
- * Densità dei LED per metro che il cliente può scegliere. Il predefinito è 144: il profilo della
- * striscia in `config.ts` (la COB da 160, usata da admin e debug) non è nella scala, quindi la
- * pagina cliente scrive sempre la densità nell'ordine. Cambia solo il numero e il passo dei LED
- * (anteprima, BOM, alimentatore), non il passo di taglio.
+ * LED densities per metre the customer can choose. The default is 144: the strip profile
+ * in `config.ts` (the 160 COB, used by admin and debug) is not on the scale, so the
+ * customer page always writes the density into the order. It changes only the number and pitch of the LEDs
+ * (preview, BOM, power supply), not the cut pitch.
  */
 export const LED_DENSITIES: readonly number[] = [30, 60, 74, 96, 144];
 export const DEFAULT_LED_DENSITY = DEFAULT_PARAMS.LED_PER_M;
@@ -114,12 +114,12 @@ export function ledDensityOptions(): { value: number; label: string; isDefault: 
   return LED_DENSITIES.map((value) => ({ value, label: `${value} LED/m`, isDefault: value === DEFAULT_LED_DENSITY }));
 }
 
-/** Tensioni della striscia nel menu; predefinita quella del profilo (5 V). */
+/** Strip voltages in the menu; default that of the profile (5 V). */
 export function voltageOptions(): { value: number; label: string; isDefault: boolean }[] {
   return STRIP_VOLTAGES.map((value) => ({ value, label: `${value} V`, isDefault: value === DEFAULT_PARAMS.STRIP_V }));
 }
 
-/** Strisce nel menu: il modello detta misure, cerniere, passo di taglio e densità. */
+/** Strips in the menu: the model sets measurements, hinges, cut pitch and density. */
 export function stripOptions(): { value: string; label: string; isDefault: boolean }[] {
   return STRIP_PROFILES.map((strip) => ({
     value: strip.id,
@@ -128,7 +128,7 @@ export function stripOptions(): { value: string; label: string; isDefault: boole
   }));
 }
 
-/** Controller nel menu; predefinito quello standard. */
+/** Controllers in the menu; default the standard one. */
 export function controllerOptions(): { value: string; label: string; isDefault: boolean }[] {
   return CONTROLLERS.map((c) => ({
     value: c.id,
@@ -137,7 +137,7 @@ export function controllerOptions(): { value: string; label: string; isDefault: 
   }));
 }
 
-/** Scatole nel menu: automatica, nessuna, poi il catalogo. */
+/** Boxes in the menu: automatic, none, then the catalogue. */
 export function boxOptions(): { value: string; label: string; isDefault: boolean }[] {
   return [
     { value: BOX_AUTO, label: 'Auto: smallest that fits', isDefault: true },
@@ -153,21 +153,21 @@ export function boxOptions(): { value: string; label: string; isDefault: boolean
 export interface TechInput {
   numbers: Partial<Record<TechNumericKey, string>>;
   edgeProfile: string;
-  /** Valore del menu della densità. Assente: nessuna densità nell'ordine. Sconosciuto: 144. */
+  /** Value of the density menu. Absent: no density in the order. Unknown: 144. */
   ledPerM?: string;
-  /** Valore del menu della tensione. Assente o sconosciuto: quella del profilo. */
+  /** Value of the voltage menu. Absent or unknown: that of the profile. */
   stripV?: string;
-  /** Id del controller. Assente o sconosciuto: quello standard. */
+  /** Id of the controller. Absent or unknown: the standard one. */
   controller?: string;
-  /** Scatola: BOX_AUTO, BOX_NONE o un id di BOXES. Assente o sconosciuta: automatica. */
+  /** Box: BOX_AUTO, BOX_NONE or an id from BOXES. Absent or unknown: automatic. */
   box?: string;
-  /** Id di STRIP_PROFILES. Assente o sconosciuto: quella predefinita. */
+  /** Id from STRIP_PROFILES. Absent or unknown: the default one. */
   strip?: string;
 }
 
 /**
- * Valori del modulo → override per l'ordine. Un campo vuoto, non numerico o fuori dai limiti
- * resta al default; si scrivono solo i valori diversi dal default.
+ * Form values → overrides for the order. An empty, non-numeric or out-of-range field
+ * stays at the default; only values different from the default are written.
  */
 export function techParams(input: TechInput): Partial<Params> {
   const out: Partial<Params> = {};
@@ -197,7 +197,7 @@ export function techParams(input: TechInput): Partial<Params> {
   return out;
 }
 
-/** Il campo è leggibile ma fuori dai limiti, o non è un numero. */
+/** The field is readable but out of range, or it is not a number. */
 export function techFieldInvalid(field: TechField, raw: string): boolean {
   if (raw.trim() === '') return false;
   const value = Number(raw);

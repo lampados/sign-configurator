@@ -1,87 +1,87 @@
-// Tutte le misure in millimetri, gli angoli in gradi (SPEC §1-§3).
+// All measurements in millimetres, angles in degrees (SPEC §1-§3).
 
 export const GENERATOR_VERSION = '0.2.0';
 export const ORDER_SCHEMA_VERSION = 4 as const;
 
-/** Margine lastra, mm (SPEC §13). Il cliente sta fra min e max. */
+/** Plate margin, mm (SPEC §13). The customer stays between min and max. */
 export const PLATE_MARGIN = 20;
 export const PLATE_MARGIN_MIN = 10;
 export const PLATE_MARGIN_MAX = 60;
-/** Raggio angoli di `rect`, mm (SPEC §13). */
+/** Corner radius of `rect`, mm (SPEC §13). */
 export const PLATE_CORNER_R = 8;
 export const PLATE_CORNER_R_MIN = 0;
 export const PLATE_CORNER_R_MAX = 50;
 /**
- * Piano utile del laser, mm. `null` finché non misurato: il vincolo di §12.4 non scatta.
+ * Usable bed of the laser, mm. `null` until measured: the constraint of §12.4 does not trigger.
  */
 export const PLATE_MAX_W: number | null = null;
 export const PLATE_MAX_H: number | null = null;
-/** Fori di fissaggio allineati agli ancoraggi, mm. */
+/** Fixing holes aligned with the anchors, mm. */
 export const PLATE_FIX_HOLE_D = 3.4;
-/** Fori di montaggio a parete, mm. */
+/** Wall mounting holes, mm. */
 export const PLATE_MOUNT_HOLE_D = 5.0;
-/** Distanza dei fori di montaggio dal bordo, mm. */
+/** Distance of the mounting holes from the edge, mm. */
 export const PLATE_MOUNT_INSET = 10;
-/** Fori passanti sotto asole e cavo. `false` lascia la lastra chiusa (SPEC §13). */
+/** Through holes under slots and cable. `false` leaves the plate closed (SPEC §13). */
 export const PLATE_WIRE_HOLES = true;
 /**
- * Diametro dei passaggi dei fili sotto asole e tasche d'angolo, mm. Sotto un foro tondo
- * dell'housing (`WIRE_HOLE_D`, `PATH_HOLE_D`) il fondale ha invece un foro uguale, nello stesso punto.
+ * Diameter of the wire passages under slots and corner pockets, mm. Under a round hole
+ * of the housing (`WIRE_HOLE_D`, `PATH_HOLE_D`) the backdrop has an equal hole instead, at the same point.
  */
 export const PLATE_WIRE_HOLE_D = 6;
-/** Il fondale riporta anche i fori piccoli lungo il percorso. `false`: solo quelli dei capi. */
+/** The backdrop also carries the small holes along the path. `false`: only those at the ends. */
 export const PLATE_PATH_HOLES = true;
-/** Aria minima fra un foro di montaggio e la sagoma dell'insegna, mm. */
+/** Minimum air between a mounting hole and the outline of the sign, mm. */
 export const PLATE_MOUNT_CLEARANCE = 3;
-/** Spessore lastra per materiale, mm. Segnaposto finché non si compra il foglio. */
+/** Plate thickness per material, mm. Placeholder until the sheet is bought. */
 export const PLATE_T = Object.freeze({ clear: 3, black: 3, wood: 4 });
-/** Kerf laser per materiale, mm. `null` finché non si misura (DA TARARE). */
+/** Laser kerf per material, mm. `null` until measured (TO BE CALIBRATED). */
 export const PLATE_KERF: Readonly<Record<keyof typeof PLATE_T, number | null>> = Object.freeze({
   clear: null,
   black: null,
   wood: null,
 });
 
-/** Tensioni della striscia che il configuratore conosce (SPEC §2). */
+/** Strip voltages the configurator knows (SPEC §2). */
 export const STRIP_VOLTAGES: readonly number[] = [5, 12, 24];
 
-/** Un controller WLED che il configuratore sa dimensionare (SPEC §2, Controller). */
+/** A WLED controller the configurator can size (SPEC §2, Controller). */
 export interface ControllerSpec {
   id: string;
   brand: string;
   name: string;
   model: string;
-  /** Tensione d'ingresso, V DC: uguale a quella della striscia. */
+  /** Input voltage, V DC: the same as the strip. */
   minV: number;
   maxV: number;
-  /** Corrente totale continua attraverso la scheda, A. */
+  /** Total continuous current through the board, A. */
   maxA: number;
-  /** Corrente massima a una tensione precisa, quando è più bassa di `maxA` (V → A). */
+  /** Maximum current at a specific voltage, when it is lower than `maxA` (V → A). */
   ampsAt?: Readonly<Record<number, number>>;
-  /** LED (IC) gestibili con un frame rate decente. */
+  /** LEDs (ICs) that can be driven at a decent frame rate. */
   maxIcs: number;
   outputs: number;
-  /** L × W × H, mm; null se il costruttore non la dà. */
+  /** L × W × H, mm; null if the maker does not give it. */
   sizeMm: [number, number, number] | null;
-  /** Prezzo di un pezzo, €, IVA esclusa: entra nel prezzo dell'insegna (SPEC §12.5). */
+  /** Price of one piece, €, excluding VAT: it enters the price of the sign (SPEC §12.5). */
   priceEur: number;
   url: string;
-  /** Nota per la pagina parts. */
+  /** Note for the parts page. */
   note?: string;
 }
 
 /**
- * Controller WLED disponibili. Il primo è quello standard, montato dietro l'insegna.
- * GLEDOPTO Ultra Mini: dalle schede dei rivenditori, 5–24 V, 10 A, 2 uscite, 800 IC (il dato
- * «10 A per canale» non torna con i 240 W dichiarati: per prudenza 10 A in totale); misure
+ * Available WLED controllers. The first is the standard one, mounted behind the sign.
+ * GLEDOPTO Ultra Mini: from the resellers' sheets, 5–24 V, 10 A, 2 outputs, 800 ICs (the figure
+ * "10 A per channel" does not agree with the declared 240 W: to be safe, 10 A in total); size
  * 40 × 40 × 20 mm.
- * GL-C-616WL: dalle schede dei rivenditori, 15 A in totale, 10 A per uscita, 2 uscite, Wi-Fi ed
- * Ethernet; misure e limite di LED non pubblicati.
- * QuinLED: dalle pagine quinled.info. Seeed: dal wiki e dalle schede dei rivenditori, 3 A a 5 V e
- * 2 A a 12 V, misure con la XIAO montata.
- * Dove il costruttore non dà un limite di LED: circa 600 per uscita, la soglia che WLED
- * suggerisce per un buon frame rate. Gli IC si contano come i LED.
- * Prezzi: un pezzo, IVA esclusa, novembre 2026.
+ * GL-C-616WL: from the resellers' sheets, 15 A in total, 10 A per output, 2 outputs, Wi-Fi and
+ * Ethernet; size and LED limit not published.
+ * QuinLED: from the quinled.info pages. Seeed: from the wiki and the resellers' sheets, 3 A at 5 V and
+ * 2 A at 12 V, size with the XIAO mounted.
+ * Where the maker gives no LED limit: about 600 per output, the threshold WLED
+ * suggests for a good frame rate. ICs are counted like LEDs.
+ * Prices: one piece, excluding VAT, November 2026.
  */
 export const CONTROLLERS: readonly ControllerSpec[] = Object.freeze([
   {
@@ -147,35 +147,35 @@ export const CONTROLLERS: readonly ControllerSpec[] = Object.freeze([
   },
 ]);
 
-/** Il controller standard. */
+/** The standard controller. */
 export const CONTROLLER: ControllerSpec = CONTROLLERS[0]!;
 
-/** Corrente che il controller regge alla tensione della striscia, A. */
+/** Current the controller holds at the strip voltage, A. */
 export function controllerAmps(c: ControllerSpec, volts: number): number {
   return c.ampsAt?.[volts] ?? c.maxA;
 }
 
-/** Controller dall'id; quello standard se l'id è sconosciuto. */
+/** Controller by id; the standard one if the id is unknown. */
 export function controllerOf(id: string | undefined): ControllerSpec {
   return CONTROLLERS.find((c) => c.id === id) ?? CONTROLLER;
 }
 
 /**
- * Contatore pubblico (SPEC §14): sotto i pulsanti del pannello Order un totale compare solo da qui
- * in su. Sotto la soglia non si mostra niente.
+ * Public counter (SPEC §14): under the buttons of the Order panel a total appears only from here
+ * up. Under the threshold nothing is shown.
  */
 export const STATS_MIN_SHOWN = 10;
 
-/** Pagina cliente: offre il download di housing.stl e, se attivo, diffuser.stl (SPEC §5). */
+/** Customer page: offers the download of housing.stl and, if on, diffuser.stl (SPEC §5). */
 export const CUSTOMER_STL_DOWNLOAD = true;
 
-/** Negozio WooCommerce che riceve le richieste, e il prodotto generico a cui aggancia il design. */
+/** WooCommerce shop that receives the requests, and the generic product it attaches the design to. */
 export interface Shop {
   url: string;
   productId: number;
 }
 
-/** Legge il negozio dalle due variabili: null se una manca o non è valida. */
+/** Reads the shop from the two variables: null if one is missing or invalid. */
 export function shopOf(url: string | undefined, productId: string | undefined): Shop | null {
   const id = Number((productId ?? '').trim());
   if (!Number.isInteger(id) || id <= 0) return null;
@@ -188,25 +188,25 @@ export function shopOf(url: string | undefined, productId: string | undefined): 
   }
 }
 
-// Fuori da Vite (Pages Functions) `import.meta.env` non esiste.
+// Outside Vite (Pages Functions) `import.meta.env` does not exist.
 const BUILD_ENV = (import.meta.env ?? {}) as Record<string, string | undefined>;
 
 /**
- * Il negozio non è scritto nel codice: arriva dalle variabili di build VITE_SHOP_URL e
- * VITE_SHOP_PRODUCT_ID (SPEC §15; su Cloudflare Pages: Settings → Variables and secrets; in locale:
- * `.env.local`, vedi `.env.example`). «Send request» salva il design e porta il cliente al carrello
- * di quel negozio, dove inserisce i suoi dati. Senza le variabili SHOP è null: il pulsante non
- * compare e resta il download. Così un fork non manda i suoi clienti nel negozio di un altro.
+ * The shop is not written in the code: it comes from the build variables VITE_SHOP_URL and
+ * VITE_SHOP_PRODUCT_ID (SPEC §15; on Cloudflare Pages: Settings → Variables and secrets; locally:
+ * `.env.local`, see `.env.example`). "Send request" saves the design and takes the customer to the cart
+ * of that shop, where they enter their details. Without the variables SHOP is null: the button does not
+ * appear and the download stays. This way a fork does not send its customers to someone else's shop.
  */
 export const SHOP: Shop | null = shopOf(BUILD_ENV.VITE_SHOP_URL, BUILD_ENV.VITE_SHOP_PRODUCT_ID);
 
-/** Indirizzo del carrello con il design agganciato; null senza negozio. */
+/** Address of the cart with the design attached; null without a shop. */
 export function shopCartUrl(code: string, shop: Shop | null = SHOP): string | null {
   if (!shop) return null;
   return `${shop.url}/?add-to-cart=${shop.productId}&design=${encodeURIComponent(code)}`;
 }
 
-/** Indirizzo della pagina per sostenere il progetto: solo http(s), altrimenti null. */
+/** Address of the page to support the project: http(s) only, otherwise null. */
 export function supportOf(url: string | undefined): string | null {
   try {
     const parsed = new URL((url ?? '').trim());
@@ -218,33 +218,33 @@ export function supportOf(url: string | undefined): string | null {
 }
 
 /**
- * Pagina delle offerte (Ko-fi, Buy Me a Coffee, ...): arriva dalla variabile di build
- * VITE_SUPPORT_URL, come il negozio (SPEC §16). Senza, i due inviti non compaiono: un fork non
- * raccoglie offerte per qualcun altro.
+ * Donation page (Ko-fi, Buy Me a Coffee, ...): it comes from the build variable
+ * VITE_SUPPORT_URL, like the shop (SPEC §16). Without it, the two invitations do not appear: a fork does not
+ * collect donations for someone else.
  */
 export const SUPPORT_URL: string | null = supportOf(BUILD_ENV.VITE_SUPPORT_URL);
 
-/** Lato lungo massimo di una bitmap caricata, prima della soglia (SPEC §4bis). */
+/** Maximum long side of an uploaded bitmap, before the threshold (SPEC §4bis). */
 export const IMAGE_MAX_PX = 4096;
 
-/** Tolleranza del fit spezzone → Bézier all'apertura dell'editor (SPEC §5bis). */
+/** Tolerance of the segment → Bézier fit when the editor opens (SPEC §5bis). */
 export const EDIT_FIT_TOL = 0.3;
 
-/** Distanza minima fra due nodi consecutivi durante il trascinamento (SPEC §5bis). */
+/** Minimum distance between two consecutive nodes while dragging (SPEC §5bis). */
 export const EDIT_MIN_NODE_DIST = 0.5;
 
-/** Profilo dello spigolo superiore della parete (SPEC §3). */
+/** Profile of the top edge of the wall (SPEC §3). */
 export type EdgeProfile = 'square' | 'outer' | 'inner' | 'both';
 
-/** warn: lo spigolo resta un errore; split: lo spezzone si taglia nello spigolo. */
+/** warn: the cusp stays an error; split: the segment is cut at the cusp. */
 export type CuspMode = 'warn' | 'split';
 
-/** omit: l'anello si esclude; dash: trattino; dot: spezzone con fori; unlit: rilievo senza striscia. */
+/** omit: the loop is excluded; dash: dash; dot: segment with holes; unlit: raised shape with no strip. */
 export type IDotMode = 'omit' | 'dash' | 'dot' | 'unlit';
 
 /**
- * Misure della striscia LED. R_MIN e MIN_LETTER_H non stanno qui: si ricavano dal profilo.
- * Le strisce si aggiungono a STRIP_PROFILES; DEFAULT_STRIP è quella standard.
+ * Measurements of the LED strip. R_MIN and MIN_LETTER_H are not here: they are derived from the profile.
+ * Strips are added to STRIP_PROFILES; DEFAULT_STRIP is the standard one.
  */
 export interface StripProfile {
   id: string;
@@ -257,64 +257,64 @@ export interface StripProfile {
   CUT_PITCH: number;
   LED_PER_M: number;
   /**
-   * La striscia segue le curve dell'insegna piegandosi **di lato**, nel proprio piano. Ci riescono
-   * solo le strisce fatte apposta: quelle con gli intagli sui bordi (COB) e le serpentine a S. Una
-   * striscia normale su circuito flessibile no: il rame del bordo esterno dovrebbe allungarsi, e
-   * invece si accartoccia. Con `false` ogni curva va tagliata e risaldata.
+   * The strip follows the curves of the sign by bending **sideways**, in its own plane. Only strips
+   * made for it can: those with notches on the edges (COB) and S-shaped serpentine ones. A
+   * normal strip on a flexible circuit cannot: the copper of the outer edge would have to stretch, and
+   * crumples instead. With `false` every curve must be cut and resoldered.
    */
   sideBend: boolean;
   /**
-   * Fin dove un giunto fra due unità di taglio piega di lato **senza tagliare**, in gradi. Oltre,
-   * lì la striscia si taglia e si ricollega. Per una striscia che segue le curve (`sideBend`) non
-   * si usa: non si taglia mai per piegare.
+   * How far a joint between two cut units bends sideways **without cutting**, in degrees. Beyond that,
+   * the strip is cut there and reconnected. For a strip that follows curves (`sideBend`) it is not
+   * used: it is never cut in order to bend.
    */
   cutBendDeg: number;
-  /** `false`: misure di catalogo, ancora da confermare col calibro. */
+  /** `false`: catalogue measurements, still to be confirmed with the caliper. */
   measured: boolean;
-  /** Prezzo al metro, €, IVA esclusa (rotolo da 5 m diviso 5). `null`: non ancora rilevato. */
+  /** Price per metre, €, excluding VAT (5 m reel divided by 5). `null`: not yet surveyed. */
   eurPerM: number | null;
   notes: string;
 }
 
 /**
- * Aria fra la striscia e le pareti del canale: `CHANNEL_W = STRIP_W + CHANNEL_CLEARANCE`.
- * Vale per ogni profilo, e l'interfaccia la usa per far seguire il canale alla striscia.
+ * Air between the strip and the channel walls: `CHANNEL_W = STRIP_W + CHANNEL_CLEARANCE`.
+ * It holds for every profile, and the interface uses it to make the channel follow the strip.
  */
 export const CHANNEL_CLEARANCE = 0.4;
 
 /**
- * Aria fra la faccia dei LED e il diffusore: `CHANNEL_DEPTH = STRIP_T + LED_AIR`. È la sigma della
- * gaussiana in anteprima: più ce n'è, più la luce dei singoli LED si fonde.
+ * Air between the face of the LEDs and the diffuser: `CHANNEL_DEPTH = STRIP_T + LED_AIR`. It is the sigma of the
+ * gaussian in the preview: the more there is, the more the light of the single LEDs blends.
  */
 export const LED_AIR = 6;
 
 /**
- * Piega di lato di un giunto senza tagliare, per una striscia rigida o dal giunto corto: è la
- * flessione che il circuito regge da sé. Vale per le strisce con guaina (IP65).
+ * Sideways bend of a joint without cutting, for a stiff strip or one with a short joint: it is the
+ * flex the circuit holds by itself. It applies to sleeved strips (IP65).
  */
 export const CUT_BEND_STIFF_DEG = 10;
 
 /**
- * Piega di lato di un giunto della WS2812B senza guaina, a ogni densità (144 compresa, per
- * scelta di Davide: non ancora provata): il circuito si increspa
- * sulle piazzole di rame e ruota. Provato da Davide il 15 novembre 2026 su una 60 LED/m da 10 mm:
- * 90° in quattro giunti, sul tavolo. Da confermare dentro un canale stampato.
+ * Sideways bend of a joint of the unsleeved WS2812B, at every density (144 included, by
+ * Davide's choice: not yet tried): the circuit ripples
+ * on the copper pads and rotates. Tried by Davide on 15 November 2026 on a 10 mm 60 LED/m strip:
+ * 90° in four joints, on the table. To be confirmed inside a printed channel.
  */
 export const CUT_BEND_FLEX_DEG = 30;
 
-/** Minuti di montaggio per ogni taglio in curva: tagliare, orientare il pezzo, risaldare tre piazzole. */
+/** Assembly minutes for every cut on a bend: cut, orient the piece, resolder three pads. */
 export const ASSEMBLY_MIN_PER_CUT = 10;
 
 /**
- * Famiglia WS2812B classica su circuito flessibile: 10 mm di larghezza, 2 mm di spessore, un LED
- * per unità di taglio. **Non piega di lato**, ma si taglia a ogni LED: in curva diventa una catena
- * di pezzetti dritti lunghi un'unità di taglio, ricollegati fra loro. Non c'è quindi un limite di
- * piega della striscia: ogni taglio costa tempo di montaggio (`ASSEMBLY_MIN_PER_CUT`). Misure di
- * catalogo (SK6812/WS2812B 5050, 10 mm), da confermare col calibro.
+ * Classic WS2812B family on a flexible circuit: 10 mm wide, 2 mm thick, one LED
+ * per cut unit. **It does not bend sideways**, but it can be cut at every LED: on a bend it becomes a chain
+ * of short straight pieces one cut unit long, reconnected to each other. So there is no bend
+ * limit of the strip: every cut costs assembly time (`ASSEMBLY_MIN_PER_CUT`). Catalogue
+ * measurements (SK6812/WS2812B 5050, 10 mm), to be confirmed with the caliper.
  */
 /**
- * WS2812B su circuito flessibile. `width` è la larghezza del circuito: 10 mm è la striscia comune
- * (LED 5050), quelle strette da 8, 5 e 4 mm (LED 5050 o 3535) entrano in tratti più vicini.
+ * WS2812B on a flexible circuit. `width` is the width of the circuit: 10 mm is the common strip
+ * (5050 LEDs), the narrow 8, 5 and 4 mm ones (5050 or 3535 LEDs) fit closer strokes.
  */
 function ws2812b(ledPerM: number, ip: 'IP20' | 'IP65', thickness: number, width = 10.0): StripProfile {
   const narrow = width < 10;
@@ -324,14 +324,14 @@ function ws2812b(ledPerM: number, ip: 'IP20' | 'IP65', thickness: number, width 
     STRIP_W: width,
     STRIP_T: thickness,
     CHANNEL_W: Math.round((width + CHANNEL_CLEARANCE) * 100) / 100,
-    // La «cerniera» qui è il taglio: un pezzo dritto per unità di taglio, e fra due pezzi l'angolo
-    // che serve. 90° è il limite geometrico di due pezzi accostati nel canale, non della striscia.
+    // The "hinge" here is the cut: one straight piece per cut unit, and between two pieces the angle
+    // that is needed. 90° is the geometric limit of two pieces side by side in the channel, not of the strip.
     HINGE_PITCH: Math.round((1000 / ledPerM) * 100) / 100,
     HINGE_MAX_DEG: 90,
     CUT_PITCH: Math.round((1000 / ledPerM) * 100) / 100,
     LED_PER_M: ledPerM,
     sideBend: false,
-    // Senza guaina piega uguale a ogni densità: la 144 come la 60 adesiva (deciso da Davide il 17 novembre 2026).
+    // Unsleeved, it bends the same at every density: the 144 like the adhesive 60 (decided by Davide on 17 November 2026).
     cutBendDeg: ip === 'IP20' ? CUT_BEND_FLEX_DEG : CUT_BEND_STIFF_DEG,
     measured: false,
     eurPerM: null,
@@ -340,16 +340,16 @@ function ws2812b(ledPerM: number, ip: 'IP20' | 'IP65', thickness: number, width 
 }
 
 export const WS2812B_30: StripProfile = Object.freeze(ws2812b(30, 'IP20', 2.0));
-// Rotolo da 5 m a 25,98 € IVA esclusa (16 novembre 2026).
+// 5 m reel at €25.98 excluding VAT (16 November 2026).
 export const WS2812B_60: StripProfile = Object.freeze({ ...ws2812b(60, 'IP20', 2.0), eurPerM: 5.2 });
-// 20 € al metro, IVA esclusa (17 novembre 2026).
+// €20 per metre, excluding VAT (17 November 2026).
 export const WS2812B_144: StripProfile = Object.freeze({ ...ws2812b(144, 'IP20', 2.0), eurPerM: 20 });
 export const WS2812B_60_IP65: StripProfile = Object.freeze(ws2812b(60, 'IP65', 2.2));
-/** Strisce strette, 60 LED/m: 8 e 5 mm con LED 5050, 4 mm con LED 3535 (più basso). */
+/** Narrow strips, 60 LED/m: 8 and 5 mm with 5050 LEDs, 4 mm with 3535 LEDs (lower). */
 export const WS2812B_60_8MM: StripProfile = Object.freeze(ws2812b(60, 'IP20', 2.0, 8.0));
 export const WS2812B_60_5MM: StripProfile = Object.freeze(ws2812b(60, 'IP20', 2.0, 5.0));
 export const WS2812B_60_4MM: StripProfile = Object.freeze(ws2812b(60, 'IP20', 1.8, 4.0));
-/** Stretta e fitta: pezzi da 7 mm, entra nei riccioli dei corsivi. Tanti tagli in curva. */
+/** Narrow and dense: 7 mm pieces, it fits the curls of cursives. Many cuts on bends. */
 export const WS2812B_144_5MM: StripProfile = Object.freeze(ws2812b(144, 'IP20', 2.0, 5.0));
 
 /** TOPAI WS2812B COB 5 mm, 160 LED/m (SPEC §2). */
@@ -363,11 +363,11 @@ export const COB_5MM: StripProfile = Object.freeze({
   HINGE_MAX_DEG: 40,
   CUT_PITCH: 10.0,
   LED_PER_M: 160,
-  // Intagli sui bordi ogni ~1 cm: sul pezzo B del bend test segue fino a 45°, 40° è il margine.
+  // Notches on the edges every ~1 cm: on part B of the bend test it follows up to 45°, 40° is the margin.
   sideBend: true,
   cutBendDeg: 0,
   measured: true,
-  // Rotolo da 5 m a 25,69 € IVA esclusa (16 novembre 2026).
+  // 5 m reel at €25.69 excluding VAT (16 November 2026).
   eurPerM: 5.14,
   notes: 'Misurata sul campione stampato: segue le curve fino a 45°, al 90° va tagliata.',
 });
@@ -385,9 +385,9 @@ export const STRIP_PROFILES: readonly StripProfile[] = Object.freeze([
 ]);
 
 /**
- * La striscia che Davide usa e offre di preferenza: WS2812B 144 LED/m, larga 10 mm (scelta del
- * 17 novembre 2026). **Non piega di lato**: in curva va tagliata e ricollegata, e la distinta conta
- * i tagli e il tempo di montaggio. Chi vuole meno saldature sceglie la COB.
+ * The strip Davide uses and offers by preference: WS2812B 144 LED/m, 10 mm wide (choice of
+ * 17 November 2026). **It does not bend sideways**: on a bend it must be cut and reconnected, and the bill of materials counts
+ * the cuts and the assembly time. Whoever wants fewer solder joints picks the COB.
  */
 export const DEFAULT_STRIP: StripProfile = WS2812B_144;
 
@@ -396,41 +396,41 @@ export function stripProfileOf(id: string | undefined): StripProfile {
 }
 
 export interface Params {
-  // Hardware (SPEC §2): copiati dal profilo striscia
+  // Hardware (SPEC §2): copied from the strip profile
   STRIP_W: number;
-  /** DA MISURARE */
+  /** TO BE MEASURED */
   STRIP_T: number;
   /**
-   * Campione di piegatura, pezzo D: lunghezza della transizione lineare dell'inclinazione
-   * prima e dopo ogni arco. Non entra ancora nella pipeline dell'insegna.
+   * Bending sample, part D: length of the linear transition of the tilt
+   * before and after every arc. It does not enter the sign pipeline yet.
    */
   BANK_TRANSITION_L: number;
   HINGE_PITCH: number;
-  /** Angolo massimo per cerniera. La striscia segue fino a 45°; 40° è il margine. */
+  /** Maximum angle per hinge. The strip follows up to 45°; 40° is the margin. */
   HINGE_MAX_DEG: number;
   CUT_PITCH: number;
   LED_PER_M: number;
-  /** Corrente di un LED a bianco pieno a 5 V, mA. Serve alla stima dell'alimentatore. */
+  /** Current of one LED at full white at 5 V, mA. Used for the power supply estimate. */
   LED_MAX_MA: number;
   /**
-   * Tensione della striscia, V: 5, 12 o 24 (`STRIP_VOLTAGES`). A parità di potenza per LED
-   * la corrente scala come 5 / STRIP_V.
+   * Strip voltage, V: 5, 12 or 24 (`STRIP_VOLTAGES`). For the same power per LED
+   * the current scales as 5 / STRIP_V.
    */
   STRIP_V: number;
-  /** Controller WLED, id di `CONTROLLERS`. Cambia solo i limiti della distinta. */
+  /** WLED controller, id from `CONTROLLERS`. It only changes the limits of the bill of materials. */
   CONTROLLER_ID: string;
-  /** Modello di striscia scelto: un id di STRIP_PROFILES. Detta le misure, salvo override espliciti. */
+  /** Chosen strip model: an id from STRIP_PROFILES. It sets the measurements, unless explicitly overridden. */
   STRIP_ID: string;
-  /** Scatola dell'elettronica: 'auto' (la più piccola che basta), 'none' o l'id di `BOXES`. */
+  /** Electronics box: 'auto' (the smallest that is enough), 'none' or the id from `BOXES`. */
   BOX_ID: string;
 
-  // Geometria (SPEC §3)
+  // Geometry (SPEC §3)
   CHANNEL_W: number;
   CHANNEL_DEPTH: number;
   WALL: number;
-  /** Sotto questo spessore la parete interna non si assottiglia: la freccia in più genera un avviso. */
+  /** Under this thickness the inner wall is not thinned: the extra sagitta produces a warning. */
   WALL_MIN: number;
-  /** Aria fra due sagome che non si toccano. Sotto, i tratti non contigui si fondono. */
+  /** Air between two outlines that do not touch. Under it, non-adjacent strokes merge. */
   MIN_GAP: number;
   FLOOR: number;
   ANCHOR_HOLE_D: number;
@@ -440,51 +440,51 @@ export interface Params {
   ANCHOR_BOSS: boolean;
   ANCHOR_BOSS_D: number;
   ANCHOR_BOSS_H: number;
-  /** Asola fili: larghezza, di default uguale al canale */
+  /** Wire slot: width, by default equal to the channel */
   WIRE_SLOT_W: number;
-  /** Asola fili: ultimi mm dello spezzone, a filo della terminazione arrotondata */
+  /** Wire slot: last mm of the segment, flush with the rounded end */
   WIRE_SLOT_L: number;
-  /** Smusso a 45° sul labbro interno dell'asola, lato spezzone, dove la striscia scende */
+  /** 45° chamfer on the inner lip of the slot, segment side, where the strip goes down */
   SLOT_LIP_CHAMFER: number;
   /**
-   * Foro tondo per i fili a ogni estremità di spezzone, al posto dell'asola: diametro, mm. Sta
-   * dentro il canale (al più largo quanto il canale), a metà degli ultimi `WIRE_SLOT_L`, e non
-   * tocca il piede delle pareti: il pezzo resta intero. 0: l'asola rettangolare di prima.
+   * Round wire hole at each end of a segment, instead of the slot: diameter, mm. It sits
+   * inside the channel (at most as wide as the channel), halfway along the last `WIRE_SLOT_L`, and does not
+   * touch the foot of the walls: the part stays in one piece. 0: the rectangular slot of before.
    */
   WIRE_HOLE_D: number;
   /**
-   * Fori piccoli lungo tutto il percorso, sul fondo del canale: diametro, mm. Dove la striscia si
-   * taglia in una curva, i fili passano dal foro più vicino. 0: nessuno.
+   * Small holes along the whole path, in the channel floor: diameter, mm. Where the strip is
+   * cut on a curve, the wires go through the nearest hole. 0: none.
    */
   PATH_HOLE_D: number;
-  /** Passo dei fori lungo il percorso, mm: si distribuiscono a distanze uguali, vicine a questa. */
+  /** Pitch of the holes along the path, mm: they are spread at equal distances, close to this. */
   PATH_HOLE_PITCH: number;
   CABLE_HOLE_D: number;
   CROSSING_GAP: number;
   DIFFUSER_T: number;
   DIFFUSER_CLEARANCE: number;
   EDGE_PROFILE: EdgeProfile;
-  /** Altezza verticale dello smusso; ≤ CHANNEL_DEPTH */
+  /** Vertical height of the chamfer; ≤ CHANNEL_DEPTH */
   CHAMFER_SIZE: number;
-  /** Angolo dello smusso rispetto all'orizzontale, in gradi */
+  /** Angle of the chamfer from the horizontal, in degrees */
   CHAMFER_ANGLE: number;
-  /** Altezza delle fette dello smusso a gradini (= altezza layer di stampa) */
+  /** Height of the slices of the stepped chamfer (= print layer height) */
   LAYER_STEP: number;
-  /** Derivato: 2·R_MIN, diametro della piega più stretta. `resolveParams` lo ricalcola. */
+  /** Derived: 2·R_MIN, diameter of the tightest bend. `resolveParams` recomputes it. */
   MIN_LETTER_H: number | null;
-  /** Spigoli di font o scheletro: avviso, oppure taglio dello spezzone. */
+  /** Cusps of font or skeleton: warning, or cutting the segment. */
   CUSP_MODE: CuspMode;
-  /** Sotto questa distanza le asole DIN/DOUT vicine diventano una tasca d'angolo. */
+  /** Under this distance neighbouring DIN/DOUT slots become a corner pocket. */
   CORNER_MERGE_DIST: number;
-  /** Puntini e anelli sotto R_MIN. */
+  /** Dots and loops under R_MIN. */
   I_DOT_MODE: IDotMode;
-  /** Foro passante sotto ciascuna piazzola del puntino, al posto delle asole. */
+  /** Through hole under each pad of the dot, instead of the slots. */
   DOT_WIRE_HOLE_D: number;
-  /** Di quanto la pillola, parete compresa, può uscire dall'ingombro del puntino. */
+  /** How far the pill, wall included, may stick out of the footprint of the dot. */
   DOT_OVERHANG_MM: number;
-  /** Sotto questa frazione di linea centrale illuminata, la lettera avvisa. */
+  /** Under this fraction of lit centreline, the letter warns. */
   COVERAGE_MIN: number;
-  /** Piatto di stampa, mm: oltre, housing e diffusore si dividono in pezzi (SPEC §14). */
+  /** Print bed, mm: beyond it, housing and diffuser are split into pieces (SPEC §14). */
   BED_W: number;
   BED_H: number;
 }
@@ -504,7 +504,7 @@ export const DEFAULT_PARAMS: Readonly<Params> = Object.freeze({
   BOX_ID: 'auto',
 
   CHANNEL_W: DEFAULT_STRIP.CHANNEL_W,
-  /** Spessore della striscia più LED_AIR: l'aria fra i LED e il diffusore. */
+  /** Strip thickness plus LED_AIR: the air between the LEDs and the diffuser. */
   CHANNEL_DEPTH: DEFAULT_STRIP.STRIP_T + LED_AIR,
   WALL: 2.2,
   WALL_MIN: 1.2,
@@ -538,14 +538,14 @@ export const DEFAULT_PARAMS: Readonly<Params> = Object.freeze({
   DOT_WIRE_HOLE_D: 2.5,
   DOT_OVERHANG_MM: 1.5,
   COVERAGE_MIN: 0.85,
-  // Bambu Lab H2D: piatto da 350 × 320 mm.
+  // Bambu Lab H2D: 350 × 320 mm bed.
   BED_W: 350,
   BED_H: 320,
 });
 
-/** Applica gli override di `order.params` ai default e ricalcola MIN_LETTER_H dal profilo. */
+/** Applies the overrides of `order.params` to the defaults and recomputes MIN_LETTER_H from the profile. */
 export function resolveParams(overrides: Partial<Params> = {}): Params {
-  // Il modello di striscia detta le sue misure; un valore scritto a mano nell'ordine vince lo stesso.
+  // The strip model sets its measurements; a value typed by hand in the order wins all the same.
   const profile = overrides.STRIP_ID === undefined ? null : stripProfileOf(overrides.STRIP_ID);
   const base: Params =
     profile === null || profile.id === DEFAULT_STRIP.id
@@ -568,20 +568,20 @@ export function resolveParams(overrides: Partial<Params> = {}): Params {
   return merged;
 }
 
-/** Raggio minimo di piega: R_MIN = HINGE_PITCH / (2·sin(HINGE_MAX_DEG/2)). */
+/** Minimum bend radius: R_MIN = HINGE_PITCH / (2·sin(HINGE_MAX_DEG/2)). */
 export function rMin(p: Pick<StripProfile, 'HINGE_PITCH' | 'HINGE_MAX_DEG'>): number {
   const halfRad = (p.HINGE_MAX_DEG * Math.PI) / 360;
   return p.HINGE_PITCH / (2 * Math.sin(halfRad));
 }
 
-/** Altezza minima di lettera derivata dal profilo: diametro della piega più stretta. */
+/** Minimum letter height derived from the profile: diameter of the tightest bend. */
 export function minLetterH(p: Pick<StripProfile, 'HINGE_PITCH' | 'HINGE_MAX_DEG'>): number {
   return 2 * rMin(p);
 }
 
 /**
- * La striscia ci sta nel canale? Avvisi in italiano come gli altri del generatore: un canale più
- * stretto o meno profondo della striscia descrive un pezzo che non si può montare.
+ * Does the strip fit in the channel? Warnings like the generator's others: a channel
+ * narrower or shallower than the strip describes a part that cannot be assembled.
  */
 export function stripFitWarnings(p: Pick<Params, 'STRIP_W' | 'STRIP_T' | 'CHANNEL_W' | 'CHANNEL_DEPTH'>): string[] {
   const out: string[] = [];
@@ -594,7 +594,7 @@ export function stripFitWarnings(p: Pick<Params, 'STRIP_W' | 'STRIP_T' | 'CHANNE
   return out;
 }
 
-/** Altezza totale del corpo: FLOOR + CHANNEL_DEPTH. */
+/** Total height of the body: FLOOR + CHANNEL_DEPTH. */
 export function totalHeight(p: Pick<Params, 'FLOOR' | 'CHANNEL_DEPTH'>): number {
   return p.FLOOR + p.CHANNEL_DEPTH;
 }

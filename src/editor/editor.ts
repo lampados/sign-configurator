@@ -1,4 +1,4 @@
-// Editor dei tracciati (SPEC §5bis). Paper.js arriva solo qui, con import() dinamico.
+// Path editor (SPEC §5bis). Paper.js arrives only here, with a dynamic import().
 
 import { EDIT_FIT_TOL, EDIT_MIN_NODE_DIST, type Params } from '../config';
 import type { Point } from '../geometry/rasterize';
@@ -9,7 +9,7 @@ import type { CurveNode, CurvePath, DotPath, OrderCrossing, OrderPath } from '..
 type Paper = typeof import('paper/dist/paper-core');
 
 export interface PathEditor {
-  /** Spezzoni [D] → curve, con Path.simplify alla tolleranza dell'editor. */
+  /** Segments [D] → curves, with Path.simplify at the editor tolerance. */
   freeze(segments: readonly EditSegment[]): OrderPath[];
   load(paths: readonly OrderPath[], crossings: readonly OrderCrossing[]): void;
   show(): void;
@@ -20,9 +20,9 @@ export interface PathEditorOptions {
   canvas: HTMLCanvasElement;
   toolbar: HTMLElement;
   getParams(): Params;
-  /** Modifica conclusa: il worker può rigenerare. */
+  /** Edit finished: the worker can regenerate. */
   onCommit(paths: OrderPath[], crossings: OrderCrossing[]): void;
-  /** Durante il gesto: blocca l'invio senza rigenerare la mesh. */
+  /** During the gesture: blocks sending without regenerating the mesh. */
   onLive(blocked: boolean): void;
 }
 
@@ -67,7 +67,7 @@ function coarsePointer(): boolean {
   return window.matchMedia('(pointer: coarse)').matches;
 }
 
-/** Apre l'editor sul canvas. Paper.js non è nel bundle finché non si chiama questa funzione. */
+/** Opens the editor on the canvas. Paper.js is not in the bundle until this function is called. */
 export async function openPathEditor(options: PathEditorOptions): Promise<PathEditor> {
   const paper = await loadPaper();
   const { canvas, toolbar } = options;

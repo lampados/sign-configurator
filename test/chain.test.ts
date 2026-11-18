@@ -4,8 +4,8 @@ import { resampleChain, type ChainHinge } from '../src/geometry/chain';
 import type { Point } from '../src/geometry/rasterize';
 
 /**
- * Queste prove riguardano la piega della striscia, quindi usano una striscia che piega: la COB.
- * La predefinita (WS2812B su circuito flessibile) non curva, e qui non direbbe nulla di utile.
+ * These tests are about the bending of the strip, so they use a strip that bends: the COB.
+ * The default one (WS2812B on a flexible circuit) does not curve, and would say nothing useful here.
  */
 const BENDABLE = resolveParams({ STRIP_ID: 'cob-5mm' });
 
@@ -13,7 +13,7 @@ const PITCH = BENDABLE.HINGE_PITCH;
 
 const dist = (a: Point, b: Point): number => Math.hypot(b[0] - a[0], b[1] - a[1]);
 
-/** Arco di cerchio di raggio noto, dal punto (R, 0), in senso antiorario. */
+/** Arc of a circle of known radius, from the point (R, 0), counter-clockwise. */
 function circularArc(radius: number, sweepDeg: number, stepDeg = 0.5): Point[] {
   const n = Math.max(2, Math.round(sweepDeg / stepDeg));
   const pts: Point[] = [];
@@ -28,7 +28,7 @@ function turnDeg(radius: number, pitch: number): number {
   return (2 * Math.asin(pitch / (2 * radius)) * 180) / Math.PI;
 }
 
-/** Cerniere le cui due corde sono un passo intero: l'ultima, più corta, non conta. */
+/** Hinges whose two chords are a full pitch: the last, shorter one does not count. */
 function fullHinges(points: readonly Point[], hinges: readonly ChainHinge[], pitch: number): ChainHinge[] {
   return hinges.filter((_, k) => {
     const i = k + 1;

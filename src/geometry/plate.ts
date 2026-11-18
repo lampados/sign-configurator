@@ -1,6 +1,6 @@
-// Fondale (SPEC §13): lastra da tagliare al laser dietro l'housing, rettangolare, a pillola o
-// sagomata attorno all'insegna. Anteprima, STL e SVG di taglio vengono dagli stessi poligoni in mm.
-// La scelta del cliente è `plate` dell'ordine v4 (SPEC §6); le misure fisse stanno in config.
+// Backdrop (SPEC §13): plate to laser cut behind the housing, rectangular, pill-shaped or
+// contoured around the sign. Preview, STL and cutting SVG come from the same polygons in mm.
+// The customer's choice is `plate` of the v4 order (SPEC §6); the fixed measurements are in config.
 import type { CrossSection, Manifold, ManifoldToplevel, Vec2 } from 'manifold-3d';
 import {
   PLATE_CORNER_R,
@@ -30,7 +30,7 @@ export const PLATE_SHAPES: readonly { value: PlateShape; label: string }[] = [
   { value: 'contour', label: 'Contour' },
 ];
 
-/** Etichette per il cliente (in inglese, SPEC §12.2); lo spessore viene da `PLATE_T` (segnaposto). */
+/** Labels for the customer (in English, SPEC §12.2); the thickness comes from `PLATE_T` (placeholder). */
 export const PLATE_MATERIALS: Readonly<Record<PlateMaterial, { label: string; thicknessMm: number }>> = {
   clear: { label: 'Clear acrylic', thicknessMm: PLATE_T.clear },
   black: { label: 'Smoked black acrylic', thicknessMm: PLATE_T.black },
@@ -50,32 +50,32 @@ export interface PlateHole {
   kind: PlateHoleKind;
   x: number;
   y: number;
-  /** Diametro nominale: quello dopo il taglio. */
+  /** Nominal diameter: the one after cutting. */
   d: number;
 }
 
 export interface PlateModel {
   choice: PlateChoice;
   thicknessMm: number;
-  /** Contorno esterno in vista frontale, mm (senza kerf). */
+  /** Outer outline in front view, mm (without kerf). */
   outline: [number, number][][];
   holes: PlateHole[];
   widthMm: number;
   heightMm: number;
   areaMm2: number;
   warnings: string[];
-  /** Lastra fra Z = −spessore e Z = 0, dietro l'housing. Chi la riceve la cancella. */
+  /** Plate between Z = −thickness and Z = 0, behind the housing. Whoever receives it deletes it. */
   solid: Manifold;
 }
 
-/** Riepilogo del fondale nella BOM (SPEC §13). */
+/** Summary of the backdrop in the BOM (SPEC §13). */
 export interface PlateBom {
   shape: PlateShape;
   material: PlateMaterial;
   widthMm: number;
   heightMm: number;
   areaMm2: number;
-  /** Lunghezza di taglio: contorno più circonferenze dei fori. */
+  /** Cut length: outline plus circumferences of the holes. */
   cutLengthMm: number;
   thicknessMm: number;
   fixHoles: number;
@@ -85,7 +85,7 @@ export interface PlateBom {
 
 const ROUND_SEGMENTS = 48;
 const HOLE_SEGMENTS = 32;
-/** Raggi di chiusura provati per unire le parti di un fondale sagomato. */
+/** Closing radii tried to join the parts of a contoured backdrop. */
 const CLOSING_STEPS = [10, 20, 40, 80, 160];
 
 const clamp = (v: number, min: number, max: number, fallback: number): number =>
@@ -119,7 +119,7 @@ function perimeter(poly: readonly (readonly [number, number])[]): number {
   return total;
 }
 
-/** Tiene solo i contorni esterni: i buchi della sagoma (l'occhiello della «o») si riempiono. */
+/** Keeps only the outer contours: the holes of the outline (the counter of the "o") are filled. */
 function fillHoles(wasm: ManifoldToplevel, section: CrossSection): CrossSection {
   const outers = section.toPolygons().filter((poly) => signedArea(poly) > 0);
   return new wasm.CrossSection(outers, 'NonZero');
@@ -136,7 +136,7 @@ function roundedRect(wasm: ManifoldToplevel, min: Vec2, max: Vec2, radius: numbe
   return out;
 }
 
-/** Offset della sagoma; se resta in più pezzi, una chiusura morfologica li unisce. */
+/** Offset of the outline; if it stays in several pieces, a morphological closing joins them. */
 function contourSection(wasm: ManifoldToplevel, sign: CrossSection, margin: number, warnings: string[]): CrossSection {
   let best = sign.offset(margin, 'Round', 2, ROUND_SEGMENTS);
   for (const close of CLOSING_STEPS) {
@@ -178,7 +178,7 @@ function centroid(points: readonly (readonly [number, number])[]): [number, numb
   return [x / n, y / n];
 }
 
-/** Dove vanno i fori di montaggio: quattro angoli del rettangolo, i due centri delle teste della pillola. */
+/** Where the mounting holes go: four corners of the rectangle, the two centres of the ends of the pill. */
 function mountSpots(shape: PlateShape, min: Vec2, max: Vec2): Vec2[] {
   const inset = PLATE_MOUNT_INSET + PLATE_MOUNT_HOLE_D / 2;
   if (shape === 'rect') {
@@ -206,9 +206,9 @@ function mountSpots(shape: PlateShape, min: Vec2, max: Vec2): Vec2[] {
 }
 
 /**
- * Fori del fondale: fissaggio sotto gli ancoraggi, cavo principale, passaggi dei fili sotto i
- * fori dei capi, quelli lungo il percorso e i puntini (se `PLATE_WIRE_HOLES`), montaggio a parete
- * se non cadono sotto l'insegna.
+ * Holes of the backdrop: fixing under the anchors, main cable, wire passages under the
+ * holes at the ends, those along the path and the dots (if `PLATE_WIRE_HOLES`), wall mounting
+ * if they do not fall under the sign.
  */
 function plateHoles(
   wasm: ManifoldToplevel,
@@ -224,10 +224,10 @@ function plateHoles(
   const cable = housing.holes.cable;
   if (cable) holes.push({ kind: 'cable', x: cable.x, y: cable.y, d: cable.d });
   if (PLATE_WIRE_HOLES) {
-    // Gli stessi fori dell'housing, nello stesso punto e dello stesso diametro: i fili passano
-    // dritti. Sotto un'asola o una tasca (non tonde) resta il foro da PLATE_WIRE_HOLE_D.
+    // The same holes as the housing, at the same point and with the same diameter: the wires go
+    // straight through. Under a slot or a pocket (not round) the PLATE_WIRE_HOLE_D hole stays.
     const wire = (x: number, y: number, d: number): void => {
-      // Il cavo passa dal foro grande del primo capo: lì si fa un foro solo, il più largo dei due.
+      // The cable goes through the large hole of the first end: a single hole is made there, the wider of the two.
       const same = holes.find((hole) => hole.kind === 'cable' && Math.hypot(hole.x - x, hole.y - y) < (hole.d + d) / 2);
       if (same) same.d = Math.max(same.d, d);
       else holes.push({ kind: 'wire', x, y, d });
@@ -262,8 +262,8 @@ function plateHoles(
 }
 
 /**
- * Lastra dietro l'insegna. `housing.outline` è la sagoma frontale dell'housing (mm): il fondale
- * la contiene con il margine scelto. Il kerf allarga il contorno e restringe i fori di kerf/2.
+ * Plate behind the sign. `housing.outline` is the front outline of the housing (mm): the backdrop
+ * contains it with the chosen margin. The kerf widens the outline and narrows the holes by kerf/2.
  */
 export function buildPlate(
   wasm: ManifoldToplevel,
@@ -322,7 +322,7 @@ export function buildPlate(
 
 const round2 = (n: number): number => Math.round(n * 100) / 100;
 
-/** Riepilogo del fondale per la BOM: misure, taglio e fori per tipo. */
+/** Summary of the backdrop for the BOM: measurements, cut and holes by type. */
 export function plateBom(plate: Omit<PlateModel, 'solid'>): PlateBom {
   const count = (kind: PlateHoleKind): number => plate.holes.filter((hole) => hole.kind === kind).length;
   const cut =

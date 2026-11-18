@@ -1,5 +1,5 @@
-// [J] Fondale: SVG di taglio laser in mm, visto dal retro come back.dxf (SPEC §13).
-// Blu = fori (si tagliano per primi), rosso = contorno (per ultimo).
+// [J] Backdrop: laser cutting SVG in mm, seen from the back like back.dxf (SPEC §13).
+// Blue = holes (cut first), red = outline (last).
 import type { PlateModel } from '../geometry/plate';
 import { PLATE_MATERIALS } from '../geometry/plate';
 
@@ -13,7 +13,7 @@ function num(n: number): string {
   return Object.is(r, -0) ? '0' : String(r);
 }
 
-/** SVG del fondale. Le coordinate in ingresso sono frontali: qui X si specchia, Y va verso il basso. */
+/** SVG of the backdrop. The input coordinates are front ones: here X is mirrored, Y points down. */
 export function plateToSvg(plate: Pick<PlateModel, 'outline' | 'holes' | 'choice' | 'thicknessMm'>): string {
   const xs = plate.outline.flatMap((poly) => poly.map((p) => p[0]));
   const ys = plate.outline.flatMap((poly) => poly.map((p) => p[1]));
@@ -21,7 +21,7 @@ export function plateToSvg(plate: Pick<PlateModel, 'outline' | 'holes' | 'choice
   const maxX = Math.max(...xs);
   const minY = Math.min(...ys);
   const maxY = Math.max(...ys);
-  // Vista dal retro: x' = maxX − x. SVG ha Y in giù: y' = maxY − y.
+  // Seen from the back: x' = maxX − x. SVG has Y down: y' = maxY − y.
   const X = (x: number): number => maxX - x + PAD;
   const Y = (y: number): number => maxY - y + PAD;
   const width = maxX - minX + 2 * PAD;

@@ -1,16 +1,16 @@
-// Geometria dei pezzi di prova per R_MIN / HINGE_MAX_DEG (SPEC §2).
-// Pezzo A (archi): S di archi da 180° alternati, canale allargato della freccia s = P²/(8R).
-// Pezzo B (angoli): zig-zag di dritti lunghi 3·HINGE_PITCH con spigoli vivi.
-// Pezzo D (inclinazione): quattro archi R10, dritti da 40, fondo ruotato attorno alla tangente.
-// Pezzo E (giunti): angoli 90°, 90°, 120° con tasca CORNER_POCKET. Solo nel campione.
-// Marcature senza testo: fori passanti sul fondo prima di ogni piega, tacche sul bordo esterno.
-// Come nell'insegna: asole fili DIN/DOUT sull'intera estremità del canale (holes.ts).
+// Geometry of the test parts for R_MIN / HINGE_MAX_DEG (SPEC §2).
+// Part A (arcs): an S of alternating 180° arcs, channel widened by the sagitta s = P²/(8R).
+// Part B (corners): zig-zag of straights 3·HINGE_PITCH long with sharp corners.
+// Part D (tilt): four R10 arcs, 40 mm straights, floor rotated about the tangent.
+// Part E (joints): corners 90°, 90°, 120° with a CORNER_POCKET. In the sample only.
+// Markers without text: through holes in the floor before every bend, notches on the outer edge.
+// As in the sign: DIN/DOUT wire slots over the whole end of the channel (holes.ts).
 import type { Box, CrossSection, ErrorStatus, Manifold, ManifoldToplevel, Vec2, Vec3 } from 'manifold-3d';
 import { COB_5MM, resolveParams, type Params, totalHeight } from '../config';
 
 /**
- * I pezzi di prova sono disegnati per la striscia COB con gli intagli, l'unica che segue le curve.
- * Non seguono la striscia predefinita del configuratore, che non piega di lato.
+ * The test parts are designed for the COB strip with notches, the only one that follows curves.
+ * They do not follow the configurator's default strip, which does not bend sideways.
  */
 const DEFAULT_PARAMS = resolveParams({ STRIP_ID: COB_5MM.id });
 import { planChamfer, profiledBody, type ChamferPlan } from '../geometry/edgeProfile';
@@ -27,23 +27,23 @@ export const BANK_STRAIGHT = 40;
 const BANK_SWEEP_DEG = 90;
 export const JOINT_ANGLES_DEG: readonly number[] = [90, 90, 120];
 export const JOINT_STRAIGHT = 40;
-/** Varianti di tolleranza del canale: quello in uso e uno più largo di questo passo, mm. */
+/** Channel tolerance variants: the one in use and one wider by this step, mm. */
 export const VARIANT_STEP = 0.4;
 
-/** Le due larghezze delle varianti: il canale dei parametri e +VARIANT_STEP. */
+/** The two widths of the variants: the channel of the parameters and +VARIANT_STEP. */
 export function variantWidths(channelW: number): number[] {
   return [channelW, Math.round((channelW + VARIANT_STEP) * 100) / 100];
 }
 
 const ARC_STRAIGHT = 30;
 const ARC_SWEEP_DEG = 180;
-/** Pezzo B: direzione del primo tratto, scelta perché lo zig-zag avanzi lungo +X. */
+/** Part B: direction of the first stretch, chosen so that the zig-zag advances along +X. */
 const CORNER_START_DEG = -15;
-/** Massima deviazione corda-arco della polilinea centrale. */
+/** Maximum chord-to-arc deviation of the central polyline. */
 const ARC_TOLERANCE = 0.005;
 
 const MARK_HOLE_D = 2;
-/** Distanza dal punto d'inizio piega al centro del primo foro, lungo il tratto dritto precedente. */
+/** Distance from the start of the bend to the centre of the first hole, along the preceding straight. */
 const MARK_HOLE_FIRST = 2.5;
 const MARK_HOLE_PITCH = 4;
 const MARK_HOLE_SEGMENTS = 24;
@@ -53,7 +53,7 @@ const NOTCH_DEPTH = 1.0;
 const NOTCH_FIRST = 6;
 const NOTCH_PITCH = 3.5;
 
-/** Semi-larghezza del nastro sottile attorno alla linea centrale, poi gonfiato con offset. */
+/** Half-width of the thin ribbon around the centreline, then inflated with an offset. */
 const RIBBON_HALF = 0.05;
 const ROUND_SEGMENTS = 96;
 
@@ -82,7 +82,7 @@ export type BendTestParams = Pick<
 export interface BendTestOptions {
   kind: BendTestKind;
   params?: Partial<BendTestParams>;
-  /** true: un pezzo per ogni larghezza di `variantWidths(CHANNEL_W)`, marcati con 1/2 tacche. */
+  /** true: one part for every width of `variantWidths(CHANNEL_W)`, marked with 1/2 notches. */
   variants?: boolean;
 }
 
@@ -90,40 +90,40 @@ export interface BendTestPiece {
   channelW: number;
   notches: number;
   offsetY: number;
-  /** Fori passanti: deve valere expectedHoles (marcature 1 + 2 + … più 2 asole fili). */
+  /** Through holes: expectedHoles must hold (markers 1 + 2 + … plus 2 wire slots). */
   genus: number;
 }
 
 export interface BendTestResult {
   kind: BendTestKind;
-  /** Da liberare con `delete()` a carico del chiamante. */
+  /** To be freed with `delete()` by the caller. */
   manifold: Manifold;
   status: ErrorStatus;
   bounds: Box;
   pieces: BendTestPiece[];
   pathLength: number;
-  /** Marcature + asole fili. */
+  /** Markers + wire slots. */
   expectedHoles: number;
-  /** Smusso effettivo (dopo la validazione) e relativi avvisi. */
+  /** Effective chamfer (after validation) and its warnings. */
   chamfer: ChamferPlan;
 }
 
 export interface Bend {
-  /** Raggio (archi) o angolo in gradi (spigoli): ciò che la marcatura identifica. */
+  /** Radius (arcs) or angle in degrees (corners): what the marker identifies. */
   label: number;
-  /** Punto in cui inizia la piega (inizio arco o vertice dello spigolo). */
+  /** Point where the bend starts (start of the arc or vertex of the corner). */
   start: Vec2;
-  /** Direzione in ingresso. */
+  /** Incoming direction. */
   heading: Vec2;
-  /** Direzione in uscita. */
+  /** Outgoing direction. */
   headingOut: Vec2;
-  /** +1 = sinistra (antiorario), −1 = destra. */
+  /** +1 = left (counter-clockwise), −1 = right. */
   turn: 1 | -1;
-  /** Solo archi. */
+  /** Arcs only. */
   arc?: { center: Vec2; radius: number; points: Vec2[] };
 }
 
-/** Percorso della striscia: `start` è il DIN, `end` il DOUT (SPEC §5 "Verso degli spezzoni"). */
+/** Path of the strip: `start` is the DIN, `end` the DOUT (SPEC §5 "Direction of the segments"). */
 export interface CenterPath {
   points: Vec2[];
   bends: Bend[];
@@ -132,9 +132,9 @@ export interface CenterPath {
   end: Vec2;
   endHeading: Vec2;
   length: number;
-  /** Pezzo D: archi con inclinazione, in ascissa curvilinea. */
+  /** Part D: arcs with tilt, by arc length. */
   bankSpans?: readonly BankSpan[];
-  /** Pezzo E: una tasca passante su ogni spigolo. */
+  /** Part E: a through pocket on every corner. */
   cornerPockets?: boolean;
 }
 
@@ -149,11 +149,11 @@ export interface BankSpan {
 
 export interface WireSlot {
   role: 'DIN' | 'DOUT';
-  /** Estremità dello spezzone: labbro interno dell'asola quando EXTRA = L. */
+  /** End of the segment: inner lip of the slot when EXTRA = L. */
   center: Vec2;
-  /** Tangente del percorso nel verso DIN → DOUT. */
+  /** Tangent of the path in the DIN → DOUT direction. */
   tangent: Vec2;
-  /** Fuori dallo spezzone, verso la parete di testa. */
+  /** Out of the segment, towards the end wall. */
   outward: Vec2;
 }
 
@@ -165,13 +165,13 @@ const unit = (a: Vec2): Vec2 => scale(a, 1 / Math.hypot(a[0], a[1]));
 const leftNormal = (t: Vec2): Vec2 => [-t[1], t[0]];
 const dirOf = (rad: number): Vec2 => [Math.cos(rad), Math.sin(rad)];
 
-/** Freccia di una corda lunga `pitch` su un arco di raggio R (SPEC §5 [F]). */
+/** Sagitta of a chord `pitch` long on an arc of radius R (SPEC §5 [F]). */
 export const sagitta = (pitch: number, radius: number): number => (pitch * pitch) / (8 * radius);
 
 /**
- * Pezzo B: distanza massima dal vertice della linea centrale raggiunta da una striscia larga
- * `stripW` piegata di `angleDeg` in un solo intaglio. Caso peggiore: perno sul bordo esterno,
- * l'angolo del tratto rigido sporge di (w/2)/cos(θ/2).
+ * Part B: maximum distance from the vertex of the centreline reached by a strip `stripW`
+ * wide bent by `angleDeg` at a single notch. Worst case: pivot on the outer edge,
+ * the corner of the stiff stretch sticks out by (w/2)/cos(θ/2).
  */
 export const cornerOuterRadius = (stripW: number, channelW: number, angleDeg: number): number =>
   Math.max(
@@ -193,8 +193,8 @@ export function bendTestPath(kind: BendTestKind, hingePitch = DEFAULT_PARAMS.HIN
 }
 
 /**
- * Ingombro orizzontale di una striscia STRIP_W × STRIP_T ruotata di `bankDeg`
- * attorno alla tangente, più la tolleranza già presente in CHANNEL_W.
+ * Horizontal footprint of a STRIP_W × STRIP_T strip rotated by `bankDeg`
+ * about the tangent, plus the tolerance already in CHANNEL_W.
  */
 export function bankedChannelHalf(stripW: number, stripT: number, channelW: number, bankDeg: number): number {
   const th = (Math.abs(bankDeg) * Math.PI) / 180;
@@ -203,7 +203,7 @@ export function bankedChannelHalf(stripW: number, stripT: number, channelW: numb
   return Math.max(channelW, footprint + clearance) / 2;
 }
 
-/** Dritto, poi per ogni raggio arco da 180° + dritto. Parte da (0,0) verso +Y, primo arco a destra. */
+/** Straight, then for every radius a 180° arc + straight. Starts at (0,0) towards +Y, first arc to the right. */
 function arcsPath(radii: readonly number[]): CenterPath {
   const sweep = (ARC_SWEEP_DEG * Math.PI) / 180;
   let pos: Vec2 = [0, 0];
@@ -259,7 +259,7 @@ function arcsPath(radii: readonly number[]): CenterPath {
   };
 }
 
-/** Zig-zag: dritto, poi per ogni angolo spigolo + dritto; sinistra/destra alternati. */
+/** Zig-zag: straight, then for every angle a corner + straight; left/right alternating. */
 function cornersPath(anglesDeg: readonly number[], segment: number): CenterPath {
   let heading = (CORNER_START_DEG * Math.PI) / 180;
   let pos: Vec2 = add([0, 0], scale(dirOf(heading), segment));
@@ -284,7 +284,7 @@ function cornersPath(anglesDeg: readonly number[], segment: number): CenterPath 
   };
 }
 
-/** Quattro archi R10 da 90°, alternati, separati da dritti di 40. Parte verso +X, primo arco a destra. */
+/** Four R10 90° arcs, alternating, separated by 40 mm straights. Starts towards +X, first arc to the right. */
 function bankPath(): CenterPath {
   const radius = BANK_RADIUS;
   const sweep = (BANK_SWEEP_DEG * Math.PI) / 180;
@@ -347,8 +347,8 @@ function bankPath(): CenterPath {
 }
 
 /**
- * Nastro chiuso di semi-larghezza `half` attorno a una polilinea aperta, con normali a mitra
- * così che il gonfiaggio successivo lasci gli spigoli interni vivi nella posizione giusta.
+ * Closed ribbon of half-width `half` around an open polyline, with mitred normals
+ * so that the later inflation leaves the inner corners sharp in the right position.
  */
 function ribbon(points: readonly Vec2[], half: number): Vec2[] {
   const right: Vec2[] = [];
@@ -368,7 +368,7 @@ function ribbon(points: readonly Vec2[], half: number): Vec2[] {
   return [...right, ...left.reverse()];
 }
 
-/** Rettangolo orientato: `along` lungo t (centrato su c), da `n0` a `n1` lungo la normale n. */
+/** Oriented rectangle: `along` along t (centred on c), from `n0` to `n1` along the normal n. */
 function orientedRect(c: Vec2, t: Vec2, n: Vec2, along: number, n0: number, n1: number): Vec2[] {
   const h = along / 2;
   return [
@@ -379,13 +379,13 @@ function orientedRect(c: Vec2, t: Vec2, n: Vec2, along: number, n0: number, n1: 
   ];
 }
 
-/** Marcature + asole. Il pezzo E aggiunge una tasca per spigolo. */
+/** Markers + slots. Part E adds a pocket per corner. */
 export function expectedHoleCount(path: CenterPath): number {
   return markHoleCenters(path).length + wireSlots(path).length + (path.cornerPockets ? path.bends.length : 0);
 }
 
 export function markHoleCenters(path: CenterPath): Vec2[] {
-  // Sulla tasca d'angolo il primo foro standard (2,5 mm) cade nel vuoto: si parte più indietro.
+  // On the corner pocket the first standard hole (2.5 mm) falls into the void: it starts further back.
   const first = path.cornerPockets ? 9 : MARK_HOLE_FIRST;
   return path.bends.flatMap((bend, i) =>
     Array.from({ length: i + 1 }, (_, j) =>
@@ -394,7 +394,7 @@ export function markHoleCenters(path: CenterPath): Vec2[] {
   );
 }
 
-/** Asole fili: il labbro è l'estremità dello spezzone, l'apertura guarda la parete di testa. */
+/** Wire slots: the lip is the end of the segment, the opening faces the end wall. */
 export function wireSlots(path: CenterPath): WireSlot[] {
   return [
     { role: 'DIN', center: path.start, tangent: path.startHeading, outward: scale(path.startHeading, -1) },
@@ -406,7 +406,7 @@ function slotEnd(slot: WireSlot): SlotEnd {
   return { at: slot.center, outward: slot.outward };
 }
 
-/** Tacche sul lato esterno del primo tratto dritto (opposto alla prima piega). */
+/** Notches on the outer side of the first straight (opposite the first bend). */
 function notchPolygons(path: CenterPath, count: number, outerHalf: number): Vec2[][] {
   const firstTurn = path.bends[0]?.turn ?? -1;
   const n = scale(leftNormal(path.startHeading), -firstTurn);
@@ -417,8 +417,8 @@ function notchPolygons(path: CenterPath, count: number, outerHalf: number): Vec2
 }
 
 /**
- * Ingombro in pianta del canale (vuoto): terminazione arrotondata sull'estremità,
- * allargato sul lato interno di archi e spigoli.
+ * Plan footprint of the channel (void): rounded end at the extremity,
+ * widened on the inner side of arcs and corners.
  */
 export function channelSection(
   wasm: ManifoldToplevel,
@@ -437,7 +437,7 @@ export function channelSection(
 
     for (const bend of path.bends) {
       if (bend.arc) {
-        // Le corde della catena cadono verso il centro: si allarga solo il lato interno di s.
+        // The chords of the chain fall towards the centre: only the inner side is widened by s.
         const { center, radius, points } = bend.arc;
         const s = sagitta(p.HINGE_PITCH, radius);
         const k = (radius - s / 2) / radius;
@@ -445,7 +445,7 @@ export function channelSection(
         const band = tmp(new CrossSection(ribbon(shifted, RIBBON_HALF), 'NonZero'));
         fills.push(tmp(band.offset(halfW + s / 2 - RIBBON_HALF, 'Round', 2, ROUND_SEGMENTS)));
       } else {
-        // Spigolo: interno vivo (dato dall'offset), esterno arrotondato con il raggio necessario.
+        // Corner: sharp inside (given by the offset), outside rounded with the needed radius.
         const angle = Math.acos(Math.max(-1, Math.min(1, dot(bend.heading, bend.headingOut))));
         const rOut = cornerOuterRadius(p.STRIP_W, p.CHANNEL_W, (angle * 180) / Math.PI);
         const far = (2 * rOut) / Math.sin(angle / 2);
@@ -490,7 +490,7 @@ function spanInner(span: BankSpan, s: number, tangent: Vec2): Vec2 {
   return scale(leftNormal(heading), span.turn);
 }
 
-/** Semilarghezza del canale e inclinazione (lato interno più basso) a un'ascissa. */
+/** Half-width of the channel and tilt (inner side lower) at an abscissa. */
 function bankFrame(
   path: CenterPath,
   s: number,
@@ -590,7 +590,7 @@ function floorZ(frame: Station, lateral: number, floor: number): number {
   return floor - (offset[0] * frame.tilt[0] + offset[1] * frame.tilt[1]);
 }
 
-/** Solido da una sequenza di sezioni a 4 vertici. Se il verso è interno, si ribalta. */
+/** Solid from a sequence of 4-vertex sections. If the winding is inward, it is flipped. */
 function loftSolid(wasm: ManifoldToplevel, sections: readonly (readonly Vec3[])[]): Manifold {
   const { Manifold, Mesh } = wasm;
   const verts: number[] = [];
@@ -635,7 +635,7 @@ function loftSolid(wasm: ManifoldToplevel, sections: readonly (readonly Vec3[])[
     if (solid.status() === 'NoError' && solid.volume() > 0) return solid;
     solid.delete();
   } catch {
-    // Il verso opposto è l'altra faccia esterna.
+    // The opposite winding is the other outer face.
   }
   const flipped: number[] = [];
   for (let i = 0; i < tris.length; i += 3) flipped.push(tris[i]!, tris[i + 2]!, tris[i + 1]!);
@@ -643,8 +643,8 @@ function loftSolid(wasm: ManifoldToplevel, sections: readonly (readonly Vec3[])[
 }
 
 /**
- * Vuoto del canale: la pianta è quella del canale, il fondo è la superficie spazzata
- * (lato interno più basso). Pareti e cima restano verticali / orizzontali.
+ * Void of the channel: the plan is that of the channel, the floor is the swept surface
+ * (inner side lower). Walls and top stay vertical / horizontal.
  */
 function bankedChannelVoid(wasm: ManifoldToplevel, path: CenterPath, channel: CrossSection, p: BendTestParams): Manifold {
   const { Manifold } = wasm;
@@ -672,7 +672,7 @@ function bankedChannelVoid(wasm: ManifoldToplevel, path: CenterPath, channel: Cr
   return voidCut;
 }
 
-/** Tasca d'angolo: unione delle due asole a piena larghezza, smusso sui due ingressi. */
+/** Corner pocket: union of the two slots at full width, chamfer on the two entries. */
 function cornerPocketSolids(wasm: ManifoldToplevel, channel: CrossSection, path: CenterPath, p: BendTestParams): Manifold[] {
   const { CrossSection } = wasm;
   const wide = { ...p, WIRE_SLOT_W: p.CHANNEL_W };
@@ -749,8 +749,8 @@ function buildPiece(
 }
 
 /**
- * Offset in Y di ogni pezzo: il successivo scende il più possibile negli avvallamenti
- * del precedente, mantenendo almeno PACK_GAP mm di distanza in pianta.
+ * Y offset of every part: the next one goes down as far as possible into the hollows
+ * of the previous one, keeping at least PACK_GAP mm of distance in plan.
  */
 function packOffsets(outlines: readonly CrossSection[]): number[] {
   const first = outlines[0];
@@ -804,7 +804,7 @@ export function resolveBendTestParams(overrides: Partial<BendTestParams> = {}): 
   };
 }
 
-/** Con i default l'asola è larga quanto il canale, anche sulle varianti (canale e +0,4). */
+/** With the defaults the slot is as wide as the channel, on the variants too (channel and +0.4). */
 function channelParams(base: BendTestParams, channelW: number): BendTestParams {
   const followsChannel = Math.abs(base.WIRE_SLOT_W - base.CHANNEL_W) < 1e-9;
   return {
@@ -822,7 +822,7 @@ export async function buildBendTest(options: BendTestOptions): Promise<BendTestR
     ? variantWidths(base.CHANNEL_W).map((w, i) => ({ channelW: w, notches: i + 1 }))
     : [{ channelW: base.CHANNEL_W, notches: 0 }];
 
-  // Lo smusso dipende da WALL e CHANNEL_DEPTH, uguali per tutte le varianti.
+  // The chamfer depends on WALL and CHANNEL_DEPTH, the same for all the variants.
   const chamfer = planChamfer(base);
   const pieces = specs.map((s) => buildPiece(wasm, path, channelParams(base, s.channelW), s.notches, chamfer));
   try {

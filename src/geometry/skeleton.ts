@@ -1,18 +1,18 @@
-// [B] Scheletro (SPEC §5): thinning di Zhang-Suen sulla bitmap di [A], poi pulizia dei pixel
-// ridondanti (gradini, blocchi 2×2) per avere uno scheletro 8-connesso largo un pixel.
-// Modulo puro, deterministico. La bitmap deve avere almeno 1 px vuoto sul bordo (il margine di [A]).
+// [B] Skeleton (SPEC §5): Zhang-Suen thinning on the bitmap of [A], then cleanup of redundant
+// pixels (steps, 2×2 blocks) to get an 8-connected skeleton one pixel wide.
+// Pure, deterministic module. The bitmap must have at least 1 empty px on the border (the margin of [A]).
 
-/** Offset degli 8 vicini in senso orario a partire da nord: P2..P9 della notazione di Zhang-Suen. */
+/** Offsets of the 8 neighbours clockwise starting from north: P2..P9 of the Zhang-Suen notation. */
 function ringOffsets(width: number): number[] {
   return [-width, -width + 1, 1, width + 1, width, width - 1, -1, -width - 1];
 }
 
-/** Vicini (0/1) di `i` nell'ordine N, NE, E, SE, S, SW, W, NW. */
+/** Neighbours (0/1) of `i` in the order N, NE, E, SE, S, SW, W, NW. */
 function ring(data: Uint8Array, i: number, off: readonly number[], out: Uint8Array): void {
   for (let k = 0; k < 8; k++) out[k] = data[i + off[k]!] ? 1 : 0;
 }
 
-/** Numero di transizioni 0→1 percorrendo l'anello degli 8 vicini (crossing number). */
+/** Number of 0→1 transitions going around the ring of the 8 neighbours (crossing number). */
 export function crossings(n: Uint8Array): number {
   let a = 0;
   for (let k = 0; k < 8; k++) if (!n[k] && n[(k + 1) % 8]) a++;
@@ -21,13 +21,13 @@ export function crossings(n: Uint8Array): number {
 
 const count = (n: Uint8Array): number => n[0]! + n[1]! + n[2]! + n[3]! + n[4]! + n[5]! + n[6]! + n[7]!;
 
-/** Zhang & Suen (1984), sulle sole celle piene: restituisce una nuova bitmap. */
+/** Zhang & Suen (1984), on filled cells only: returns a new bitmap. */
 export function zhangSuen(data: Uint8Array, width: number, height: number): Uint8Array {
   const img = data.slice();
   const off = ringOffsets(width);
   const n = new Uint8Array(8);
-  // Solo i pixel del fronte (con almeno un vicino vuoto) possono essere tolti: si esaminano solo
-  // quelli, e il fronte avanza con i vicini dei pixel tolti. Il risultato è quello del metodo classico.
+  // Only front pixels (with at least one empty neighbour) can be removed: only those are
+  // examined, and the front advances with the neighbours of the removed pixels. The result is that of the classic method.
   const inFront = new Uint8Array(img.length);
   let front: number[] = [];
   for (let y = 1; y < height - 1; y++) {
@@ -76,12 +76,12 @@ export function zhangSuen(data: Uint8Array, width: number, height: number): Uint
 }
 
 /**
- * Punto semplice per l'8-connessione del pieno: i vicini pieni formano una sola componente
- * (8-adiacenza nell'anello) e i vicini vuoti 4-adiacenti a p una sola componente (4-adiacenza).
+ * Simple point for the 8-connectivity of the filled set: the filled neighbours form a single component
+ * (8-adjacency in the ring) and the empty neighbours 4-adjacent to p a single component (4-adjacency).
  */
 function isSimple(n: Uint8Array): boolean {
-  // Componenti dei pieni nell'anello: nell'anello ordinato, i pieni ai lati (k pari) sono adiacenti
-  // ai due angoli vicini; due lati consecutivi (N ed E) sono adiacenti fra loro anche se l'angolo è vuoto.
+  // Components of the filled ones in the ring: in the ordered ring, filled ones on the sides (even k) are adjacent
+  // to the two neighbouring corners; two consecutive sides (N and E) are adjacent to each other even if the corner is empty.
   const seen = new Uint8Array(8);
   let fgComponents = 0;
   for (let s = 0; s < 8; s++) {
@@ -101,7 +101,7 @@ function isSimple(n: Uint8Array): boolean {
     }
   }
   if (fgComponents !== 1) return false;
-  // Componenti dei vuoti (4-adiacenza nell'anello: solo k±1) che contengono un lato vuoto.
+  // Components of the empty ones (4-adjacency in the ring: only k±1) that contain an empty side.
   const seenBg = new Uint8Array(8);
   let bgComponents = 0;
   for (const s of [0, 2, 4, 6]) {
@@ -123,14 +123,14 @@ function isSimple(n: Uint8Array): boolean {
 }
 
 /**
- * Toglie i pixel semplici con almeno 2 vicini (gradini e blocchi 2×2 lasciati da Zhang-Suen):
- * le estremità restano, la connettività pure.
+ * Removes simple pixels with at least 2 neighbours (steps and 2×2 blocks left by Zhang-Suen):
+ * the ends stay, and so does connectivity.
  */
 export function cleanSkeleton(skel: Uint8Array, width: number, height: number): Uint8Array {
   const img = skel.slice();
   const off = ringOffsets(width);
   const n = new Uint8Array(8);
-  // In ordine raster, come una scansione completa dell'immagine.
+  // In raster order, like a full scan of the image.
   let alive: number[] = [];
   for (let y = 1; y < height - 1; y++) {
     for (let x = 1; x < width - 1; x++) if (img[y * width + x]) alive.push(y * width + x);
@@ -149,7 +149,7 @@ export function cleanSkeleton(skel: Uint8Array, width: number, height: number): 
   return img;
 }
 
-/** [B]: bitmap di [A] → scheletro largo un pixel. */
+/** [B]: bitmap of [A] → skeleton one pixel wide. */
 export function skeletonize(data: Uint8Array, width: number, height: number): Uint8Array {
   return cleanSkeleton(zhangSuen(data, width, height), width, height);
 }

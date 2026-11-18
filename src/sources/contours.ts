@@ -1,23 +1,23 @@
-// Contorni di una bitmap binaria (SPEC §4bis, trace "outline").
-// Marching squares: i pixel diagonali non si uniscono, così un buco resta un buco.
-// Modulo puro. Stessa bitmap → stessi percorsi, in browser, worker e Node.
+// Contours of a binary bitmap (SPEC §4bis, trace "outline").
+// Marching squares: diagonal pixels are not joined, so a hole stays a hole.
+// Pure module. Same bitmap → same paths, in browser, worker and Node.
 import { POLYLINE_TOLERANCE_PX } from '../geometry/graph';
 import { pxToMm, type Point, type PxToMm } from '../geometry/rasterize';
 
-/** Buco più piccolo di così non diventa un percorso di striscia (SPEC §4bis). */
+/** A hole smaller than this does not become a strip path (SPEC §4bis). */
 export const MIN_HOLE_AREA_MM2 = 0.05;
 
 export interface TracePath {
-  /** Pixel continui, Y verso il basso. Il primo punto non è ripetuto in coda: il percorso è chiuso. */
+  /** Continuous pixels, Y pointing down. The first point is not repeated at the end: the path is closed. */
   points: Point[];
-  /** Gira intorno a un buco, non al bordo esterno di una regione. */
+  /** It goes around a hole, not the outer border of a region. */
   hole: boolean;
 }
 
 export interface TraceOptions {
-  /** Douglas-Peucker, in pixel. Default 0,75, come le polilinee di [C]. */
+  /** Douglas-Peucker, in pixels. Default 0.75, like the polylines of [C]. */
   tolerancePx?: number;
-  /** I buchi con area minore si scartano. 0 li tiene tutti. */
+  /** Holes with a smaller area are discarded. 0 keeps them all. */
   minHoleAreaPx?: number;
 }
 
@@ -31,8 +31,8 @@ interface Seg {
 const keyOf = (x: number, y: number): string => `${Math.round(x * 2)},${Math.round(y * 2)}`;
 
 /**
- * Bordi delle regioni piene. Ogni percorso è chiuso; l'inchiostro resta a destra
- * (Y verso il basso), quindi i buchi hanno area con segno negativo.
+ * Borders of the filled regions. Every path is closed; the ink stays on the right
+ * (Y pointing down), so holes have negative signed area.
  */
 export function traceContours(data: Uint8Array, width: number, height: number, options: TraceOptions = {}): TracePath[] {
   const tolerance = options.tolerancePx ?? POLYLINE_TOLERANCE_PX;
@@ -61,7 +61,7 @@ export function traceContours(data: Uint8Array, width: number, height: number, o
   return out;
 }
 
-/** Polilinee in mm, Y verso l'alto, già semplificate. I buchi sotto `minHoleAreaMm2` non ci sono. */
+/** Polylines in mm, Y pointing up, already simplified. Holes under `minHoleAreaMm2` are not there. */
 export function outlinePolylines(
   raster: { data: Uint8Array; width: number; height: number; pxPerMm: number; pxToMm: PxToMm },
   minHoleAreaMm2 = MIN_HOLE_AREA_MM2,
@@ -142,7 +142,7 @@ function segments(data: Uint8Array, width: number, height: number): Seg[] {
   return segs;
 }
 
-/** Il segmento di partenza è il primo non usato, in ordine di scansione: il risultato non dipende dall'ordine di scoperta. */
+/** The starting segment is the first unused one, in scan order: the result does not depend on the order of discovery. */
 function walk(segs: Seg[], starts: Map<string, number[]>, used: Uint8Array, start: number): Point[] | null {
   const first = segs[start];
   if (!first) return null;
@@ -164,8 +164,8 @@ function walk(segs: Seg[], starts: Map<string, number[]>, used: Uint8Array, star
 }
 
 /**
- * A un incrocio si prende la svolta più a destra: l'inchiostro resta a destra del verso
- * di marcia e due regioni che si toccano solo in diagonale non si fondono.
+ * At a crossing the rightmost turn is taken: the ink stays on the right of the direction
+ * of travel and two regions that touch only diagonally do not merge.
  */
 function chooseNext(segs: Seg[], incoming: Seg, candidates: readonly number[], used: Uint8Array): number {
   let best = -1;

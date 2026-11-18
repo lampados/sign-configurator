@@ -1,33 +1,33 @@
-// Scatole per l'elettronica (SPEC §2, Scatola): catalogo e scelta in base agli ingombri di
-// alimentatore e controller. Misure interne in mm; prezzi indicativi per un pezzo, IVA esclusa,
-// novembre 2026. Modulo puro.
+// Boxes for the electronics (SPEC §2, Box): catalogue and choice based on the footprints of
+// power supply and controller. Inner measurements in mm; indicative prices for one piece, excluding VAT,
+// November 2026. Pure module.
 
-/** Distanza fra un componente e la parete, mm. */
+/** Distance between a component and the wall, mm. */
 export const BOX_WALL_GAP_MM = 5;
-/** Distanza fra due componenti affiancati, mm. */
+/** Distance between two components side by side, mm. */
 export const BOX_ITEM_GAP_MM = 10;
-/** Aria sopra il componente più alto, per i cavi sui morsetti, mm. */
+/** Air above the tallest component, for the cables on the terminals, mm. */
 export const BOX_TOP_GAP_MM = 10;
-/** Ingombro indicativo di un controller di cui il costruttore non pubblica le misure. */
+/** Indicative footprint of a controller whose maker does not publish the measurements. */
 export const CONTROLLER_FALLBACK_MM: [number, number, number] = [60, 35, 20];
 
 export interface BoxSpec {
   id: string;
   brand: string;
   model: string;
-  /** Interno L × W × H, mm. */
+  /** Inside L × W × H, mm. */
   innerMm: [number, number, number];
-  /** Esterno L × W × H, mm; null se non l'abbiamo da una fonte. */
+  /** Outside L × W × H, mm; null if we do not have it from a source. */
   outerMm: [number, number, number] | null;
   ip: string;
   material: string;
   priceEur: [number, number];
   url: string;
-  /** Interno stimato dall'esterno (pareti e coperchio), non dichiarato dal costruttore. */
+  /** Inside estimated from the outside (walls and lid), not declared by the maker. */
   innerEstimated?: boolean;
 }
 
-/** Hammond dà le misure esterne: interno stimato con pareti da 2,5 mm e 7 mm fra fondo e coperchio. */
+/** Hammond gives the outer measurements: inside estimated with 2.5 mm walls and 7 mm between floor and lid. */
 function hammond(model: string, outer: [number, number, number], price: [number, number]): BoxSpec {
   return {
     id: model.toLowerCase(),
@@ -43,7 +43,7 @@ function hammond(model: string, outer: [number, number, number], price: [number,
   };
 }
 
-/** Gewiss serie 44 CE: il codice dice le misure interne. */
+/** Gewiss 44 CE series: the code gives the inner measurements. */
 function gewiss(model: string, inner: [number, number, number], outer: [number, number, number] | null, price: [number, number], ip = 'IP56'): BoxSpec {
   return {
     id: model.toLowerCase(),
@@ -70,12 +70,12 @@ export const BOXES: readonly BoxSpec[] = [
   gewiss('GW44209', [300, 220, 120], [316, 236, 128], [29, 58], 'IP55'),
 ];
 
-/** Scelta nel menu: la più piccola che basta, nessuna scatola, o una scatola precisa. */
+/** Choice in the menu: the smallest that is enough, no box, or a specific box. */
 export const BOX_AUTO = 'auto';
 export const BOX_NONE = 'none';
 
 export interface BoxItem {
-  /** Nome per gli avvisi. */
+  /** Name for the warnings. */
   label: string;
   sizeMm: [number, number, number];
 }
@@ -83,8 +83,8 @@ export interface BoxItem {
 const volume = (b: BoxSpec): number => b.innerMm[0] * b.innerMm[1] * b.innerMm[2];
 
 /**
- * Le misure interne minime per `items` affiancati: in fila lungo L oppure lungo W, con
- * BOX_WALL_GAP_MM alle pareti, BOX_ITEM_GAP_MM fra un componente e l'altro, BOX_TOP_GAP_MM sopra.
+ * The minimum inner measurements for `items` side by side: in a row along L or along W, with
+ * BOX_WALL_GAP_MM to the walls, BOX_ITEM_GAP_MM between one component and the next, BOX_TOP_GAP_MM above.
  */
 export function boxNeeds(items: readonly BoxItem[]): [number, number, number][] {
   if (items.length === 0) return [];
@@ -100,7 +100,7 @@ export function boxNeeds(items: readonly BoxItem[]): [number, number, number][] 
   ];
 }
 
-/** I componenti ci stanno, in una delle due file e con la scatola girata come serve. */
+/** The components fit, in one of the two rows and with the box rotated as needed. */
 export function boxFits(box: BoxSpec, items: readonly BoxItem[]): boolean {
   if (items.length === 0) return true;
   const [bl, bw, bh] = box.innerMm;
@@ -109,22 +109,22 @@ export function boxFits(box: BoxSpec, items: readonly BoxItem[]): boolean {
   );
 }
 
-/** Id delle scatole che contengono `items`, dalla più piccola. */
+/** Ids of the boxes that hold `items`, smallest first. */
 export function boxesThatFit(items: readonly BoxItem[]): string[] {
   return [...BOXES].sort((a, b) => volume(a) - volume(b)).filter((b) => boxFits(b, items)).map((b) => b.id);
 }
 
 export interface BoxPick {
   box: BoxSpec | null;
-  /** La scatola scelta li contiene tutti; sempre vero senza scatola o senza componenti. */
+  /** The chosen box holds them all; always true without a box or without components. */
   fits: boolean;
-  /** Scelta automatica: la più piccola che basta. */
+  /** Automatic choice: the smallest that is enough. */
   auto: boolean;
 }
 
 /**
- * Scatola per `items`. `choice`: BOX_AUTO (la più piccola che basta, per volume interno),
- * BOX_NONE, o l'id di una scatola (anche se troppo piccola: `fits` lo dice).
+ * Box for `items`. `choice`: BOX_AUTO (the smallest that is enough, by inner volume),
+ * BOX_NONE, or the id of a box (even if too small: `fits` says so).
  */
 export function pickBox(items: readonly BoxItem[], choice: string = BOX_AUTO): BoxPick {
   if (choice === BOX_NONE || items.length === 0) return { box: null, fits: true, auto: choice !== BOX_NONE };

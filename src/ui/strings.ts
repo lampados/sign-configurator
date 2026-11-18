@@ -1,20 +1,20 @@
-// Testi della pagina cliente (SPEC §12.2): il meno possibile, in inglese breve. Icone, numeri e
-// unità (mm, cm, V, A, LED/m) fanno il resto. Admin, debug e bend test restano in italiano.
-// Gli avvisi del generatore sono in inglese ma tecnici (servono a chi produce): `customerMessage`
-// li riduce a poche frasi per il cliente e scarta tutto il resto.
+// Texts of the customer page (SPEC §12.2): as little as possible, in short English. Icons, numbers and
+// units (mm, cm, V, A, LED/m) do the rest. The labels of the debug and bend-test pages stay in Italian.
+// Generator warnings are in English but technical (they serve whoever produces): `customerMessage`
+// reduces them to a few sentences for the customer and discards everything else.
 
 export const S = {
   pageTitle: 'Ciao, a WYSIWYG Sign Configurator',
-  /** In alto a sinistra sull'anteprima: nome, versione e autore, invito a contribuire. */
+  /** Top left on the preview: name, version and author, invitation to contribute. */
   brand: {
-    /** Nome corto: telefono. Nome lungo: desktop, scheda del browser, anteprime dei link. */
+    /** Short name: phone. Long name: desktop, browser tab, link previews. */
     name: 'Ciao Configurator',
     longName: 'Ciao, a WYSIWYG Sign Configurator',
     byline: 'v 0.2 designed by Davide Gomba',
     contribute: 'Contribute to this project on GitHub',
     repo: 'https://github.com/lampados/sign-configurator',
   },
-  /** Prezzo voce per voce nel pannello Order (SPEC §12.5): ogni voce è un `id` di `priceOrder`. */
+  /** Line-by-line price in the Order panel (SPEC §12.5): every line is an `id` of `priceOrder`. */
   price: {
     title: 'Price',
     lines: {
@@ -35,7 +35,7 @@ export const S = {
     shipping: 'Shipping (estimate)',
     toQuote: 'to be quoted',
     note: 'This is only an estimate. We confirm the price, with shipping, within 24 hours of your request.',
-    /** Etichette senza quantità, per la stima che va al negozio: la quantità sta nel dettaglio. */
+    /** Labels without quantity, for the estimate that goes to the shop: the quantity is in the detail. */
     plain: { strip: 'LED strip', segments: 'Assembly', margin: 'Margin' },
     detail: {
       strip: (name: string, metres: string) => `${name} · ${metres} m`,
@@ -44,12 +44,12 @@ export const S = {
     },
     eur: (amount: number) => `€${Number.isInteger(amount) ? amount : amount.toFixed(2)}`,
   },
-  /** Invito a offrire un caffè: sotto il nome e, nel pannello Order, sotto «Download STL». */
+  /** Invitation to offer a coffee: under the name and, in the Order panel, under "Download STL". */
   support: {
     brand: '☕ Offer me a coffee',
     lead: 'Printing it yourself?',
     link: 'Offer me a coffee',
-    /** I tre tagli si scelgono sulla pagina delle offerte: qui sono solo nominati. */
+    /** The three sizes are chosen on the donation page: here they are only named. */
     sizes: 'espresso, doppio or corretto.',
   },
   tools: {
@@ -75,7 +75,7 @@ export const S = {
   sheet: { configure: 'Configure', request: 'Order', done: 'Done', aria: 'Tools' },
   view: { aria: 'View', on: 'On', off: 'Off' },
   rotate: 'Rotate screen',
-  /** Giro guidato: parte alla prima visita e dal tasto «?». Il colore non c'è: è solo estetica. */
+  /** Guided tour: it starts at the first visit and from the "?" button. Colour is not in it: it is only aesthetics. */
   tour: {
     help: 'Help',
     aria: 'Guided tour',
@@ -161,9 +161,9 @@ export const S = {
     title: (country: string) => `Power supply plug: ${country}. Universal input 100–240 V.`,
   },
   supply: {
-    /** Pillola: modello, tensione e corrente nominale. */
+    /** Pill: model, voltage and nominal current. */
     pill: (model: string, volts: number, amps: number) => `${model} · ${volts} V · ${amps} A`,
-    /** Nessun modello del catalogo basta: solo quanto serve. */
+    /** No catalogue model is enough: only what is needed. */
     bare: (volts: number, amps: number) => `${volts} V · ${amps} A`,
     title: (model: string, needA: number, volts: number) =>
       `Power supply: ${model}. The sign needs ${needA} A at ${volts} V (25 % margin). See all parts.`,
@@ -173,14 +173,14 @@ export const S = {
   order: {
     send: 'Send request',
     sending: 'Sending…',
-    /** Sotto il pulsante: che cosa succede dopo, e dove finiscono i dati. */
+    /** Under the button: what happens next, and where the data ends up. */
     next: 'You will enter your contact and shipping details on our shop. We reply with the final price.',
     failed: 'Could not send the design. Check your connection and try again.',
     notFound: 'This design link has expired or is wrong.',
     download: 'Download STL',
     downloadParts: (parts: number) => `Download STL · ${parts} parts (.zip)`,
     blockedFallback: 'Fix the design before sending.',
-    /** Riga sotto i pulsanti: i totali di tutti, non quelli di chi guarda. */
+    /** Row under the buttons: everyone's totals, not those of the viewer. */
     stats: {
       downloads: (n: number) => `${n} downloads`,
       requests: (n: number) => `${n} requests`,
@@ -209,10 +209,10 @@ export const S = {
     print: 'Printing',
     printOne: 'One piece',
     printParts: (parts: number, bedW: number, bedH: number) => `${parts} parts for a ${bedW} × ${bedH} mm plate`,
-    /** Un giunto cade su un canale: lì la striscia va tagliata e risaldata. */
+    /** A joint falls on a channel: there the strip must be cut and resoldered. */
     printJoins: (joins: number) => `${joins} join${joins === 1 ? '' : 's'} across a lit channel`,
     assembly: 'Assembly',
-    /** Tagli in curva e tempo di montaggio: «31 strip cuts · 5 h 10 min». */
+    /** Cuts on bends and assembly time: "31 strip cuts · 5 h 10 min". */
     assemblyValue: (cuts: number, minutes: number, jumpers = 0) => {
       const h = Math.floor(minutes / 60);
       const m = minutes % 60;
@@ -244,7 +244,7 @@ export const S = {
   },
 };
 
-/** Avviso del generatore → frase per il cliente, oppure null se non lo riguarda. */
+/** Generator warning → sentence for the customer, or null if it does not concern them. */
 export function customerMessage(warning: string): string | null {
   const rules: [RegExp, (m: RegExpMatchArray) => string][] = [
     [/curve too tight/, () => 'Some curves are too tight for the LED strip: make the sign bigger or choose a strip with more LEDs per metre.'],
@@ -270,7 +270,7 @@ export function customerMessage(warning: string): string | null {
   return null;
 }
 
-/** Avvisi tradotti, senza doppioni; quelli che il cliente non deve vedere spariscono. */
+/** Simplified warnings, without duplicates; those the customer must not see disappear. */
 export function customerMessages(warnings: readonly string[]): string[] {
   return [...new Set(warnings.map(customerMessage).filter((m): m is string => m !== null))];
 }

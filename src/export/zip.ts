@@ -1,4 +1,4 @@
-// ZIP senza compressione (metodo «store»): più file in un solo download. Modulo puro.
+// ZIP without compression ("store" method): several files in a single download. Pure module.
 
 export interface ZipEntry {
   name: string;
@@ -26,11 +26,11 @@ function bytesOf(data: ZipEntry['data']): Uint8Array {
   return data instanceof Uint8Array ? data : new Uint8Array(data);
 }
 
-// Data fissa (1 gennaio 2026): lo stesso contenuto dà lo stesso ZIP, byte per byte.
+// Fixed date (1 January 2026): the same content gives the same ZIP, byte for byte.
 const DOS_TIME = 0;
 const DOS_DATE = ((2026 - 1980) << 9) | (1 << 5) | 1;
 
-/** Archivio ZIP con i file nell'ordine dato. Nomi in UTF-8. */
+/** ZIP archive with the files in the given order. Names in UTF-8. */
 export function zipStore(entries: readonly ZipEntry[]): Uint8Array {
   const files = entries.map((entry) => {
     const data = bytesOf(entry.data);

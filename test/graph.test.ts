@@ -9,7 +9,7 @@ const readPublic: FontBytesReader = async (file) => {
   return b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength) as ArrayBuffer;
 };
 
-/** Rettangolo (antiorario) lungo `length` e largo `width`, centrato in (cx, cy), ruotato di `deg`. */
+/** Rectangle (counter-clockwise) `length` long and `width` wide, centred at (cx, cy), rotated by `deg`. */
 function bar(cx: number, cy: number, length: number, width: number, deg: number): Contour {
   const a = (deg * Math.PI) / 180;
   const [c, s] = [Math.cos(a), Math.sin(a)];
@@ -102,7 +102,7 @@ describe('buildGraph on Sacramento (100 mm)', () => {
     for (const n of g.nodes) h[n.degree] = (h[n.degree] ?? 0) + 1;
     return h;
   };
-  /** Lunghezza minima degli archi che finiscono in un estremo, in larghezze del tratto. */
+  /** Minimum length of the edges that end at an endpoint, in stroke widths. */
   const shortestEndEdge = (g: SkeletonGraph): number =>
     Math.min(
       ...g.edges
@@ -113,12 +113,12 @@ describe('buildGraph on Sacramento (100 mm)', () => {
   it('"alebe": the loops of l, e, b cross at degree-4 nodes, no spurious branch', async () => {
     const r = await sacramento('alebe');
     const g = buildGraph(r);
-    // Ogni nodo va all'ultimo glifo con l'origine alla sua sinistra.
+    // Every node goes to the last glyph with its origin to the left of it.
     const owner = (x: number): number => r.glyphs.filter((gl) => gl.x <= x).length - 1;
     const crossingsPerGlyph = r.glyphs.map((_, k) => g.nodes.filter((n) => n.degree === 4 && owner(n.x) === k).length);
     expect(r.glyphs.map((gl) => gl.char).join('')).toBe('alebe');
     expect(crossingsPerGlyph).toEqual([0, 1, 1, 1, 1]);
-    // Estremi veri: attacco e asta della "a", ricciolo della "b", uscita finale.
+    // Real endpoints: lead-in and stem of the "a", curl of the "b", final exit.
     expect(histogram(g)).toEqual({ 1: 4, 3: 2, 4: 4 });
     expect(shortestEndEdge(g)).toBeGreaterThan(1);
   });

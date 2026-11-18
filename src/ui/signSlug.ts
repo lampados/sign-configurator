@@ -1,8 +1,8 @@
-// Nome file degli STL del cliente (SPEC §5). Minuscolo, ASCII, trattini, al massimo 40 caratteri.
+// File name of the customer's STLs (SPEC §5). Lowercase, ASCII, hyphens, at most 40 characters.
 
 const SLUG_MAX = 40;
 
-/** «Ciao Torino» → `ciao-torino`. Vuoto o senza lettere → `insegna`. */
+/** "Ciao Torino" → `ciao-torino`. Empty or without letters → `sign`. */
 export function signSlug(value: string): string {
   const ascii = value
     .normalize('NFD')
@@ -18,17 +18,17 @@ export function stlFileName(source: string, heightMm: number, part: 'housing' | 
   return `${signSlug(source)}-${heightMm}mm-${part}.stl`;
 }
 
-/** Pezzo `index` di `count` (da 1) quando l'insegna è divisa per il piatto di stampa (SPEC §14). */
+/** Piece `index` of `count` (from 1) when the sign is split for the print bed (SPEC §14). */
 export function partFileName(source: string, heightMm: number, part: 'housing' | 'diffuser', index: number, count: number): string {
   return `${signSlug(source)}-${heightMm}mm-${part}-${index}of${count}.stl`;
 }
 
-/** Archivio con tutti i file di un'insegna divisa in pezzi. */
+/** Archive with all the files of a sign split into pieces. */
 export function zipFileName(source: string, heightMm: number): string {
   return `${signSlug(source)}-${heightMm}mm.zip`;
 }
 
-/** File di taglio laser del fondale (SPEC §13): stesso nome dell'STL, in SVG. */
+/** Laser cutting file of the backdrop (SPEC §13): same name as the STL, in SVG. */
 export function plateSvgFileName(source: string, heightMm: number): string {
   return `${signSlug(source)}-${heightMm}mm-backdrop.svg`;
 }

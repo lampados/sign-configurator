@@ -2,7 +2,7 @@ import { expect, type Page } from '@playwright/test';
 
 const FAVICON = 'favicon.ico';
 
-/** Errori di console e richieste fallite (il 404 di favicon.ico non è dell'app). */
+/** Console errors and failed requests (the 404 of favicon.ico is not the app's). */
 export function trackPage(page: Page): { problems: () => string[]; wasmOk: () => boolean } {
   const problems: string[] = [];
   let wasmOk = false;
@@ -21,7 +21,7 @@ export function trackPage(page: Page): { problems: () => string[]; wasmOk: () =>
   page.on('response', (res) => {
     const url = res.url();
     if (url.includes(FAVICON)) return;
-    // Vite rinomina l'asset (`manifold-<hash>.wasm`): conta qualsiasi .wasm andato a buon fine.
+    // Vite renames the asset (`manifold-<hash>.wasm`): any .wasm that loaded successfully counts.
     if (url.includes('.wasm') && res.ok()) wasmOk = true;
     if (res.status() >= 400) problems.push(`HTTP ${res.status()} ${url}`);
   });

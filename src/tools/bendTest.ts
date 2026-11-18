@@ -1,9 +1,9 @@
-// Pezzi di prova per misurare HINGE_MAX_DEG e R_MIN reali della striscia (SPEC §2, §10).
+// Test parts to measure the real HINGE_MAX_DEG and R_MIN of the strip (SPEC §2, §10).
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { COB_5MM, resolveParams, type EdgeProfile } from '../config';
 
-// I pezzi di prova nascono per la COB con gli intagli: la striscia predefinita non piega di lato.
+// The test parts were made for the COB with notches: the default strip does not bend sideways.
 const DEFAULT_PARAMS = resolveParams({ STRIP_ID: COB_5MM.id });
 import { meshToStl, type StlMesh } from '../export/stl';
 import {
@@ -14,7 +14,7 @@ import {
 } from './bendTestGeometry';
 
 const BED_WARN_MM = 250;
-/** Distanza fra A e B nell'anteprima (non negli STL, che restano separati). */
+/** Distance between A and B in the preview (not in the STLs, which stay separate). */
 const PREVIEW_GAP = 20;
 const PARAM_KEYS = [
   'CHANNEL_W',
@@ -61,7 +61,7 @@ variantsBox.addEventListener('change', () => {
 function createPreview(container: HTMLElement) {
   const renderer = new THREE.WebGLRenderer({ antialias: true });
   renderer.setPixelRatio(window.devicePixelRatio);
-  // Fuori dal flusso: la canvas non deve cambiare la dimensione osservata dal ResizeObserver.
+  // Out of the flow: the canvas must not change the size observed by the ResizeObserver.
   Object.assign(renderer.domElement.style, { position: 'absolute', inset: '0', display: 'block' });
   container.appendChild(renderer.domElement);
 
@@ -111,7 +111,7 @@ function createPreview(container: HTMLElement) {
   };
 
   return {
-    /** Mostra i pezzi affiancati lungo X, allineati in basso. */
+    /** Shows the parts side by side along X, aligned at the bottom. */
     show(meshes: readonly StlMesh[]): void {
       for (const child of [...content.children]) {
         content.remove(child);

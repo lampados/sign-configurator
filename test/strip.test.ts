@@ -5,8 +5,8 @@ import { sourceFromPaths } from '../src/geometry/segment';
 import { buildStrip } from '../src/geometry/strip';
 
 /**
- * Queste prove riguardano la piega della striscia, quindi usano una striscia che piega: la COB.
- * La predefinita (WS2812B su circuito flessibile) non curva, e qui non direbbe nulla di utile.
+ * These tests are about the bending of the strip, so they use a strip that bends: the COB.
+ * The default one (WS2812B on a flexible circuit) does not curve, and would say nothing useful here.
  */
 const BENDABLE = resolveParams({ STRIP_ID: 'cob-5mm' });
 
@@ -36,7 +36,7 @@ describe('minimum height', () => {
     expect(model.suggestion.hasErrors).toBe(false);
     expect(model.suggestion.heightMm).toBe(BENDABLE.CUT_PITCH);
     expect(model.bom.segments[0]?.cutLengthMm).toBe(80);
-    // 100 mm meno le due asole da 6: 88 mm di luce.
+    // 100 mm minus the two 6 mm slots: 88 mm of lit length.
     expect(model.bom.totalLeds).toBe(Math.round((88 * BENDABLE.LED_PER_M) / 1000));
   });
 
@@ -131,7 +131,7 @@ describe('minimum height', () => {
   });
 
   it('a narrow T merges beyond the contact, and scale separates it', () => {
-    // Il ramo parte dalla T a 10° dall'asta: lontano dal contatto i due tratti restano vicini.
+    // The branch leaves the T at 10° from the stem: far from the contact the two strokes stay close.
     const deg = (10 * Math.PI) / 180;
     const tip: Point = [50 + 80 * Math.cos(deg), 80 * Math.sin(deg)];
     const model = buildStrip(

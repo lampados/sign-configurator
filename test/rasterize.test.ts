@@ -21,7 +21,7 @@ const readPublic: FontBytesReader = async (file) => {
 };
 
 const FONT_IDS = FONTS.filter((font) => font.kind === 'outline').map((font) => font.id);
-// I font CJK misurano l'altezza su 永 e non hanno maiuscole da controllare: queste prove sono latine.
+// CJK fonts measure the height on 永 and have no capitals to check: these tests are Latin.
 const LATIN_IDS = FONTS.filter((font) => font.kind === 'outline' && (font.script ?? 'latin') === 'latin').map(
   (font) => font.id,
 );
@@ -30,8 +30,8 @@ const TEXT = 'Ciao Torino';
 const filled = (r: Raster): number => r.data.reduce((n, v) => n + v, 0);
 
 /**
- * Componenti connesse dei pixel con valore `value` (8-connesse per il pieno, 4 per il vuoto),
- * contando solo quelle di almeno `minSize` pixel.
+ * Connected components of the pixels with value `value` (8-connected for filled, 4 for empty),
+ * counting only those of at least `minSize` pixels.
  */
 function components(r: Raster, value: 0 | 1, minSize = 1): number {
   const { width: w, height: h, data } = r;
@@ -70,16 +70,16 @@ function components(r: Raster, value: 0 | 1, minSize = 1): number {
 }
 
 /**
- * Regioni piene e buchi (il fondo esterno, connesso grazie al margine, non conta).
- * I buchi sotto 0.05 mm² sono fessure tra contorni quasi a contatto, senza rilevanza fisica.
+ * Filled regions and holes (the outer background, connected thanks to the margin, does not count).
+ * Holes under 0.05 mm² are slits between contours almost in contact, with no physical relevance.
  */
 const topology = (r: Raster) => ({
   regions: components(r, 1),
   holes: components(r, 0, Math.ceil(0.05 * r.pxPerMm ** 2)) - 1,
 });
 
-/** Lettere disegnate come un unico tratto (più il puntino della i): vale per Sacramento,
- *  non per Neonderthaw, che imita i tubi al neon con interruzioni volute. */
+/** Letters drawn as a single stroke (plus the dot of the i): it holds for Sacramento,
+ *  not for Neonderthaw, which imitates neon tubes with intended breaks. */
 const SINGLE_STROKE: Record<string, boolean> = { sacramento: true, neonderthaw: false };
 
 function circle(cx: number, cy: number, radius: number, n: number, ccw: boolean): Contour {
@@ -194,7 +194,7 @@ describe('rasterize (text)', () => {
       expect(r.xHeightMm).toBeCloseTo(entry.xHeightMeasured * scale, 9);
       expect(r.warnings).toEqual([]);
 
-      // L'altezza è la sommità reale della "H", e la x-height quella della "x".
+      // The height is the real top of the "H", and the x-height that of the "x".
       const hx = await rasterize({ text: 'Hx', fontId, heightMm }, readPublic);
       expect(hx.glyphs[0]!.bbox!.maxY).toBeCloseTo(heightMm, 2);
       expect(hx.glyphs[1]!.bbox!.maxY).toBeCloseTo(hx.xHeightMm, 2);
@@ -204,10 +204,10 @@ describe('rasterize (text)', () => {
       const caps = r.glyphs.filter((g) => g.char === 'C' || g.char === 'T');
       expect(caps.map((g) => g.char)).toEqual(['C', 'T']);
       for (const g of caps) {
-        // Il contorno del glifo è scalato in base all'altezza misurata...
+        // The outline of the glyph is scaled according to the measured height...
         const unitsTop = font.charToGlyph(g.char!).getBoundingBox().y2;
         expect(g.bbox!.maxY).toBeCloseTo(unitsTop * scale, 1);
-        // ...e la bitmap lo riproduce: la riga più alta con inchiostro nelle sue colonne.
+        // ...and the bitmap reproduces it: the highest row with ink in its columns.
         const [c0] = mmToPx(r.pxToMm, g.bbox!.minX, 0);
         const [c1] = mmToPx(r.pxToMm, g.bbox!.maxX, 0);
         let topRow = -1;
@@ -223,7 +223,7 @@ describe('rasterize (text)', () => {
         expect(Math.abs(topMm - g.bbox!.maxY)).toBeLessThanOrEqual(r.pxToMm.mmPerPx);
       }
 
-      // La linea di base cade su un bordo di pixel; ingombro e larghezza sono esposti in mm.
+      // The baseline falls on a pixel edge; footprint and width are exposed in mm.
       const baselineRow = mmToPx(r.pxToMm, 0, 0)[1];
       expect(baselineRow).toBeCloseTo(Math.round(baselineRow), 9);
       expect(r.bbox!.maxX - r.bbox!.minX).toBeGreaterThan(0);
@@ -248,7 +248,7 @@ describe('rasterize (text)', () => {
         if (SINGLE_STROKE[fontId]) expect(t.regions, `${fontId} "${ch}"`).toBe(ch === 'i' ? 2 : 1);
         letterRegions += t.regions;
       }
-      // Nel testo intero le lettere legate possono unirsi, ma non spezzarsi.
+      // In the whole text joined letters can merge, but not break.
       const all = await rasterize({ text: TEXT, fontId, heightMm }, readPublic);
       expect(topology(all).regions).toBeLessThanOrEqual(letterRegions);
     }, 30_000);

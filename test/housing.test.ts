@@ -19,9 +19,9 @@ const readPublic: FontBytesReader = async (file) => {
   return b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength) as ArrayBuffer;
 };
 
-// Gli spigoli con tasca valgono per una striscia che segue le curve: la COB.
+// Cusps with a pocket apply to a strip that follows curves: the COB.
 const BENDABLE = resolveParams({ STRIP_ID: 'cob-5mm' });
-// Passo lungo (60 LED/m): è quello che dà una freccia misurabile sugli archi di prova.
+// Long pitch (60 LED/m): it is the one that gives a measurable sagitta on the test arcs.
 const P = resolveParams({ STRIP_ID: 'ws2812b-60' });
 
 function line(length: number, id: number, origin: Vec2 = [0, 0]): HousingPath {
@@ -105,18 +105,18 @@ describe('housing', () => {
       const floorZ = P.FLOOR / 2;
       const voidAt = async (c: Vec2) => (await sliceArea(built.solid, floorZ, c)) < 1e-6;
       const solidAt = async (c: Vec2) => (await sliceArea(built.solid, floorZ, c)) > 0.01;
-      // Capo DOUT, in x = 80: il foro sta a metà degli ultimi WIRE_SLOT_L, cioè in x = 77.
+      // DOUT end, at x = 80: the hole sits halfway along the last WIRE_SLOT_L, that is at x = 77.
       const cx = 80 - P.WIRE_SLOT_L / 2;
       const r = P.WIRE_HOLE_D / 2;
       expect(await voidAt([cx, 0])).toBe(true);
       expect(await voidAt([cx + r - 0.3, 0])).toBe(true);
       expect(await voidAt([cx, r - 0.3])).toBe(true);
-      // Attorno al foro il fondo c'è: verso la striscia, verso la testa del canale, ai lati.
+      // Around the hole the floor is there: towards the strip, towards the end of the channel, at the sides.
       expect(await solidAt([cx - r - 0.4, 0])).toBe(true);
       expect(await solidAt([cx + r + 0.4, 0])).toBe(true);
       expect(await solidAt([cx, r + 0.4])).toBe(true);
       expect(await solidAt([cx, -(r + 0.4)])).toBe(true);
-      // Il contorno del foro per DXF e fondale è un cerchio di quel diametro, centrato lì.
+      // The outline of the hole for DXF and backdrop is a circle of that diameter, centred there.
       const dout = built.holes.wireSlots.find((slot) => slot.role === 'DOUT')!;
       const xs = dout.points.map((q) => q[0]);
       const ys = dout.points.map((q) => q[1]);
@@ -124,7 +124,7 @@ describe('housing', () => {
       expect(Math.max(...ys) - Math.min(...ys)).toBeCloseTo(P.WIRE_HOLE_D, 1);
       expect((Math.max(...xs) + Math.min(...xs)) / 2).toBeCloseTo(cx, 1);
       expect(built.solid.decompose()).toHaveLength(1);
-      // Il cavo passa dal foro grande del primo capo: non ce n'è un secondo accanto.
+      // The cable goes through the large hole of the first end: there is no second one next to it.
       expect(built.holes.cable).toMatchObject({ x: P.WIRE_SLOT_L / 2, y: 0 });
     } finally {
       built.solid.delete();
@@ -143,21 +143,21 @@ describe('housing', () => {
         expect(hole.d).toBe(4);
         expect(hole.y).toBeCloseTo(0, 6);
       }
-      // Passo regolare: le distanze fra fori vicini sono multipli dello stesso passo (dove un
-      // ancoraggio ha preso il posto di un foro, il salto è doppio).
+      // Regular pitch: the distances between neighbouring holes are multiples of the same pitch (where an
+      // anchor took the place of a hole, the jump is double).
       const xs = holes.map((hole) => hole.x).sort((a, b) => a - b);
       const step = Math.min(...xs.slice(1).map((x, i) => x - xs[i]!));
       expect(step).toBeGreaterThan(11);
       expect(step).toBeLessThan(13);
       for (let i = 1; i < xs.length; i++) expect(((xs[i]! - xs[i - 1]!) / step) % 1).toBeCloseTo(0, 6);
-      // Fra un foro piccolo e qualsiasi altro foro resta almeno 1,5 mm di fondo.
+      // Between a small hole and any other hole at least 1.5 mm of floor is left.
       const others = [
         ...built.holes.anchors.map((hole) => ({ x: hole.x, r: P.ANCHOR_HOLE_D / 2 })),
         { x: P.WIRE_SLOT_L / 2, r: P.WIRE_HOLE_D / 2 },
         { x: 200 - P.WIRE_SLOT_L / 2, r: P.WIRE_HOLE_D / 2 },
       ];
       for (const hole of holes) for (const other of others) expect(Math.abs(hole.x - other.x) - other.r - 2).toBeGreaterThanOrEqual(1.5 - 1e-6);
-      // Sono passanti, e fra due fori il fondo c'è.
+      // They are through holes, and between two holes the floor is there.
       const floorZ = P.FLOOR / 2;
       expect(await sliceArea(built.solid, floorZ, [xs[2]!, 0])).toBeLessThan(1e-6);
       expect(await sliceArea(built.solid, floorZ, [xs[2]! + step / 2, 0])).toBeGreaterThan(0.01);
@@ -401,7 +401,7 @@ describe('generate', () => {
     expect(elapsed).toBeLessThan(3000);
     expect(result.housingMesh.triVerts.length).toBeGreaterThan(12);
     expect(result.diffuserMesh.triVerts.length).toBeGreaterThan(0);
-    // Ogni spezzone aperto ha due asole, meno quelle fuse nelle tasche. Il puntino "dot" non ne ha.
+    // Every open segment has two slots, minus those merged into pockets. The "dot" dot has none.
     const slotEnds = result.bom.wireSlots + result.bom.corners.length * 2;
     expect(slotEnds).toBeLessThanOrEqual(result.bom.segments.length * 2);
     expect((result.bom.segments.length * 2 - slotEnds) % 2).toBe(0);

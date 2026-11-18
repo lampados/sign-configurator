@@ -1,6 +1,6 @@
 import { defineConfig, devices } from '@playwright/test';
 
-// Solo Chromium, headless. Il server è il preview del build appena prodotto da `npm run check`.
+// Chromium only, headless. The server is the preview of the build just produced by `npm run check`.
 export default defineConfig({
   testDir: 'tests/smoke',
   fullyParallel: false,

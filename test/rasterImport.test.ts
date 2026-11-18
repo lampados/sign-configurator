@@ -14,7 +14,7 @@ const sameBytes = (a: ArrayBuffer, b: ArrayBuffer): boolean => {
   return true;
 };
 
-/** Mulberry32, seed fisso: le bitmap di prova non cambiano tra una macchina e l'altra. */
+/** Mulberry32, fixed seed: the test bitmaps do not change from one machine to another. */
 function mulberry32(seed: number): () => number {
   let state = seed >>> 0;
   return () => {

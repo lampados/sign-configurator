@@ -30,7 +30,7 @@ describe('splitting for the print bed', () => {
     for (const piece of plan.pieces) expect(piece.x1 - piece.x0).toBeLessThanOrEqual(300 - 2 * BED_MARGIN + 1e-9);
     expect(plan.pieces[0]!.x0).toBe(10);
     expect(plan.pieces[2]!.x1).toBe(710);
-    // Senza ostacoli i pezzi escono uguali, entro il passo di ricerca.
+    // Without obstacles the pieces come out equal, within the search step.
     for (const piece of plan.pieces) expect(Math.abs(piece.x1 - piece.x0 - 700 / 3)).toBeLessThan(1);
   });
 
@@ -39,7 +39,7 @@ describe('splitting for the print bed', () => {
     const free = planSplit({ ...base, keepOut: [] });
     expect(free.cutsX).toHaveLength(1);
     expect(Math.abs(free.cutsX[0]! - 200)).toBeLessThan(1);
-    // Un foro si schiva uscendo dal suo ingombro.
+    // A hole is avoided by leaving its footprint.
     const hole = planSplit({ ...base, keepOut: [{ x0: 190, x1: 210, kind: 'hole' }] });
     expect(hole.cutsX).toHaveLength(1);
     const x = hole.cutsX[0]!;
@@ -48,7 +48,7 @@ describe('splitting for the print bed', () => {
   });
 
   it('a gap without channels beats a cut through a letter, even with a wire slot inside', () => {
-    // Un canale continuo da 0 a 400, interrotto solo fra 195 e 205: lì c'è l'asola.
+    // A continuous channel from 0 to 400, interrupted only between 195 and 205: the slot is there.
     const centerlines: SplitPoint[][] = [
       [
         [0, 60],
@@ -73,8 +73,8 @@ describe('splitting for the print bed', () => {
   });
 
   it('one more piece is accepted if it avoids cutting a channel', () => {
-    // Varchi senza canali a 200, 400 e 600. Con due soli tagli (il minimo per 800 mm) almeno uno
-    // cadrebbe dentro una lettera; con tre cadono tutti nei varchi.
+    // Gaps without channels at 200, 400 and 600. With only two cuts (the minimum for 800 mm) at least one
+    // would fall inside a letter; with three they all fall in the gaps.
     const centerlines: SplitPoint[][] = [
       [
         [0, 60],
@@ -102,7 +102,7 @@ describe('splitting for the print bed', () => {
   });
 
   it('the cut goes where it crosses the fewest channels', () => {
-    // Fra x = 150 e 250 ci sono tre canali orizzontali; fuori uno solo.
+    // Between x = 150 and 250 there are three horizontal channels; outside only one.
     const centerlines: SplitPoint[][] = [
       [
         [0, 60],

@@ -16,7 +16,7 @@ describe('ZIP without compression', () => {
     const end = zip.length - 22;
     expect(view.getUint32(end, true)).toBe(0x06054b50);
     expect(view.getUint16(end + 10, true)).toBe(2);
-    // Il primo file: nome e dati in chiaro subito dopo l'intestazione da 30 byte.
+    // The first file: name and data in clear right after the 30-byte header.
     expect(new TextDecoder().decode(zip.subarray(30, 35))).toBe('a.txt');
     expect(new TextDecoder().decode(zip.subarray(35, 39))).toBe('ciao');
     expect(view.getUint32(14, true)).toBe(crc32(new TextEncoder().encode('ciao')));

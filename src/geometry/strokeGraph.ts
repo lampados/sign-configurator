@@ -1,10 +1,10 @@
-// Polilinee di un font a tratto singolo → grafo [C], senza bitmap né scheletro.
-// Gli estremi che si toccano (lettere legate) si fondono entro STROKE_JOIN_MM.
-// Un incrocio vero spezza i due tratti in un nodo, così la segmentazione lo vede.
+// Polylines of a single-stroke font → graph [C], without bitmap or skeleton.
+// Endpoints that touch (joined letters) are merged within STROKE_JOIN_MM.
+// A real crossing splits the two strokes at a node, so segmentation sees it.
 import type { GraphEdge, GraphNode, SkeletonGraph } from './graph';
 import type { Point } from './rasterize';
 
-/** Distanza sotto la quale due estremi di un tratto singolo sono lo stesso nodo. */
+/** Distance under which two endpoints of a single stroke are the same node. */
 export const STROKE_JOIN_MM = 0.3;
 
 interface Stroke {
@@ -22,7 +22,7 @@ const lengthOf = (pts: readonly Point[]): number => {
 
 const keyOf = (p: Point): string => `${Math.round(p[0] * 1000)},${Math.round(p[1] * 1000)}`;
 
-/** Grafo già pronto per [D]. Nessun ramo spurio da potare: le linee sono quelle del font. */
+/** Graph ready for [D]. No spurious branch to prune: the lines are those of the font. */
 export function graphFromStrokes(paths: readonly { points: readonly Point[]; closed?: boolean }[]): SkeletonGraph {
   const strokes = prepare(paths);
   weldEndpoints(strokes, STROKE_JOIN_MM);
@@ -93,7 +93,7 @@ function weldEndpoints(strokes: Stroke[], tol: number): void {
   }
 }
 
-/** Un estremo che cade sul filo di un altro tratto lo spezza e ci si attacca. */
+/** An endpoint that lands on another stroke splits it and attaches to it. */
 function snapEndpointsToStrokes(strokes: Stroke[], tol: number): void {
   const hits: { s: number; seg: number; t: number; p: Point }[] = [];
   for (let s = 0; s < strokes.length; s++) {

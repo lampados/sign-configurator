@@ -31,14 +31,14 @@ describe('cuts on bends and assembly time', () => {
   it('the WS2812B 60 LED/m on a cursive is cut: each cut counts 10 minutes', async () => {
     const result = await generateSign(order({ STRIP_ID: 'ws2812b-60' }), readPublic);
     const { bendCuts, assemblyMin } = result.bom.assembly;
-    // Soglia di 30° per giunto: restano i tagli nei riccioli stretti, non uno per LED.
+    // Threshold of 30° per joint: the cuts in the tight curls stay, not one per LED.
     expect(bendCuts).toBeGreaterThan(0);
     expect(bendCuts).toBeLessThan(result.bom.assembly.totalLeds / 2);
     expect(ASSEMBLY_MIN_PER_CUT).toBe(10);
-    // Tagli in curva e ponticelli contano uguale: 10 minuti l'uno.
+    // Cuts on bends and jumpers count the same: 10 minutes each.
     expect(assemblyMin).toBe((bendCuts + result.bom.assembly.jumpers) * 10);
     expect(result.bom.assembly.jumpers).toBeGreaterThan(0);
-    // Tagliare è permesso: la curva non è più un errore della striscia.
+    // Cutting is allowed: the curve is no longer an error of the strip.
     expect(result.warnings.join('\n')).not.toMatch(/does not bend sideways/);
   }, 120_000);
 

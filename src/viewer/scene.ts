@@ -1,5 +1,5 @@
-// Anteprima three.js, indipendente dal tipo di LED (SPEC §5). I lightPoints arrivano
-// dalla pipeline: oggi la striscia COB, domani un pixel a passo libero.
+// three.js preview, independent of the type of LED (SPEC §5). The lightPoints come
+// from the pipeline: today the COB strip, tomorrow a free-pitch pixel.
 import {
   ACESFilmicToneMapping,
   Box3,
@@ -53,11 +53,11 @@ export interface SignViewData {
   housing: StlMesh;
   diffuser: StlMesh;
   lights: readonly LightPoint[];
-  /** Distanza LED–diffusore, mm. Larghezza della gaussiana. */
+  /** LED–diffuser distance, mm. Width of the gaussian. */
   ledGapMm: number;
-  /** Fondale dietro l'housing (SPEC §13), con il suo materiale. Assente: nessun fondale. */
+  /** Backdrop behind the housing (SPEC §13), with its material. Absent: no backdrop. */
   plate?: { mesh: StlMesh; material: PlateMaterial } | null;
-  /** Tagli per il piatto di stampa (SPEC §14): segmenti verticali a x costante, sopra l'insegna. */
+  /** Cuts for the print bed (SPEC §14): vertical segments at constant x, over the sign. */
   cuts?: readonly { x: number; y0: number; y1: number; z: number }[];
 }
 
@@ -65,23 +65,23 @@ export interface SignScene {
   setSign(sign: SignViewData): void;
   setMode(mode: PreviewMode): void;
   setColor(hex: string): void;
-  /** colore fisso usa il selettore; arcobaleno scorre e si ferma con prefers-reduced-motion. */
+  /** colore fisso uses the picker; arcobaleno runs and stops with prefers-reduced-motion. */
   setEffect(effect: 'fisso' | 'arcobaleno'): void;
-  /** Esposizione ACES. Il cliente resta sul default. */
+  /** ACES exposure. The customer stays on the default. */
   setExposure(value: number): void;
-  /** Raggio dell'alone. La soglia del bloom non scende. */
+  /** Radius of the halo. The bloom threshold does not go down. */
   setHalo(radius: number): void;
   /**
-   * Foto dell'insegna in vista standard (di fronte, accesa, con il diffusore, 4:3), come data URL
-   * JPEG. Non dipende da come il cliente ha girato o spento l'anteprima, che resta com'era.
-   * `null` senza un'insegna o se il browser non restituisce l'immagine.
+   * Photo of the sign in the standard view (from the front, lit, with the diffuser, 4:3), as a JPEG
+   * data URL. It does not depend on how the customer rotated or switched off the preview, which stays as it was.
+   * `null` without a sign or if the browser does not return the image.
    */
   snapshot(): string | null;
   dispose(): void;
 }
 
 const FRONT_LIMIT = (40 * Math.PI) / 180;
-/** Oltre quest'angolo fra due facce lo spigolo resta vivo nell'ombreggiatura. */
+/** Beyond this angle between two faces the edge stays sharp in the shading. */
 const CREASE_ANGLE = (35 * Math.PI) / 180;
 const WALL = 0xe6e0d6;
 
@@ -105,22 +105,22 @@ function geometryOf(mesh: StlMesh): BufferGeometry {
   const geometry = new BufferGeometry();
   geometry.setAttribute('position', new BufferAttribute(positions, 3));
   geometry.setIndex(new BufferAttribute(mesh.triVerts, 1));
-  // Normali a spigolo: le pareti curve restano morbide, le facce piane (cima del diffusore, bordo,
-  // lastra) restano piane invece di sfumare a ventaglio verso i vertici condivisi con le pareti.
+  // Creased normals: curved walls stay soft, flat faces (top of the diffuser, edge,
+  // plate) stay flat instead of fanning out towards the vertices shared with the walls.
   const creased = toCreasedNormals(geometry, CREASE_ANGLE);
   geometry.dispose();
   return creased;
 }
 
-/** Aria attorno all'insegna nell'inquadratura. */
+/** Air around the sign in the framing. */
 const FIT_MARGIN = 1.28;
-/** Foto per il negozio (SPEC §12.7): 4:3, abbastanza per una scheda prodotto, leggera da salvare. */
+/** Photo for the shop (SPEC §12.7): 4:3, enough for a product card, light to save. */
 const SNAPSHOT_W = 1000;
 const SNAPSHOT_H = 750;
 const SNAPSHOT_QUALITY = 0.86;
-/** Sotto questa altezza l'anteprima è «bassa» e l'insegna lascia libere testata e controlli. */
+/** Under this height the preview is "low" and the sign leaves header and controls free. */
 const SHORT_STAGE_PX = 520;
-/** Altezza coperta da testata (sopra) e controlli (sotto) sull'anteprima. */
+/** Height covered by header (top) and controls (bottom) on the preview. */
 const STAGE_CHROME_PX = 65;
 
 export function mountSignScene(host: HTMLElement, options?: { background?: number }): SignScene {
@@ -184,9 +184,9 @@ export function mountSignScene(host: HTMLElement, options?: { background?: numbe
     side: DoubleSide,
   });
   const diffuserOff = new MeshStandardMaterial({ color: 0xf7f4ef, roughness: 0.94, metalness: 0, side: DoubleSide });
-  // Fondale: plexi nero trasparente (fumé lucido, si vede il muro dietro) o legno opaco.
+  // Backdrop: black transparent acrylic (glossy smoke, the wall shows behind) or matt wood.
   const plateMaterials: Record<PlateMaterial, MeshStandardMaterial> = {
-    // Plexi trasparente: quasi invisibile, lucido; si vedono fori e fili dietro.
+    // Clear acrylic: almost invisible, glossy; holes and wires show behind.
     clear: new MeshStandardMaterial({
       color: 0xc8d4de,
       roughness: 0.04,
@@ -197,20 +197,20 @@ export function mountSignScene(host: HTMLElement, options?: { background?: numbe
       side: DoubleSide,
       emissive: 0xffffff,
     }),
-    // Plexi nero trasparente (fumé).
+    // Black transparent acrylic (smoke).
     black: new MeshStandardMaterial({
-      // Sullo sfondo nero del cliente un nero pieno sparirebbe: un grigio fumé lucido lo stacca.
+      // On the customer's black background a solid black would disappear: a glossy smoke grey sets it apart.
       color: 0x3a3a48,
       roughness: 0.16,
       metalness: 0.4,
       transparent: true,
       opacity: 0.8,
-      // Il bagliore del neon sulla lastra: il plexi lucido lo riflette, un po' smorzato.
+      // The glow of the neon on the plate: glossy acrylic reflects it, a little damped.
       emissive: 0xb4b4c8,
       depthWrite: false,
       side: DoubleSide,
     }),
-    // Il legno opaco diffonde il bagliore in caldo.
+    // Matt wood diffuses the glow warmly.
     wood: new MeshStandardMaterial({ color: 0xa2713f, roughness: 0.82, metalness: 0, side: DoubleSide, emissive: 0xffd2a0 }),
   };
 
@@ -225,7 +225,7 @@ export function mountSignScene(host: HTMLElement, options?: { background?: numbe
   splat.frustumCulled = false;
   glowScene.add(splat);
   const glowMaterial = createDiffuserGlowMaterial(glowTarget.texture);
-  // La lastra sta davanti al muro e ne coprirebbe il bagliore: lo riceve lei, dalla stessa texture.
+  // The plate sits in front of the wall and would cover its glow: the plate receives it, from the same texture.
   for (const material of Object.values(plateMaterials)) {
     material.emissiveMap = glowTarget.texture;
     material.emissiveIntensity = 0;
@@ -254,7 +254,7 @@ export function mountSignScene(host: HTMLElement, options?: { background?: numbe
 
   const rainbowOn = (): boolean => rainbowAsked;
 
-  // Dichiarati prima di resize(): l'observer chiama resize subito, a insegna ancora assente.
+  // Declared before resize(): the observer calls resize at once, with the sign still absent.
   let viewBox: Box3 | null = null;
 
   const fitDistance = (size: Vector3): number => {
@@ -262,8 +262,8 @@ export function mountSignScene(host: HTMLElement, options?: { background?: numbe
     const aspect = Math.max(camera.aspect, 0.2);
     const distForHeight = Math.max(size.y, 1) / 2 / tan;
     const distForWidth = Math.max(size.x, 1) / 2 / (tan * aspect);
-    // Anteprima bassa (telefono in orizzontale, o pannello aperto): testata e controlli coprono
-    // circa 65 px sopra e sotto, e l'insegna si rimpicciolisce per restarne fuori.
+    // Low preview (phone in landscape, or panel open): header and controls cover
+    // about 65 px above and below, and the sign shrinks to stay out of them.
     const hostH = host.clientHeight;
     const heightMargin = hostH > 0 && hostH < SHORT_STAGE_PX
       ? Math.max(FIT_MARGIN, (hostH / Math.max(hostH - 2 * STAGE_CHROME_PX, hostH * 0.4)) * 1.1)
@@ -347,7 +347,7 @@ export function mountSignScene(host: HTMLElement, options?: { background?: numbe
       diffuserMesh.material = on ? glowMaterial : diffuserOff;
     }
     emitters.visible = open && lights.length > 0;
-    // Con un fondale la stanza resta un po' più chiara, altrimenti la lastra sparisce nel nero.
+    // With a backdrop the room stays a little brighter, otherwise the plate disappears into black.
     const room = plateMesh ? 3 : 1;
     daylight.intensity = on || open ? 0.22 * room : 0.9;
     sun.intensity = on || open ? 0.28 * room : 1.15;
@@ -392,7 +392,7 @@ export function mountSignScene(host: HTMLElement, options?: { background?: numbe
     void span;
   };
 
-  /** Coordinate della texture del bagliore sulla lastra: le stesse del muro, dal piano XY. */
+  /** Coordinates of the glow texture on the plate: the same as the wall, from the XY plane. */
   const plateGlowUv = (geometry: BufferGeometry): void => {
     const origin = wallMaterial.uniforms.uOrigin!.value as Vector2;
     const span = wallMaterial.uniforms.uSpan!.value as Vector2;
@@ -508,8 +508,8 @@ export function mountSignScene(host: HTMLElement, options?: { background?: numbe
       diffuserMesh = new Mesh(geometryOf(sign.diffuser), diffuserOff);
       scene.add(housingMesh, diffuserMesh);
       if (sign.plate) {
-        // Facce piane: normali per faccia, altrimenti la faccia grande si sfuma verso i bordi e
-        // mostra i triangoli lunghi della triangolazione.
+        // Flat faces: per-face normals, otherwise the large face fades towards the edges and
+        // shows the long triangles of the triangulation.
         plateMesh = new Mesh(geometryOf(sign.plate.mesh), plateMaterials[sign.plate.material]);
         plateMesh.renderOrder = -1;
         scene.add(plateMesh);
@@ -519,7 +519,7 @@ export function mountSignScene(host: HTMLElement, options?: { background?: numbe
       if (box.isEmpty()) box.set(new Vector3(-10, -10, 0), new Vector3(10, 10, 12));
       layoutGlow(box);
       if (plateMesh) plateGlowUv(plateMesh.geometry);
-      // L'inquadratura comprende il fondale; il bagliore resta calcolato sull'insegna.
+      // The framing includes the backdrop; the glow is still computed on the sign.
       const view = plateMesh ? box.clone().union(new Box3().setFromObject(plateMesh)) : box;
       frame(view);
       applyMode();
@@ -557,14 +557,14 @@ export function mountSignScene(host: HTMLElement, options?: { background?: numbe
       try {
         mode = 'accesa';
         applyMode();
-        // I tagli per il piatto di stampa sono un aiuto a chi stampa, non fanno parte del prodotto.
+        // The cuts for the print bed are a help for whoever prints, they are not part of the product.
         if (cutLines) cutLines.visible = false;
         renderer.setPixelRatio(1);
         renderer.setSize(SNAPSHOT_W, SNAPSHOT_H, false);
         composer.setSize(SNAPSHOT_W, SNAPSHOT_H);
         bloom.setSize(SNAPSHOT_W, SNAPSHOT_H);
         camera.aspect = SNAPSHOT_W / SNAPSHOT_H;
-        // Di fronte, con lo stesso margine dell'anteprima: l'insegna riempie il fotogramma.
+        // From the front, with the same margin as the preview: the sign fills the frame.
         const center = viewBox.getCenter(new Vector3());
         const size = viewBox.getSize(new Vector3());
         const tan = Math.tan((camera.fov * Math.PI) / 360);
@@ -575,7 +575,7 @@ export function mountSignScene(host: HTMLElement, options?: { background?: numbe
         paintColors(0);
         renderGlow();
         composer.render();
-        // Subito dopo il render: il contenuto del canvas vale fino alla prossima composizione.
+        // Right after the render: the content of the canvas is valid until the next composition.
         const url = renderer.domElement.toDataURL('image/jpeg', SNAPSHOT_QUALITY);
         return url.startsWith('data:image/jpeg;base64,') ? url : null;
       } catch {

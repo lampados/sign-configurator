@@ -20,7 +20,7 @@ function maxTurnDeg(pts: readonly Point[]): number {
 
 describe('spline of the single-stroke fonts', () => {
   it('passes through every vertex and removes the elbows of a coarse polyline', () => {
-    // Un arco approssimato con 6 corde, come i glifi Hershey: gomiti da 30°.
+    // An arc approximated with 6 chords, like the Hershey glyphs: 30° elbows.
     const coarse: Point[] = Array.from({ length: 7 }, (_, i) => {
       const a = (i / 6) * Math.PI;
       return [50 * Math.cos(a), 50 * Math.sin(a)];
@@ -29,7 +29,7 @@ describe('spline of the single-stroke fonts', () => {
     for (const p of coarse) expect(near(curve, p)).toBeLessThan(1e-6);
     expect(maxTurnDeg(coarse)).toBeGreaterThan(29);
     expect(maxTurnDeg(curve)).toBeLessThan(5);
-    // Più vicina all'arco vero della spezzata: la corda si scosta di 50·(1 − cos 15°) ≈ 1,7 mm.
+    // Closer to the true arc than the polyline: the chord deviates by 50·(1 − cos 15°) ≈ 1.7 mm.
     const chordGap = 50 * (1 - Math.cos(Math.PI / 12));
     const worst = Math.max(...curve.map((p) => Math.abs(Math.hypot(p[0], p[1]) - 50)));
     expect(worst).toBeLessThan(chordGap / 2);

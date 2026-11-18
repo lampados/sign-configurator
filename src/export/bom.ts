@@ -1,8 +1,8 @@
-// [J] Distinta materiali (SPEC §5, BOM). LED e taglio usano la parte illuminata:
-// lo spezzone meno un'asola WIRE_SLOT_L a ogni capo. I fori stanno ad almeno 10 mm
-// dal labbro, dagli incroci e fra loro, a passo ANCHOR_SPACING, e comunque almeno
-// ANCHOR_MIN_PER_SEGMENT se ci stanno.
-// Due asole DIN/DOUT vicine diventano una tasca: il filo fra gli spezzoni è 0 mm. Modulo puro.
+// [J] Bill of materials (SPEC §5, BOM). LEDs and cut use the lit part:
+// the segment minus a WIRE_SLOT_L slot at each end. Holes sit at least 10 mm
+// from the lip, from crossings and from each other, at ANCHOR_SPACING pitch, and in any case at least
+// ANCHOR_MIN_PER_SEGMENT if they fit.
+// Two neighbouring DIN/DOUT slots become a pocket: the wire between the segments is 0 mm. Pure module.
 
 import { controllerAmps, controllerOf, STRIP_VOLTAGES } from '../config';
 import { DOT_LED_COUNT } from '../geometry/lights';
@@ -12,7 +12,7 @@ import type { ChainPath } from '../geometry/chain';
 import type { Point } from '../geometry/rasterize';
 import type { Params } from '../config';
 
-/** Distanza minima di un foro da asole, tasche, incroci e altri fori (SPEC §5, Fori). */
+/** Minimum distance of a hole from slots, pockets, crossings and other holes (SPEC §5, Holes). */
 export const HOLE_CLEARANCE_MM = 10;
 
 export interface BomSegment {
@@ -31,63 +31,63 @@ export interface Bom {
   totalLeds: number;
   anchorHoles: number;
   wireSlots: number;
-  /** Larghezza dell'asola, di default uguale al canale. */
+  /** Width of the slot, by default equal to the channel. */
   wireSlotW: number;
-  /** Lunghezza dell'asola dalla parete di testa fino al labbro. */
+  /** Length of the slot from the end wall to the lip. */
   wireSlotL: number;
-  /** Giunti d'angolo: le due asole sono una tasca sola e il filo è 0 mm. */
+  /** Corner joints: the two slots are a single pocket and the wire is 0 mm. */
   corners: BomCorner[];
-  /** Riepilogo di montaggio. */
+  /** Assembly summary. */
   assembly: BomAssembly;
   warnings: string[];
 }
 
 export interface BomAssembly {
   /**
-   * Tagli in curva di una striscia che non piega di lato: fra due unità di taglio consecutive la
-   * striscia si taglia e si ricollega. 0 per le strisce che seguono le curve.
+   * Cuts on bends of a strip that does not bend sideways: between two consecutive cut units the
+   * strip is cut and reconnected. 0 for strips that follow curves.
    */
   bendCuts: number;
-  /** Ponticelli di filo dove due tratti sono più vicini della larghezza della striscia. */
+  /** Wire jumpers where two strokes are closer than the width of the strip. */
   jumpers: number;
-  /** Tempo di montaggio dei tagli in curva, minuti: `bendCuts · ASSEMBLY_MIN_PER_CUT`. */
+  /** Assembly time of the cuts on bends, minutes: `bendCuts · ASSEMBLY_MIN_PER_CUT`. */
   assemblyMin: number;
   segments: number;
-  /** Collegamenti DIN/DOUT da saldare. I giunti d'angolo non contano. */
+  /** DIN/DOUT connections to solder. Corner joints do not count. */
   solderJoints: number;
-  /** 3 fili per collegamento. */
+  /** 3 wires per connection. */
   wires: number;
   corners: number;
-  /** Metri di filo stimati. */
+  /** Estimated metres of wire. */
   wireM: number;
   totalLeds: number;
-  /** Tensione della striscia e dell'alimentatore, V. */
+  /** Voltage of the strip and of the power supply, V. */
   voltageV: number;
-  /** Corrente alla tensione della striscia, bianco pieno. */
+  /** Current at the strip voltage, full white. */
   maxCurrentA: number;
-  /** Alimentatore consigliato, ampere alla tensione della striscia. */
+  /** Recommended power supply, amperes at the strip voltage. */
   supplyA: number;
-  /** Modello consigliato dal catalogo (`pickSupply`); null se nessuno regge `supplyA`. */
+  /** Model recommended from the catalogue (`pickSupply`); null if none holds `supplyA`. */
   supply: BomSupply | null;
-  /** Scatola per alimentatore (se da quadro) e controller; null se non serve o «none». */
+  /** Box for power supply (if panel-mount) and controller; null if not needed or "none". */
   box: BomBox | null;
-  /** Scatola troppo piccola, o nessuna del catalogo basta. */
+  /** Box too small, or none in the catalogue is enough. */
   boxWarnings: string[];
-  /** Id delle scatole del catalogo che contengono i componenti, per il menu. */
+  /** Ids of the catalogue boxes that hold the components, for the menu. */
   boxesThatFit: string[];
-  /** Controller scelto, id di `CONTROLLERS`. */
+  /** Chosen controller, id from `CONTROLLERS`. */
   controller: string;
-  /** Limiti del controller superati (corrente, numero di LED); vuoto se ci sta. */
+  /** Controller limits exceeded (current, number of LEDs); empty if it fits. */
   controllerWarnings: string[];
 }
 
 export interface BomSupply {
-  /** Codice d'ordine, per esempio «GST60A12-P1J». */
+  /** Order code, for example "GST60A12-P1J". */
   model: string;
-  /** Famiglia del catalogo, ancora della pagina parts. */
+  /** Catalogue family, anchor of the parts page. */
   family: string;
   watts: number;
-  /** Corrente nominale del modello alla tensione della striscia. */
+  /** Nominal current of the model at the strip voltage. */
   amps: number;
 }
 
@@ -98,7 +98,7 @@ export interface BomBox {
   innerMm: [number, number, number];
   fits: boolean;
   auto: boolean;
-  /** Cosa ci va dentro. */
+  /** What goes inside. */
   contents: string[];
 }
 
@@ -109,7 +109,7 @@ export interface BomCorner {
   wireMm: 0;
 }
 
-/** Estremità libera di uno spezzone, dove starebbe un'asola. */
+/** Free end of a segment, where a slot would be. */
 export interface CornerEnd {
   segmentId: number;
   role: 'DIN' | 'DOUT';
@@ -122,7 +122,7 @@ export interface BomPiece {
   points: readonly Point[];
   lengthMm: number;
   closed: boolean;
-  /** Puntino: niente asole, la luce è tutto lo spezzone. */
+  /** Dot: no slots, the lit length is the whole segment. */
   dot: boolean;
 }
 
@@ -147,9 +147,9 @@ function direction(points: readonly Point[], atEnd: boolean): [number, number] {
 }
 
 /**
- * Distanze dal DIN dei fori di ancoraggio. Ogni ANCHOR_SPACING, almeno
- * ANCHOR_MIN_PER_SEGMENT se ci stanno, a ≥ 10 mm dal labbro dell'asola
- * (WIRE_SLOT_L in più sull'estremità; 0 se lo spezzone è chiuso).
+ * Distances from the DIN of the anchor holes. Every ANCHOR_SPACING, at least
+ * ANCHOR_MIN_PER_SEGMENT if they fit, ≥ 10 mm from the lip of the slot
+ * (WIRE_SLOT_L more at the end; 0 if the segment is closed).
  */
 export function anchorStations(
   lengthMm: number,
@@ -171,7 +171,7 @@ export function anchorStations(
   return out;
 }
 
-/** Incrocio davanti all'estremità: quel capo non è un'asola, il canale prosegue. */
+/** Crossing in front of the end: that end is not a slot, the channel continues. */
 export function crossingAhead(end: Point, outward: Point, crossings: readonly Point[], gap: number): Point | null {
   let best: Point | null = null;
   let bestD = Infinity;
@@ -193,7 +193,7 @@ function clamp01(t: number): number {
   return Math.max(0, Math.min(1, t));
 }
 
-/** Distanza minima fra due segmenti. */
+/** Minimum distance between two segments. */
 function segmentDistance(p0: Point, p1: Point, q0: Point, q1: Point): number {
   const d1 = sub(p1, p0);
   const d2 = sub(q1, q0);
@@ -245,8 +245,8 @@ export interface CornerJoint extends BomCorner {
 }
 
 /**
- * Coppie DOUT+DIN la cui asola si sovrappone, o i cui labbri distano meno di
- * CORNER_MERGE_DIST. Ogni estremità entra in una sola tasca.
+ * DOUT+DIN pairs whose slots overlap, or whose lips are less than
+ * CORNER_MERGE_DIST apart. Every end enters a single pocket.
  */
 export function cornerJoints(
   ends: readonly CornerEnd[],
@@ -316,7 +316,7 @@ function openEnds(pieces: readonly BomPiece[]): CornerEnd[] {
   return ends;
 }
 
-/** Quanti fori di ancoraggio stanno sul percorso. */
+/** How many anchor holes fit on the path. */
 export function anchorHoleCount(
   lengthMm: number,
   params: Pick<Params, 'ANCHOR_SPACING' | 'ANCHOR_MIN_PER_SEGMENT' | 'WIRE_SLOT_L'>,
@@ -387,8 +387,8 @@ export function buildBom(
 const LEAD_MM = 200;
 
 /**
- * Scatola dagli ingombri: l'alimentatore se è da quadro (l'adattatore con spina sta fuori) e
- * il controller (misura indicativa se il costruttore non la pubblica).
+ * Box from the footprints: the power supply if it is panel-mount (the plug-in adapter stays outside) and
+ * the controller (indicative size if the maker does not publish it).
  */
 function boxOf(
   supply: BomSupply | null,
@@ -428,10 +428,10 @@ function supplyOf(volts: number, amps: number): BomSupply | null {
 }
 
 /**
- * Riepilogo: saldature a 3 fili, giunti, filo in linea d'aria, corrente e alimentatore.
- * `ledMaxMa` è la corrente di un LED a 5 V: a parità di potenza per LED, a `voltageV` scala
- * come 5 / voltageV. L'alimentatore ha il 25 % di margine. Oltre i limiti del controller
- * scelto (`controllerId`, di `CONTROLLERS`) restano avvisi: serve iniettare corrente o un secondo controller.
+ * Summary: 3-wire solder joints, corner joints, wire as the crow flies, current and power supply.
+ * `ledMaxMa` is the current of one LED at 5 V: for the same power per LED, at `voltageV` it scales
+ * as 5 / voltageV. The power supply has a 25 % margin. Beyond the limits of the chosen
+ * controller (`controllerId`, from `CONTROLLERS`) warnings stay: power injection or a second controller is needed.
  */
 export function bomAssembly(
   segments: readonly BomSegment[],
@@ -525,7 +525,7 @@ export function bomAssembly(
   };
 }
 
-/** Adatta una catena alla distinta. La lunghezza è quella della linea levigata, se c'è. */
+/** Adapts a chain to the bill of materials. The length is that of the smoothed line, if there is one. */
 export function bomPiece(chain: ChainPath & { id: number; smooth?: readonly Point[]; dot?: boolean }): BomPiece {
   const points =
     chain.smooth && chain.smooth.length >= 2

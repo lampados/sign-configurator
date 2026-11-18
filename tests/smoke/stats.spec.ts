@@ -1,7 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { expectClean, trackPage } from './guard';
 
-/** Contatore di download e richieste (SPEC §14): la riga sotto i pulsanti del pannello Order. */
+/** Counter of downloads and requests (SPEC §14): the row under the buttons of the Order panel. */
 async function openOrder(page: Page): Promise<void> {
   await page.setViewportSize({ width: 1280, height: 800 });
   await page.goto('index.html', { waitUntil: 'load' });
@@ -62,7 +62,7 @@ test('counter: on a narrow phone the line does not move the buttons', async ({ p
   release();
   await expect(line).toHaveText('1234 downloads · 123 requests so far');
   const after = { send: (await send.boundingBox())!, stl: (await download.boundingBox())!, line: (await line.boundingBox())! };
-  // Stessa disposizione di prima: la riga occupa una riga sua, sotto i pulsanti e dentro lo schermo.
+  // Same layout as before: the row takes a row of its own, under the buttons and inside the screen.
   expect(after.stl.x - after.send.x).toBeCloseTo(before.stl.x - before.send.x, 0);
   expect(after.stl.y - after.send.y).toBeCloseTo(before.stl.y - before.send.y, 0);
   expect(after.line.y).toBeGreaterThanOrEqual(Math.max(after.send.y + after.send.height, after.stl.y + after.stl.height) - 1);
@@ -97,9 +97,9 @@ test('coffee invitation: under the name and under "Download STL", links only', a
   await expect(note).toHaveText('Printing it yourself? Offer me a coffee: espresso, doppio or corretto.');
   await expect(note.locator('a')).toHaveAttribute('href', support);
   await expect(note.locator('a')).toHaveAttribute('rel', 'noopener');
-  // Sta sotto i pulsanti e non li sposta.
+  // It sits under the buttons and does not move them.
   const [button, line] = await Promise.all([page.locator('#download-stl').boundingBox(), note.boundingBox()]);
   expect(line!.y).toBeGreaterThanOrEqual(button!.y + button!.height);
-  // Nessuna richiesta a terzi: la pagina delle offerte si apre solo con un clic.
+  // No third-party request: the donation page opens only with a click.
   expectClean(track.problems);
 });

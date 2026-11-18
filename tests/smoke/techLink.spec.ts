@@ -15,25 +15,25 @@ test('Tech: the channel follows the strip, and a channel that is too narrow says
   const slotW = page.locator('input[name="tech-WIRE_SLOT_W"]');
   await expect(channelW).toHaveValue('10.4');
 
-  // La striscia si restringe: canale e asola la seguono, con la tolleranza di 0,4 mm.
+  // The strip gets narrower: channel and slot follow it, with the 0.4 mm tolerance.
   await stripW.fill('5');
   await expect(channelW).toHaveValue('5.4');
   await expect(slotW).toHaveValue('5.4');
 
-  // Lo spessore comanda la profondità, più i 6 mm d'aria sopra i LED.
+  // The thickness drives the depth, plus the 6 mm of air above the LEDs.
   await stripT.fill('2');
   await expect(channelD).toHaveValue('8');
 
-  // Toccato a mano, il canale smette di seguire.
+  // Touched by hand, the channel stops following.
   await channelW.fill('7');
   await stripW.fill('8');
   await expect(channelW).toHaveValue('7');
   await expect(stripW).toHaveValue('8');
 
-  // Ora la striscia non ci sta: la pagina lo dice invece di accettarlo in silenzio.
+  // Now the strip does not fit: the page says so instead of accepting it silently.
   await expect(page.locator('#preview-status')).toContainText('narrower than the LED strip', { timeout: 60_000 });
 
-  // Reset: tutto torna ai valori del profilo e l'avviso sparisce.
+  // Reset: everything goes back to the profile values and the warning disappears.
   await page.locator('#tech-reset').click();
   await expect(stripW).toHaveValue('10');
   await expect(channelW).toHaveValue('10.4');

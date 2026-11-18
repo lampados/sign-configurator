@@ -3,7 +3,7 @@ import { resolveParams } from '../src/config';
 import { liveCheck } from '../src/editor/liveCheck';
 import type { Point } from '../src/geometry/rasterize';
 
-// La validazione dal vivo parla di curve: serve una striscia che curvi.
+// Live validation talks about curves: a strip that curves is needed.
 const params = resolveParams({ WALL: 2.2, STRIP_ID: 'cob-5mm' });
 
 function arc(radius: number): Point[] {

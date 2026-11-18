@@ -1,12 +1,12 @@
-// Disegni dei controller per la pagina parts, come quelli degli alimentatori: vista obliqua,
-// stessa scala per tutti (`CONTROLLER_ART_SCALE`). Senza misure del costruttore: sagoma
-// tratteggiata di misura indicativa, segnata «size not published».
+// Drawings of the controllers for the parts page, like those of the power supplies: oblique view,
+// same scale for all (`CONTROLLER_ART_SCALE`). Without the maker's measurements: a dashed
+// outline of indicative size, marked "size not published".
 
 import type { ControllerSpec } from '../config';
 
-/** px per mm: i controller sono piccoli, scala doppia rispetto agli alimentatori. */
+/** px per mm: controllers are small, twice the scale of the power supplies. */
 export const CONTROLLER_ART_SCALE = 1.2;
-/** Misura indicativa quando il costruttore non la pubblica. */
+/** Indicative size when the maker does not publish it. */
 const FALLBACK_MM: [number, number, number] = [60, 35, 20];
 const DEPTH = 0.45;
 const COS = Math.cos(Math.PI / 6);
@@ -17,7 +17,7 @@ const VIEW_H = 72;
 const f = (n: number): string => n.toFixed(1);
 const pts = (list: [number, number][]): string => list.map(([x, y]) => `${f(x)},${f(y)}`).join(' ');
 
-/** Scheda nuda (QuinLED Dig-Uno, Seeed XIAO) o scheda in custodia (GLEDOPTO). */
+/** Bare board (QuinLED Dig-Uno, Seeed XIAO) or board in a case (GLEDOPTO). */
 function isBareBoard(c: ControllerSpec): boolean {
   return c.id === 'quinled-dig-uno' || c.id === 'xiao-led-driver';
 }
@@ -28,7 +28,7 @@ export function controllerArt(c: ControllerSpec): string {
   const s = CONTROLLER_ART_SCALE;
   const bare = isBareBoard(c);
   const l = L * s;
-  // Una scheda nuda è un circuito sottile con i componenti sopra.
+  // A bare board is a thin circuit with the components on top.
   const h = (bare ? 1.6 : H) * s;
   const dx = W * DEPTH * COS * s;
   const dy = W * DEPTH * SIN * s;
@@ -49,7 +49,7 @@ export function controllerArt(c: ControllerSpec): string {
   parts.push(`<polygon points="${pts([ftl, ftr, off(ftr), off(ftl)])}" fill="${p.top}" stroke="${p.edge}" stroke-width="0.6"${dash}/>`);
   parts.push(`<rect x="${f(x0)}" y="${f(y0 - h)}" width="${f(l)}" height="${f(h)}" fill="${p.front}" stroke="${p.edge}" stroke-width="0.6"${dash}/>`);
 
-  // Un blocco in rilievo sul piano superiore: punto (u lungo L, t lungo W), misure in mm.
+  // A raised block on the top plane: point (u along L, t along W), measurements in mm.
   const block = (u: number, t: number, bl: number, bw: number, bh: number, fill: string, edge: string): void => {
     const base: [number, number] = off([x0 + u * s, y0 - h], t);
     const bx = bl * s;
@@ -64,15 +64,15 @@ export function controllerArt(c: ControllerSpec): string {
   };
 
   if (bare) {
-    // Modulo ESP32 al centro, morsettiere verdi sui due lati corti.
+    // ESP32 module in the centre, green terminal blocks on the two short sides.
     const termW = Math.min(12, L * 0.18);
     block(1, 0.1, termW, W * 0.8, 9, '#3fa35b', '#2b7a42');
     block(L - termW - 1, 0.1, termW, W * 0.8, 9, '#3fa35b', '#2b7a42');
     block(L * 0.36, 0.25, L * 0.28, W * 0.5, 3, '#c9ccd1', '#8e9298');
-    // Portafusibile.
+    // Fuse holder.
     block(L * 0.7 - 2, 0.55, 6, W * 0.25, 5, '#e8b73c', '#a8801f');
   } else {
-    // Custodia: morsettiera sul lato corto sinistro, LED di stato e scritta sul coperchio.
+    // Case: terminal block on the left short side, status LED and lettering on the lid.
     const th = h * 0.55;
     parts.push(`<rect x="${f(x0 + 2)}" y="${f(y0 - h / 2 - th / 2)}" width="${f(Math.min(14, l * 0.22))}" height="${f(th)}" rx="1" fill="#3fa35b" stroke="#2b7a42" stroke-width="0.5"/>`);
     const led = off([x0 + l * 0.82, y0 - h], 0.5);

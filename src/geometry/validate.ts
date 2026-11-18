@@ -1,6 +1,6 @@
-// [G] Errori e avvisi con posizione (SPEC §5). Una piega oltre il massimo è una
-// "curva" se il raggio cresce con la scala, uno "spigolo" se sta in al più due
-// cerniere e il raggio non cresce. Modulo puro.
+// [G] Errors and warnings with position (SPEC §5). A bend beyond the maximum is a
+// "curva" (curve) if the radius grows with scale, a "spigolo" (cusp) if it sits in at most two
+// hinges and the radius does not grow. Pure module.
 
 import type { ChainHinge, ChainPath } from './chain';
 import { rMin, type Params } from '../config';
@@ -9,14 +9,14 @@ import type { SegmentNotice } from './segment';
 
 export type IssueLevel = 'error' | 'warning';
 
-/** curva: si allenta ingrandendo. spigolo: cuspide, la scala non basta. */
+/** curva: it eases when made bigger. spigolo: a cusp, scale is not enough. */
 export type BendKind = 'curva' | 'spigolo';
 
 export interface ValidationIssue {
   level: IssueLevel;
   bend: BendKind | null;
   segmentId: number | null;
-  /** Raggio locale della piega, mm. null se l'avviso non è una piega. */
+  /** Local radius of the bend, mm. null if the issue is not a bend. */
   radiusMm: number | null;
   message: string;
   x: number;
@@ -26,15 +26,15 @@ export interface ValidationIssue {
 export interface ValidateInput {
   chains: readonly (ChainPath & { id: number; dot?: boolean })[];
   /**
-   * Le stesse catene costruite a scala doppia, con le posizioni riportate
-   * all'originale e il raggio lasciato in millimetri della scala doppia.
+   * The same chains built at double scale, with the positions brought back
+   * to the original and the radius left in millimetres of the double scale.
    */
   scaledChains?: readonly (ChainPath & { id: number })[];
   notices: readonly SegmentNotice[];
   params: Params;
 }
 
-/** Sotto questa crescita del raggio (scala ×2) la piega non si allenta. */
+/** Under this growth of the radius (×2 scale) the bend does not ease. */
 const RADIUS_GROWTH = 1.5;
 
 const where = (x: number, y: number): string => `(${x.toFixed(1)}, ${y.toFixed(1)}) mm`;
@@ -56,8 +56,8 @@ function pointAt(points: readonly Point[], distance: number): Point {
 }
 
 /**
- * Raggio più stretto vicino al gruppo. null = attorno restano solo tratti dritti.
- * undefined = nessuna cerniera nel raggio di ricerca.
+ * Tightest radius near the group. null = only straight stretches are left around.
+ * undefined = no hinge within the search radius.
  */
 function tightestNear(chain: ChainPath | undefined, hinges: readonly ChainHinge[], reach: number): number | null | undefined {
   if (!chain) return undefined;
@@ -75,7 +75,7 @@ function tightestNear(chain: ChainPath | undefined, hinges: readonly ChainHinge[
   return best;
 }
 
-/** Un gruppo di cerniere oltre il massimo è uno spigolo solo se è corto e non si allarga. */
+/** A group of hinges beyond the maximum is a cusp only if it is short and does not widen. */
 function clusterKind(cluster: readonly ChainHinge[], scaled: ChainPath | undefined, pitch: number): BendKind {
   const currentR = cluster.reduce((min, hinge) => {
     const radius = hinge.radiusMm;
@@ -86,7 +86,7 @@ function clusterKind(cluster: readonly ChainHinge[], scaled: ChainPath | undefin
   return !grows && cluster.length <= 2 ? 'spigolo' : 'curva';
 }
 
-/** Avvisi e errori, gli errori prima, poi dall'alto verso il basso. */
+/** Warnings and errors, errors first, then from top to bottom. */
 export function validateStrip(input: ValidateInput): ValidationIssue[] {
   const { params } = input;
   const minRadius = rMin(params);
@@ -198,8 +198,8 @@ export interface ClearanceClash {
   distance: number;
   limit: number;
   /**
-   * Zone in cui i due tratti sono più vicini della larghezza della striscia: lì due strisce non
-   * stanno affiancate. Una si taglia e si scavalca con un ponticello di filo.
+   * Zones in which the two strokes are closer than the width of the strip: two strips do not
+   * fit side by side there. One is cut and bridged with a wire jumper.
    */
   overlaps: number;
 }
@@ -210,7 +210,7 @@ interface ClearanceLine {
 }
 
 const CLEARANCE_STEP = 2;
-/** Sotto questo angolo fra i due rami il tratto torna indietro: sono le due pareti di un tubo, non un angolo. */
+/** Under this angle between the two branches the stroke turns back: they are the two walls of a tube, not a corner. */
 const WALL_FOLD_DEG = 20;
 
 function arcSamples(
@@ -246,7 +246,7 @@ function arcSamples(
   return out;
 }
 
-/** I due rami si aprono almeno di `deg`: è un angolo, non due pareti affiancate. */
+/** The two branches open by at least `deg`: it is a corner, not two walls side by side. */
 function legsDiverge(ja: Point, pa: Point, jb: Point, pb: Point, deg: number): boolean {
   const ax = pa[0] - ja[0];
   const ay = pa[1] - ja[1];
@@ -260,7 +260,7 @@ function legsDiverge(ja: Point, pa: Point, jb: Point, pb: Point, deg: number): b
   return angle >= deg;
 }
 
-/** Un capo entro questa distanza da un altro tratto lo tocca: è una giunzione a T, non una fusione. */
+/** An end within this distance of another stroke touches it: it is a T junction, not a merge. */
 const TOUCH_TOL = 0.5;
 
 function nearestOnPolyline(p: Point, points: readonly Point[]): { d: number; s: number } {
@@ -282,10 +282,10 @@ function nearestOnPolyline(p: Point, points: readonly Point[]): { d: number; s: 
 }
 
 /**
- * Capi aperti che finiscono su un altro tratto, o sullo stesso lontano dal capo:
- * le giunzioni a T del grafo (§5 [D], nodi grado 3). Lì le sagome si toccano per
- * disegno, come a un incrocio, e la scala non le separa. Va chiamata sulle linee
- * prima della levigatura, dove il capo sta esattamente sull'altro tratto.
+ * Open ends that finish on another stroke, or on the same one far from the end:
+ * the T junctions of the graph (§5 [D], degree-3 nodes). There the outlines touch by
+ * design, as at a crossing, and scale does not separate them. It must be called on the lines
+ * before smoothing, where the end sits exactly on the other stroke.
  */
 export function touchPoints(
   lines: readonly ClearanceLine[],
@@ -316,12 +316,12 @@ export function touchPoints(
 }
 
 /**
- * Due tratti non contigui della linea centrale più vicini di
- * CHANNEL_W + 2·WALL + MIN_GAP: le sagome si fondono.
- * Vale anche fra le due pareti dello stesso tubo (stripMode "walls"): l'altezza
- * minima le tiene a distanza di canale, con MIN_GAP fra le sagome.
- * Un angolo, o due spezzoni che si toccano e si aprono, non conta: la corda
- * taglia il vertice. Due rami che tornano indietro, quasi paralleli, sì.
+ * Two non-adjacent strokes of the centreline closer than
+ * CHANNEL_W + 2·WALL + MIN_GAP: the outlines merge.
+ * It also holds between the two walls of the same tube (stripMode "walls"): the minimum
+ * height keeps them a channel apart, with MIN_GAP between the outlines.
+ * A corner, or two segments that touch and open, does not count: the chord
+ * cuts the vertex. Two branches that turn back, almost parallel, do.
  */
 export function centerlineClearance(
   lines: readonly ClearanceLine[],
@@ -329,8 +329,8 @@ export function centerlineClearance(
   crossings: readonly Point[] = [],
 ): ClearanceClash | null {
   const stripW = params.STRIP_W ?? 0;
-  // Una zona è un tratto continuo di sovrapposizione: un punto a meno di due limiti da un punto
-  // già visto appartiene alla stessa zona, e se ne tocca due le unisce.
+  // A zone is a continuous stretch of overlap: a point less than two limits from a point
+  // already seen belongs to the same zone, and if it touches two it joins them.
   const overlapZones: Point[][] = [];
   const limit = params.CHANNEL_W + 2 * params.WALL + params.MIN_GAP;
   const joinGap = Math.max(params.CORNER_MERGE_DIST, params.CROSSING_GAP * 2 + 1.5);
@@ -394,10 +394,10 @@ export function centerlineClearance(
         let sep = Math.abs(a.s - b.s);
         if (A.closed) sep = Math.min(sep, A.length - sep);
         if (sep <= limit) continue;
-        // Un angolo cambia direzione meno di un ritorno: la corda taglia l'angolo, non è un secondo canale.
+        // A corner changes direction less than a return: the chord cuts the corner, it is not a second channel.
         if (a.dir[0] * b.dir[0] + a.dir[1] * b.dir[1] > foldCos) continue;
-        // Un tratto che incrocia se stesso (l'occhiello di una «d», di una «l») si tocca lì per
-        // disegno, come due tratti diversi che si incrociano: attorno all'incrocio non è un difetto.
+        // A stroke that crosses itself (the loop of a "d", of an "l") touches itself there by
+        // design, like two different strokes that cross: around the crossing it is not a defect.
         if (nearCrossing(a.p, b.p)) continue;
       } else if (!A.closed && !B.closed) {
         let through: number | null = null;

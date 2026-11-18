@@ -17,7 +17,7 @@ const readPublic: FontBytesReader = async (file) => {
   return b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength) as ArrayBuffer;
 };
 
-// Passo lungo (60 LED/m): è quello che dà una freccia misurabile sugli archi di prova.
+// Long pitch (60 LED/m): it is the one that gives a measurable sagitta on the test arcs.
 const P = resolveParams({ STRIP_ID: 'ws2812b-60' });
 const OUTER = P.CHANNEL_W / 2 + P.WALL;
 
@@ -56,7 +56,7 @@ function hausdorff(a: readonly (readonly Vec2[])[], b: readonly (readonly Vec2[]
   return h;
 }
 
-/** Contorni esterni: un'asola è un foro, non fa parte della sagoma. */
+/** Outer contours: a slot is a hole, it is not part of the outline. */
 function outerPolys(section: CrossSection): Vec2[][] {
   const polys = section.toPolygons();
   let peak = 0;
@@ -185,7 +185,7 @@ describe('front outline', () => {
   });
 
   it('a cusp with a pocket does not leave the outline', async () => {
-    // La tasca d'angolo nasce quando lo spigolo supera la piega ammessa: qui 15°, larghezze di P.
+    // The corner pocket appears when the cusp exceeds the allowed bend: here 15°, widths of P.
     const BENDABLE = resolveParams({ HINGE_MAX_DEG: 15 });
     const pts: Point[] = [];
     for (let t = 40; t > 0; t -= 1) pts.push([-t, t]);

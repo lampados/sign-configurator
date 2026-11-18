@@ -1,4 +1,4 @@
-// Cliente: l'insegna a tutto schermo, gli strumenti in un foglio (SPEC §12.2).
+// Customer: the sign full screen, the tools in a sheet (SPEC §12.2).
 import './customer.css';
 import { CHANNEL_CLEARANCE, controllerOf, SHOP, SUPPORT_URL, shopCartUrl, DEFAULT_STRIP, CUSTOMER_STL_DOWNLOAD, DEFAULT_PARAMS, STATS_MIN_SHOWN, GENERATOR_VERSION, LED_AIR, ORDER_SCHEMA_VERSION, resolveParams, stripProfileOf, type Params } from '../config';
 import { statsLine } from '../api/statsStore';
@@ -61,7 +61,7 @@ function icon(path: string): string {
   return `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="${path}"/></svg>`;
 }
 
-/** Telefono con freccia: gira lo schermo tra verticale e orizzontale. */
+/** Phone with an arrow: rotates the screen between portrait and landscape. */
 const ROTATE_ICON = icon('M9 3h6a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1M4 13a8 8 0 0 0 8 8M12 21l-2.5-2.5M12 21l-2.5 2');
 
 const ICONS: Record<string, string> = {
@@ -339,8 +339,8 @@ const openRequest = document.querySelector<HTMLButtonElement>('#open-request')!;
 const stage = document.querySelector<HTMLElement>('#stage')!;
 const status = document.querySelector<HTMLElement>('#preview-status')!;
 const supply = document.querySelector<HTMLAnchorElement>('#preview-supply')!;
-// Gira lo schermo del telefono. Il blocco dell'orientamento esiste solo dove il browser lo concede
-// (Chrome su Android, a schermo intero): altrove, iPhone compreso, il tasto non si mostra.
+// Rotates the phone screen. Orientation lock exists only where the browser grants it
+// (Chrome on Android, in full screen): elsewhere, iPhone included, the button is not shown.
 const rotateButton = document.querySelector<HTMLButtonElement>('#rotate-screen')!;
 type LockableOrientation = ScreenOrientation & { lock?: (orientation: 'portrait' | 'landscape') => Promise<void> };
 const orientation = (typeof screen !== 'undefined' ? screen.orientation : undefined) as LockableOrientation | undefined;
@@ -361,7 +361,7 @@ if (orientation && typeof orientation.lock === 'function' && typeof document.doc
         await orientation.lock!(target);
         rotated = true;
       } catch {
-        // Il browser rifiuta il blocco: si torna com'era e il tasto sparisce.
+        // The browser refuses the lock: it goes back as it was and the button disappears.
         if (document.fullscreenElement) void document.exitFullscreen();
         rotateButton.hidden = true;
       }
@@ -375,7 +375,7 @@ const plugInput = document.querySelector<HTMLSelectElement>('select[name="plug"]
 const plugPill = document.querySelector<HTMLElement>('.plug-pill')!;
 const plugIcon = document.querySelector<HTMLElement>('.plug-icon')!;
 
-/** Disegno e title della pillola seguono la spina scelta. */
+/** Drawing and title of the pill follow the chosen plug. */
 function syncPlug(): void {
   const plug = plugOf(plugInput.value);
   plugIcon.innerHTML = plug.icon;
@@ -415,17 +415,17 @@ const dimW = document.querySelector<HTMLElement>('#dim-w')!;
 const dimH = document.querySelector<HTMLElement>('#dim-h')!;
 const sizeOverall = document.querySelector<HTMLElement>('#size-overall')!;
 
-/** Ingombro dell'ultima insegna generata, mm: il fondale se c'è, altrimenti la cornice. */
+/** Footprint of the last generated sign, mm: the backdrop if there is one, otherwise the frame. */
 let lastSize: { w: number; h: number } | null = null;
-/** In quanti pezzi si stampa l'ultima insegna generata (SPEC §14). 1: intera. */
+/** In how many pieces the last generated sign is printed (SPEC §14). 1: whole. */
 let lastParts = 1;
-/** Giunti che cadono su un canale acceso: lì la striscia va interrotta e risaldata. */
+/** Joints that fall on a lit channel: there the strip must be interrupted and resoldered. */
 let lastJoins = 0;
-/** Tagli in curva e minuti di montaggio dell'ultima insegna (strisce che non piegano di lato). */
+/** Cuts on bends and assembly minutes of the last sign (strips that do not bend sideways). */
 let lastAssembly = { cuts: 0, minutes: 0, jumpers: 0 };
-/** Prezzo voce per voce dell'ultima insegna generata; null finché non c'è, o senza LED. */
+/** Line-by-line price of the last generated sign; null until there is one, or without LEDs. */
 let lastQuote: SignQuote | null = null;
-/** Tratti molto vicini: non blocca l'invio, ma il cliente lo legge nel riepilogo. */
+/** Very close strokes: it does not block sending, but the customer reads it in the summary. */
 let closeNote = '';
 
 function overallLabel(size: { w: number; h: number }): string {
@@ -460,9 +460,9 @@ function outlineSize(outline: readonly (readonly [number, number][])[]): { w: nu
 }
 
 let svgMarkup: string | null = null;
-/** Immagine arrivata da un design salvato: la forma normalizzata dell'ordine, senza il file originale. */
+/** Image that came from a saved design: the normalized form of the order, without the original file. */
 let loadedSource: SvgImageSource | RasterImageSource | null = null;
-/** L'ultimo ordine generato: è quello che si salva e si condivide (SPEC §12.6). */
+/** The last generated order: it is the one that is saved and shared (SPEC §12.6). */
 let lastOrder: SignOrderV4 | null = null;
 let svgName = 'image.svg';
 let lastTool = 'text';
@@ -553,13 +553,13 @@ const techControllerInput = document.querySelector<HTMLSelectElement>('select[na
 const techBoxInput = document.querySelector<HTMLSelectElement>('select[name="tech-BOX_ID"]')!;
 const techStripInput = document.querySelector<HTMLSelectElement>('select[name="tech-STRIP_ID"]')!;
 const stripFigure = document.querySelector<HTMLDivElement>('#strip-figure')!;
-/** Il disegno segue il menu: da chiamare dopo ogni cambio di striscia, anche da ripristino. */
+/** The drawing follows the menu: to be called after every change of strip, on restore too. */
 function drawStrip(): void {
   stripFigure.innerHTML = stripSvg(stripProfileOf(techStripInput.value));
 }
 const boxLabels = new Map([...techBoxInput.options].map((o) => [o.value, o.textContent ?? '']));
 
-/** Scatole che non contengono alimentatore e controller: «too small» nel menu. */
+/** Boxes that do not hold power supply and controller: "too small" in the menu. */
 function markBoxes(fitting: readonly string[] | null): void {
   for (const option of techBoxInput.options) {
     const base = boxLabels.get(option.value) ?? option.textContent ?? '';
@@ -569,7 +569,7 @@ function markBoxes(fitting: readonly string[] | null): void {
 }
 const techReset = document.querySelector<HTMLButtonElement>('#tech-reset')!;
 
-/** Override dell'ordine: la cornice dalla barra, il resto dallo strumento Tecnica. */
+/** Overrides of the order: the frame from the bar, the rest from the Tech tool. */
 function orderParams(): Partial<Params> {
   const numbers: Partial<Record<TechNumericKey, string>> = {};
   for (const [key, input] of techNumberInputs) numbers[key] = input.value;
@@ -580,7 +580,7 @@ const plateMarginInput = document.querySelector<HTMLInputElement>('input[name="p
 const plateCornerInput = document.querySelector<HTMLInputElement>('input[name="plateCornerRMm"]')!;
 const plateSize = document.querySelector<HTMLElement>('#plate-size')!;
 
-/** Fondale scelto (SPEC §13). `null`: nessun fondale. */
+/** Chosen backdrop (SPEC §13). `null`: no backdrop. */
 function plateChoice(): PlateChoice | null {
   const material = document.querySelector<HTMLInputElement>('input[name="plateMaterial"]:checked')?.value ?? 'none';
   if (!(material in PLATE_MATERIALS)) return null;
@@ -597,7 +597,7 @@ function syncPlateFields(): void {
   const plate = plateChoice();
   for (const el of document.querySelectorAll<HTMLElement>('.plate-option')) el.classList.toggle('is-dimmed', !plate);
   for (const input of document.querySelectorAll<HTMLInputElement>('.plate-option input')) input.disabled = !plate;
-  // Il raggio vale solo per il rettangolo: la pillola ha metà del lato corto, il sagomato segue l'insegna.
+  // The radius applies only to the rectangle: the pill has half the short side, the contoured one follows the sign.
   document.querySelector<HTMLElement>('.plate-corner')!.hidden = plate !== null && plate.shape !== 'rect';
   if (!plate) plateSize.hidden = true;
 }
@@ -629,9 +629,9 @@ function applyNeon(hex: string): void {
 function syncFontSamples(): void {
   const sample = textInput.value.trim() || 'Ciao';
   for (const card of document.querySelectorAll<HTMLButtonElement>('.font-card')) {
-    // I font CJK non si scaricano finché non si scelgono: la loro miniatura resta il nome della
-    // scrittura, non il testo digitato, che uscirebbe nel font di sistema. Anche il cirillico tiene
-    // il suo campione: è la miniatura a dire che quel font ha quelle lettere.
+    // CJK fonts are not downloaded until they are chosen: their thumbnail stays the name of the
+    // script, not the typed text, which would come out in the system font. Cyrillic too keeps
+    // its sample: it is the thumbnail that says that font has those letters.
     const el = card.querySelector<HTMLElement>('.font-sample');
     if (el) el.textContent = card.dataset.sample ?? sample;
     card.setAttribute('aria-pressed', card.dataset.font === fontInput.value ? 'true' : 'false');
@@ -645,7 +645,7 @@ function syncSizeChips(): void {
   }
 }
 
-/** Righe del riepilogo: le vede il cliente e, con «Send request», le riceve il negozio. */
+/** Rows of the summary: the customer sees them and, with "Send request", the shop receives them. */
 function detailRows(): [string, string][] {
   const effect = document.querySelector<HTMLInputElement>('input[name="effect"]:checked');
   const rows: [string, string][] = [];
@@ -714,8 +714,8 @@ function detailRows(): [string, string][] {
 }
 
 /**
- * Prezzo voce per voce (SPEC §12.5): le voci a zero non compaiono; il totale e la spedizione
- * stimata chiudono l'elenco. Vuoto senza negozio: senza «Send request» non c'è niente da pagare.
+ * Line-by-line price (SPEC §12.5): lines at zero do not appear; the total and the estimated
+ * shipping close the list. Empty without a shop: without "Send request" there is nothing to pay.
  */
 function priceRows(): { label: string; value: string; total?: boolean }[] {
   const quote = lastQuote;
@@ -765,14 +765,14 @@ function renderSummary(): void {
   }
 }
 
-/** Righe che il negozio riceve con «Send request»: il riepilogo, com'è a schermo. */
+/** Rows the shop receives with "Send request": the summary, as it is on screen. */
 function summaryRows(): [string, string][] {
   return detailRows();
 }
 
 /**
- * La stima per il negozio (SPEC §12.7): le stesse voci del pannello, ognuna con il dettaglio di che
- * cosa è (modello, metri, minuti). null senza negozio o senza un'insegna con LED.
+ * The estimate for the shop (SPEC §12.7): the same lines as the panel, each with the detail of what
+ * it is (model, metres, minutes). null without a shop or without a sign with LEDs.
  */
 function quotePayload(): StoredQuote | null {
   const quote = lastQuote;
@@ -817,8 +817,8 @@ function quotePayload(): StoredQuote | null {
   return { pricingVersion: PRICING_VERSION, complete: quote.stripPriced, lines, total: quote.total, shipping: quote.shipping };
 }
 
-// Tutti gli strumenti stanno in un solo foglio, uno sotto l'altro, ciascuno in una sezione
-// richiudibile (SPEC §12.2). La barra a destra è l'indice: porta alla sezione e la apre.
+// All the tools are in a single sheet, one below the other, each in a collapsible
+// section (SPEC §12.2). The bar on the right is the index: it goes to the section and opens it.
 const sheetBody = document.querySelector<HTMLElement>('.sheet-body')!;
 const sectionsBox = document.createElement('div');
 sectionsBox.className = 'sections';
@@ -845,7 +845,7 @@ function markTool(tool: string | null): void {
   }
 }
 
-/** La sezione in cima al foglio: è quella evidenziata nella barra. */
+/** The section on top of the sheet: it is the one highlighted in the bar. */
 function sectionInView(): string | null {
   const top = sheetBody.getBoundingClientRect().top + 8;
   let current: string | null = null;
@@ -900,8 +900,8 @@ function openSheet(pane: string): void {
 const requestStats = document.querySelector<HTMLElement>('#request-stats')!;
 let statsAsked = false;
 /**
- * Contatore (SPEC §14): i totali si chiedono una volta, alla prima apertura del pannello Order. Se
- * l'endpoint non c'è, non risponde o i numeri sono sotto la soglia, la riga resta nascosta.
+ * Counter (SPEC §14): the totals are requested once, at the first opening of the Order panel. If
+ * the endpoint is not there, does not answer or the numbers are under the threshold, the row stays hidden.
  */
 function showStats(): void {
   if (statsAsked) return;
@@ -915,17 +915,17 @@ function showStats(): void {
       requestStats.textContent = line;
       requestStats.hidden = false;
     } catch {
-      // Nessun contatore: la riga non compare.
+      // No counter: the row does not appear.
     }
   })();
 }
 
-/** Un evento per click su «Download STL», anche quando i file sono più d'uno. Mai un dato personale. */
+/** One event per click on "Download STL", even when there is more than one file. Never personal data. */
 function countDownload(): void {
   try {
     navigator.sendBeacon(`${import.meta.env.BASE_URL}api/event`, new Blob([JSON.stringify({ type: 'stl' })], { type: 'application/json' }));
   } catch {
-    // Il download non dipende dal contatore.
+    // The download does not depend on the counter.
   }
 }
 
@@ -956,7 +956,7 @@ function selectKind(kind: 'text' | 'image'): void {
   input.dispatchEvent(new Event('change', { bubbles: true }));
 }
 
-// Grigio scuro: il neon resta acceso sul fondo, e cornice nera e fondali si staccano (SPEC §12.2).
+// Dark grey: the neon stays lit on the background, and the black frame and backdrops stand out (SPEC §12.2).
 const STAGE_BACKGROUND = 0x5c5c62;
 const scene = mountSignScene(stage, { background: STAGE_BACKGROUND });
 const generator = createGenerator();
@@ -1085,9 +1085,9 @@ interface ReadyStl {
   label: string;
   heightMm: number;
   diffuserOn: boolean;
-  /** Fondale: STL della lastra e SVG di taglio laser. */
+  /** Backdrop: STL of the plate and laser cutting SVG. */
   plate: { stl: ArrayBuffer; svg: string } | null;
-  /** Pezzi per il piatto di stampa (SPEC §14). null: un pezzo solo. */
+  /** Pieces for the print bed (SPEC §14). null: a single piece. */
   parts: { housing: ArrayBuffer[]; diffuser: ArrayBuffer[] } | null;
 }
 
@@ -1101,7 +1101,7 @@ function clearStl(): void {
   delete downloadButton.dataset.ready;
 }
 
-/** Il risultato in volo non è più quello chiesto: non si pubblica la mesh vecchia. */
+/** The result in flight is no longer the one asked for: the old mesh is not published. */
 function invalidateStl(): void {
   request += 1;
   clearStl();
@@ -1118,7 +1118,7 @@ function saveStl(name: string, buffer: ArrayBuffer | string, type = 'model/stl')
   window.setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-/** Alimentatore consigliato e limiti del controller, dall'ultima generazione. */
+/** Recommended power supply and controller limits, from the last generation. */
 let lastPower: {
   voltageV: number;
   supplyA: number;
@@ -1128,8 +1128,8 @@ let lastPower: {
 } | null = null;
 
 /**
- * Pillola in basso a destra, accanto alla spina: il modello consigliato dal catalogo, link alla
- * pagina parts. Rossa oltre i limiti del controller.
+ * Pill bottom right, next to the plug: the model recommended from the catalogue, link to the
+ * parts page. Red beyond the controller limits.
  */
 function showSupply(
   bom: {
@@ -1180,7 +1180,7 @@ downloadButton?.addEventListener('click', () => {
   if (!ready || downloadButton?.disabled) return;
   countDownload();
   if (ready.parts) {
-    // Insegna divisa per il piatto: tutti i file in un solo archivio.
+    // Sign split for the bed: all the files in a single archive.
     const count = ready.parts.housing.length;
     const files: ZipEntry[] = ready.parts.housing.map((data, i) => ({
       name: partFileName(ready.label, ready.heightMm, 'housing', i + 1, count),
@@ -1347,7 +1347,7 @@ async function showSign(): Promise<void> {
     updateSubmit();
     if (shell.dataset.sheet === 'request') renderSummary();
     const leds = result.lightPoints.length > 0 ? S.status.leds(result.lightPoints.length) : S.status.noLeds;
-    // Al cliente solo gli avvisi che lo riguardano, tradotti; i bloccanti stanno in Richiedi.
+    // The customer gets only the warnings that concern them, simplified; the blocking ones are in Request.
     const shown = result.warnings.filter((warning) => {
       if (/^Low-resolution image|uneven stroke|^Dot too small|^Dot not lit|^Dash outside|^Channel |^Character /.test(warning)) return true;
       return image && warning.startsWith('Outlines merging');
@@ -1356,7 +1356,7 @@ async function showSign(): Promise<void> {
     status.textContent = extra ? `${leds} ${extra}` : leds;
   } catch (err) {
     if (id !== request) return;
-    // Il font non ha nessuna di queste lettere: non è un guasto, si dice di cambiarlo.
+    // The font has none of these letters: it is not a fault, it says to change it.
     const noLetters = err instanceof Error && err.message === NO_LETTERS;
     if (!noLetters) console.warn(err);
     lastQuote = null;
@@ -1370,7 +1370,7 @@ const schedule = (): void => {
   window.clearTimeout(timer);
   timer = window.setTimeout(() => void showSign(), 350);
 };
-// Con tutte le sezioni aperte non c'è più «aprire Testo»: è il campo del testo a riportare la sorgente al testo.
+// With all the sections open there is no longer "open Text": it is the text field that brings the source back to text.
 textInput.addEventListener('focus', () => selectKind('text'));
 textInput.addEventListener('input', () => {
   syncFontSamples();
@@ -1468,10 +1468,10 @@ wallInput.addEventListener('change', () => {
 });
 
 /**
- * Campi che si inseguono (SPEC §3): il canale è la striscia più la tolleranza, la profondità è lo
- * spessore della striscia più l'aria sopra i LED, l'asola è larga quanto il canale. Il campo a valle
- * segue solo finché vale ancora quello che gli toccherebbe: appena lo si cambia a mano, resta fermo.
- * L'ordine conta: così una modifica alla striscia arriva fino all'asola.
+ * Fields that follow each other (SPEC §3): the channel is the strip plus the tolerance, the depth is the
+ * thickness of the strip plus the air above the LEDs, the slot is as wide as the channel. The downstream field
+ * follows only while it still holds what it would be given: as soon as it is changed by hand, it stays put.
+ * Order matters: this way a change to the strip reaches the slot.
  */
 const TECH_LINKS: readonly { from: TechNumericKey; to: TechNumericKey; add: number }[] = [
   { from: 'STRIP_W', to: 'CHANNEL_W', add: CHANNEL_CLEARANCE },
@@ -1482,7 +1482,7 @@ const TECH_LINKS: readonly { from: TechNumericKey; to: TechNumericKey; add: numb
 const round3 = (value: number): number => Math.round(value * 1000) / 1000;
 const lastTech = new Map<TechNumericKey, string>();
 
-/** Fissa i valori da cui ripartono i legami: all'avvio, dopo un Reset, dopo un design caricato. */
+/** Fixes the values the links restart from: at start, after a Reset, after a loaded design. */
 function rememberTechLinks(): void {
   for (const link of TECH_LINKS) {
     lastTech.set(link.from, techNumberInputs.get(link.from)!.value);
@@ -1492,8 +1492,8 @@ function rememberTechLinks(): void {
 rememberTechLinks();
 
 function onTechChange(): void {
-  // `lastTech` resta ai valori di prima per tutto il giro: così il canale appena spostato dalla
-  // striscia risulta cambiato anche al legame successivo, e l'asola lo segue.
+  // `lastTech` stays at the previous values for the whole pass: this way the channel just moved by the
+  // strip also counts as changed for the next link, and the slot follows it.
   for (const link of TECH_LINKS) {
     const from = techNumberInputs.get(link.from)!;
     const to = techNumberInputs.get(link.to)!;
@@ -1518,8 +1518,8 @@ techDensityInput.addEventListener('change', onTechChange);
 techVoltageInput.addEventListener('change', onTechChange);
 techControllerInput.addEventListener('change', onTechChange);
 techBoxInput.addEventListener('change', onTechChange);
-// Scegliere il modello di striscia riscrive le sue misure: è il senso del menu. Da lì i legami
-// ripartono, così il canale resta agganciato alla striscia nuova.
+// Choosing the strip model rewrites its measurements: that is the point of the menu. From there the links
+// restart, so the channel stays attached to the new strip.
 techStripInput.addEventListener('change', () => {
   const profile = stripProfileOf(techStripInput.value);
   drawStrip();
@@ -1650,8 +1650,8 @@ restoreButton.addEventListener('click', () => {
 });
 const requestNote = document.querySelector<HTMLElement>('#request-note')!;
 let sending = false;
-// Richiedi: il design si salva (senza alcun dato personale) e il cliente passa al carrello del
-// negozio con il codice del design. Nome, email e indirizzo si inseriscono lì.
+// Request: the design is saved (without any personal data) and the customer moves to the cart of the
+// shop with the design code. Name, email and address are entered there.
 submitButton.addEventListener('click', () => {
   if (!SHOP || submitButton.disabled || sending || !lastOrder) return;
   const order = lastOrder;
@@ -1660,7 +1660,7 @@ submitButton.addEventListener('click', () => {
   requestNote.textContent = S.order.next;
   delete requestNote.dataset.error;
   const quote = quotePayload();
-  // Foto in vista standard: di fronte, accesa, con il diffusore, comunque il cliente stia guardando.
+  // Photo in the standard view: from the front, lit, with the diffuser, however the customer is looking at it.
   const image = scene.snapshot();
   void (async () => {
     try {
@@ -1670,7 +1670,7 @@ submitButton.addEventListener('click', () => {
         body: JSON.stringify({
           order: JSON.parse(encodeShare(order).json) as unknown,
           summary: summaryRows(),
-          // Stima e foto sono un di più: se mancano, la richiesta parte lo stesso.
+          // Estimate and photo are extras: if they are missing, the request goes anyway.
           ...(quote ? { quote } : {}),
           ...(image ? { image } : {}),
         }),
@@ -1695,7 +1695,7 @@ backToText.addEventListener('click', () => {
 });
 sheetClose.addEventListener('click', () => closeSheet());
 
-// Giro guidato: benvenuto, testo, font e misura, acceso/spento e diffusore, ordine.
+// Guided tour: welcome, text, font and size, on/off and diffuser, order.
 const tool = (id: string): Element | null => document.querySelector(`[data-tool="${id}"]`);
 const TOUR_STEPS: TourStep[] = [
   { ...S.tour.welcome },
@@ -1707,7 +1707,7 @@ const TOUR_STEPS: TourStep[] = [
 ];
 const runTour = (): void => startTour(TOUR_STEPS, S.tour);
 document.querySelector<HTMLButtonElement>('#open-help')!.addEventListener('click', runTour);
-// Prima visita: parte da solo, ma non su un design aperto da link e non nei test automatici.
+// First visit: it starts by itself, but not on a design opened from a link and not in automated tests.
 if (!tourSeen() && !window.location.hash.startsWith('#o=') && !navigator.webdriver) {
   window.setTimeout(runTour, 1200);
 }
@@ -1731,7 +1731,7 @@ desktop.addEventListener('change', () => {
   if (isDesktop() && !shell.dataset.sheet) openSheet('text');
 });
 
-/** Il pulsante dice cosa fa adesso: apre l'editor o lo chiude tenendo le modifiche. */
+/** The button says what it does now: it opens the editor or closes it keeping the edits. */
 function syncEditButton(): void {
   const open = editor !== null;
   editButton.textContent = open ? S.more.doneEditing : S.more.editPaths;
@@ -1739,7 +1739,7 @@ function syncEditButton(): void {
   editorDone.hidden = !open;
 }
 
-/** Esce dall'editor e torna all'anteprima. I tracciati modificati restano: li toglie solo Restore. */
+/** Leaves the editor and goes back to the preview. Edited paths stay: only Restore removes them. */
 function closeEditor(): void {
   if (!editor) return;
   editor.close();
@@ -1795,10 +1795,10 @@ async function openEditor(): Promise<void> {
   }
 }
 
-// --- Salvare, condividere e riaprire un design (SPEC §12.6) ---
+// --- Saving, sharing and reopening a design (SPEC §12.6) ---
 
 const DESIGN_KEY = 'sign-configurator:design:v1';
-/** Oltre questa misura il design non si salva nel browser: resta il file. */
+/** Beyond this size the design is not saved in the browser: the file stays. */
 const DESIGN_STORE_MAX = 1_500_000;
 const shareButton = document.querySelector<HTMLButtonElement>('#share-design')!;
 const downloadDesignButton = document.querySelector<HTMLButtonElement>('#download-design')!;
@@ -1812,7 +1812,7 @@ function noteDesign(message: string): void {
   designNote.textContent = message;
 }
 
-/** Dopo ogni generazione riuscita: l'ordine resta nel browser, così un ricaricamento non lo perde. */
+/** After every successful generation: the order stays in the browser, so a reload does not lose it. */
 function rememberDesign(order: SignOrderV4): void {
   lastOrder = order;
   shareButton.disabled = false;
@@ -1822,7 +1822,7 @@ function rememberDesign(order: SignOrderV4): void {
     if (json && json.length <= DESIGN_STORE_MAX) window.localStorage.setItem(DESIGN_KEY, json);
     else window.localStorage.removeItem(DESIGN_KEY);
   } catch {
-    // Archivio pieno o bloccato: il design si salva comunque con il link o con il file.
+    // Storage full or blocked: the design is saved anyway with the link or with the file.
   }
 }
 
@@ -1846,7 +1846,7 @@ function setSelect(select: HTMLSelectElement, value: string, fallback: string): 
   if (select.selectedIndex < 0) select.value = fallback;
 }
 
-/** Porta un ordine nei controlli della pagina. La generazione la chiede chi chiama. */
+/** Brings an order into the controls of the page. Generation is requested by the caller. */
 function applyOrder(order: SignOrderV4): void {
   window.clearTimeout(timer);
   editor?.close();
@@ -1920,7 +1920,7 @@ function applyOrder(order: SignOrderV4): void {
   updateSubmit();
 }
 
-/** Colore, effetto e spina non rigenerano l'insegna: il design salvato li segue lo stesso. */
+/** Colour, effect and plug do not regenerate the sign: the saved design follows them all the same. */
 let refreshTimer = 0;
 function refreshDesign(): void {
   window.clearTimeout(refreshTimer);
@@ -1939,7 +1939,7 @@ for (const input of document.querySelectorAll<HTMLInputElement>('input[name="eff
   input.addEventListener('change', refreshDesign);
 }
 
-/** Link, URL o JSON del file → pagina. `false` se non è un design leggibile. */
+/** Link, URL or JSON of the file → page. `false` if it is not a readable design. */
 function openDesign(input: string): boolean {
   const read = decodeShare(input);
   if (!read.order) return false;
@@ -1948,7 +1948,7 @@ function openDesign(input: string): boolean {
   return true;
 }
 
-/** Il design aperto da un link vive poi nel browser: senza l'hash, un ricaricamento non torna indietro. */
+/** A design opened from a link then lives in the browser: without the hash, a reload does not go back. */
 function dropHash(): void {
   window.history.replaceState(null, '', window.location.pathname + window.location.search);
 }
@@ -2008,7 +2008,7 @@ newDesignButton.addEventListener('click', () => {
   try {
     window.localStorage.removeItem(DESIGN_KEY);
   } catch {
-    // Niente da togliere.
+    // Nothing to remove.
   }
   dropHash();
   window.location.reload();
@@ -2025,7 +2025,7 @@ window.addEventListener('hashchange', () => {
   void showSign();
 });
 
-// Design salvato per il negozio: ?d=<codice> lo riapre, anche quando è troppo grande per un link.
+// Design saved for the shop: ?d=<code> reopens it, even when it is too large for a link.
 const savedCode = new URLSearchParams(window.location.search).get('d');
 if (savedCode) {
   void (async () => {
@@ -2047,7 +2047,7 @@ if (savedCode) {
   })();
 }
 
-// All'apertura: prima il link, poi l'ultimo design rimasto nel browser.
+// On opening: first the link, then the last design left in the browser.
 if (window.location.hash.startsWith('#o=')) {
   if (!openDesign(window.location.hash)) noteDesign(S.more.badLink);
   dropHash();
@@ -2058,14 +2058,14 @@ if (window.location.hash.startsWith('#o=')) {
 
 void (async () => {
   await Promise.all(
-    // `lazy`: il file arriva quando il cliente sceglie il font. Il worker lo scarica da sé.
+    // `lazy`: the file arrives when the customer picks the font. The worker downloads it by itself.
     FONTS.filter((font) => font.kind === 'outline' && !font.lazy).map(async (font) => {
       try {
         const face = new FontFace(font.id, `url(${import.meta.env.BASE_URL}${font.file})`);
         await face.load();
         document.fonts.add(face);
       } catch {
-        // Senza il file resta il font di sistema. Le miniature dei tratti singoli sono v1.1.
+        // Without the file the system font stays. Thumbnails of single strokes are v1.1.
       }
     }),
   );

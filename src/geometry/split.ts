@@ -1,16 +1,16 @@
-// Suddivisione per il piatto di stampa (SPEC §14). Modulo puro: sceglie dove tagliare, non taglia.
-// Tagli verticali (x costante), dritti: i pezzi si accostano e li tiene il fondale o la colla.
+// Splitting for the print bed (SPEC §14). Pure module: it chooses where to cut, it does not cut.
+// Vertical cuts (constant x), straight: the pieces are butted together and held by the backdrop or by glue.
 
 export type SplitPoint = readonly [number, number];
 
 export interface SplitInput {
-  /** Profilo esterno dell'housing, mm. */
+  /** Outer profile of the housing, mm. */
   outline: readonly (readonly SplitPoint[])[];
-  /** Linee centrali degli spezzoni: un taglio ne attraversa il meno possibile. */
+  /** Centrelines of the segments: a cut crosses as few as possible. */
   centerlines: readonly (readonly SplitPoint[])[];
   /**
-   * Intervalli in x occupati da una lavorazione. `slot` (asola dei fili, tasca d'angolo) è dove la
-   * striscia già finisce: tagliarci dentro costa poco. `hole` (ancoraggio, cavo) si evita di qualche mm.
+   * Intervals in x taken by a feature. `slot` (wire slot, corner pocket) is where the
+   * strip already ends: cutting inside it costs little. `hole` (anchor, cable) is avoided by a few mm.
    */
   keepOut: readonly { x0: number; x1: number; kind?: 'hole' | 'slot' }[];
   bedW: number;
@@ -23,45 +23,45 @@ export interface SplitPiece {
 }
 
 export interface SplitPlan {
-  /** Ascisse dei tagli, crescenti. Vuoto: l'insegna sta sul piatto in un pezzo. */
+  /** Abscissas of the cuts, increasing. Empty: the sign fits the bed in one piece. */
   cutsX: number[];
-  /** Quanti dei tagli scelti attraversano un canale acceso: lì la striscia va interrotta. */
+  /** How many of the chosen cuts cross a lit channel: there the strip must be interrupted. */
   onChannel: number;
   pieces: SplitPiece[];
   bounds: { minX: number; maxX: number; minY: number; maxY: number };
   warnings: string[];
 }
 
-/** Margine dal bordo del piatto, per lato. */
+/** Margin from the edge of the bed, per side. */
 export const BED_MARGIN = 5;
-/** Aria per lato su ogni faccia tagliata: i pezzi accostati non forzano. */
+/** Air per side on every cut face: butted pieces do not force each other. */
 export const SPLIT_CLEARANCE = 0.1;
-/** Passo di ricerca dei tagli. */
+/** Search step of the cuts. */
 const STEP = 0.5;
-/** Un pezzo più stretto di così non si stampa bene. */
+/** A piece narrower than this does not print well. */
 const MIN_PIECE = 30;
 /**
- * Un taglio che attraversa un canale acceso obbliga a interrompere la striscia e a saldare tre fili
- * sul giunto: è la cosa da evitare per prima, molto più di una lavorazione sfiorata.
+ * A cut that crosses a lit channel forces interrupting the strip and soldering three wires
+ * at the joint: it is the first thing to avoid, much more than a grazed feature.
  */
 const COST_CROSSING = 40;
-/** Canale quasi parallelo al taglio: lascia una scheggia lunga. */
+/** Channel almost parallel to the cut: it leaves a long sliver. */
 const COST_GRAZING = 25;
-/** Il profilo esterno lo attraversa qualunque taglio: conta appena, per preferire i tratti stretti. */
+/** Any cut crosses the outer profile: it barely counts, to prefer the narrow stretches. */
 const COST_OUTLINE = 0.2;
-/** Foro di ancoraggio o del cavo tagliato a metà. Si schiva di qualche millimetro. */
+/** Anchor or cable hole cut in half. It is avoided by a few millimetres. */
 const COST_HOLE = 8;
 const HOLE_PAD = 2;
-/** Asola o tasca: lì la striscia già finisce, il taglio ci passa quasi senza danno. */
+/** Slot or pocket: there the strip already ends, the cut goes through almost without harm. */
 const COST_SLOT = 2;
-/** Dentro un varco largo il taglio si mette in mezzo: premio per ogni mm dal canale più vicino. */
+/** Inside a wide gap the cut goes in the middle: a bonus for every mm from the nearest channel. */
 const CLEARANCE_BONUS = 0.25;
 const CLEARANCE_MAX = 6;
-/** Un pezzo in più si accetta solo se evita almeno mezzo attraversamento di canale. */
+/** One more piece is accepted only if it avoids at least half a channel crossing. */
 const COST_EXTRA_PIECE = 20;
-/** Quanti pezzi in più del minimo si possono provare. */
+/** How many pieces more than the minimum can be tried. */
 const EXTRA_CUTS_MAX = 2;
-/** Sotto questo seno dell'angolo fra tratto e taglio, il tratto è «quasi parallelo» (≈ 25°). */
+/** Under this sine of the angle between stroke and cut, the stroke is "almost parallel" (≈ 25°). */
 const GRAZING_SIN = 0.42;
 
 function boundsOf(outline: readonly (readonly SplitPoint[])[]): SplitPlan['bounds'] | null {
@@ -80,7 +80,7 @@ function boundsOf(outline: readonly (readonly SplitPoint[])[]): SplitPlan['bound
   return maxX > minX && maxY > minY ? { minX, maxX, minY, maxY } : null;
 }
 
-/** Costo degli attraversamenti di una polilinea alla retta x = costante. */
+/** Cost of the crossings of a polyline with the line x = constant. */
 function crossingCost(line: readonly SplitPoint[], closed: boolean, x: number, each: number, grazing: number): number {
   let cost = 0;
   const n = line.length;
@@ -93,8 +93,8 @@ function crossingCost(line: readonly SplitPoint[], closed: boolean, x: number, e
       cost += grazing;
       continue;
     }
-    // Un vertice esattamente sul taglio conta una volta sola: lo prende il tratto che parte da lì.
-    // L'ultimo punto di una linea aperta non ha un tratto successivo: conta qui.
+    // A vertex exactly on the cut counts only once: the stretch that starts there takes it.
+    // The last point of an open line has no following stretch: it counts here.
     if (b[0] === x && (closed || i < last - 1)) continue;
     const length = Math.hypot(b[0] - a[0], b[1] - a[1]);
     cost += each;
@@ -103,7 +103,7 @@ function crossingCost(line: readonly SplitPoint[], closed: boolean, x: number, e
   return cost;
 }
 
-/** Il miglior insieme di `cuts` tagli, o null se non ce n'è uno che rispetti i limiti dei pezzi. */
+/** The best set of `cuts` cuts, or null if none respects the limits of the pieces. */
 function bestCuts(
   xs: readonly number[],
   costs: readonly number[],
@@ -115,7 +115,7 @@ function bestCuts(
   const width = maxX - minX;
   const ideal = width / (cuts + 1);
   const even = (piece: number): number => 1e-4 * Math.abs(piece - ideal);
-  // best[i]: costo minimo con l'ultimo taglio piazzato nel candidato i.
+  // best[i]: minimum cost with the last cut placed at candidate i.
   let best = xs.map((x, i) => {
     const piece = x - minX;
     return piece < MIN_PIECE || piece > maxPiece ? Infinity : costs[i]! + even(piece);
@@ -162,7 +162,7 @@ function bestCuts(
   return { cost: endCost, chosen };
 }
 
-/** Dove tagliare perché ogni pezzo stia sul piatto. Deterministico. */
+/** Where to cut so that every piece fits the bed. Deterministic. */
 export function planSplit(input: SplitInput): SplitPlan {
   const warnings: string[] = [];
   const bounds = boundsOf(input.outline) ?? { minX: 0, maxX: 0, minY: 0, maxY: 0 };
@@ -179,7 +179,7 @@ export function planSplit(input: SplitInput): SplitPlan {
   const fits = (w: number, h: number): boolean => w <= usableW + 1e-9 && h <= usableH + 1e-9;
   if (fits(width, height) || fits(height, width)) return plan;
 
-  // I pezzi tengono l'altezza dell'insegna: sul piatto la si mette lungo il lato che la contiene.
+  // The pieces keep the height of the sign: on the bed it is placed along the side that contains it.
   let maxPiece = usableW;
   if (height > usableH + 1e-9 && height <= usableW + 1e-9) maxPiece = usableH;
   else if (height > Math.max(usableW, usableH) + 1e-9) {
@@ -190,7 +190,7 @@ export function planSplit(input: SplitInput): SplitPlan {
   }
   if (width <= maxPiece + 1e-9) return plan;
 
-  // Candidati: una griglia di passo STEP fra i due bordi.
+  // Candidates: a grid of pitch STEP between the two edges.
   const count = Math.floor(width / STEP);
   const xs: number[] = [];
   const costs: number[] = [];
@@ -200,7 +200,7 @@ export function planSplit(input: SplitInput): SplitPlan {
     let channels = 0;
     for (const line of input.centerlines) channels += crossingCost(line, false, x, COST_CROSSING, COST_GRAZING);
     let cost = channels;
-    // Il profilo esterno non è un canale: un suo tratto verticale non è una scheggia da evitare.
+    // The outer profile is not a channel: a vertical stretch of it is not a sliver to avoid.
     for (const ring of input.outline) cost += crossingCost(ring, true, x, COST_OUTLINE, 0);
     for (const zone of input.keepOut) {
       const dist = Math.max(0, zone.x0 - x, x - zone.x1);
@@ -213,8 +213,8 @@ export function planSplit(input: SplitInput): SplitPlan {
     onChannel.push(channels > 0);
   }
 
-  // Distanza di ogni candidato dal canale più vicino, in due passate: il premio mette il taglio
-  // in mezzo al varco invece che a filo della lettera.
+  // Distance of every candidate from the nearest channel, in two passes: the bonus puts the cut
+  // in the middle of the gap instead of flush with the letter.
   const clearance = new Array<number>(xs.length).fill(Infinity);
   let run = Infinity;
   for (let i = 0; i < xs.length; i++) {
@@ -235,7 +235,7 @@ export function planSplit(input: SplitInput): SplitPlan {
   for (let cuts = minCuts; cuts <= top; cuts++) {
     const got = bestCuts(xs, costs, cuts, bounds.minX, bounds.maxX, maxPiece);
     if (!got) continue;
-    // Un pezzo in più si paga: conviene solo se toglie un giunto da saldare.
+    // One more piece has a cost: it is worth it only if it removes a joint to solder.
     const total = got.cost + COST_EXTRA_PIECE * (cuts - minCuts);
     if (!best || total < best.cost) best = { cost: total, chosen: got.chosen };
   }

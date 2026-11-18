@@ -1,9 +1,9 @@
-// Disegno sommario della striscia scelta, vista dall'alto, in scala: larghezza, LED, punti di taglio.
-// Modulo puro: restituisce una stringa SVG, nessun DOM.
+// Rough drawing of the chosen strip, seen from above, to scale: width, LEDs, cut points.
+// Pure module: it returns an SVG string, no DOM.
 
 import type { StripProfile } from '../config';
 
-/** Tratto di striscia disegnato, in mm: abbastanza per due LED anche a 30 LED/m. */
+/** Stretch of strip drawn, in mm: enough for two LEDs even at 30 LED/m. */
 export const STRIP_SVG_LENGTH = 70;
 
 const PAD_TOP = 9;
@@ -20,7 +20,7 @@ export interface StripSvgStats {
   cuts: number;
 }
 
-/** Quanti LED e quanti punti di taglio cadono nel tratto disegnato. */
+/** How many LEDs and how many cut points fall in the drawn stretch. */
 export function stripSvgStats(strip: StripProfile): StripSvgStats {
   const ledPitch = 1000 / strip.LED_PER_M;
   return {
@@ -38,10 +38,10 @@ export function stripSvg(strip: StripProfile): string {
   const y0 = PAD_TOP;
   const x0 = PAD_LEFT;
 
-  // Circuito flessibile. Il bordo destro resta aperto: la striscia continua.
+  // Flexible circuit. The right edge stays open: the strip continues.
   parts.push(`<rect class="strip-pcb" x="${n(x0)}" y="${n(y0)}" width="${n(len)}" height="${n(w)}" rx="0.4"/>`);
 
-  // Punti di taglio: linea tratteggiata e tre piazzole di rame per lato (+, dati, massa).
+  // Cut points: dashed line and three copper pads per side (+, data, ground).
   const padW = Math.min(1.2, strip.CUT_PITCH / 6);
   const padH = w / 5;
   for (let i = 1; i <= stats.cuts; i += 1) {
@@ -52,7 +52,7 @@ export function stripSvg(strip: StripProfile): string {
       parts.push(`<rect class="strip-pad" x="${n(x + 0.15)}" y="${n(y)}" width="${n(padW)}" height="${n(padH)}"/>`);
     }
     parts.push(`<line class="strip-cut" data-cut x1="${n(x)}" y1="${n(y0 - 1.5)}" x2="${n(x)}" y2="${n(y0 + w + 1.5)}"/>`);
-    // Intagli sui bordi: è da lì che la striscia piega di lato.
+    // Notches on the edges: that is where the strip bends sideways.
     if (strip.sideBend) {
       const d = Math.min(1, w / 5);
       parts.push(`<path class="strip-notch" d="M${n(x - d)} ${n(y0)}L${n(x)} ${n(y0 + d)}L${n(x + d)} ${n(y0)}Z"/>`);
@@ -60,7 +60,7 @@ export function stripSvg(strip: StripProfile): string {
     }
   }
 
-  // LED: la COB è una fascia continua di fosforo sopra i chip, le altre hanno un LED 5050 per passo.
+  // LEDs: the COB is a continuous band of phosphor over the chips, the others have one 5050 LED per pitch.
   const led = Math.min(5, w * 0.8, ledPitch * 0.6);
   if (strip.sideBend) {
     parts.push(`<rect class="strip-phosphor" x="${n(x0)}" y="${n(y0 + w * 0.25)}" width="${n(len)}" height="${n(w * 0.5)}" rx="${n(w * 0.25)}"/>`);
@@ -76,7 +76,7 @@ export function stripSvg(strip: StripProfile): string {
     }
   }
 
-  // Quote: larghezza a sinistra, passo di taglio sopra.
+  // Dimensions: width on the left, cut pitch above.
   const xd = x0 - 3;
   parts.push(`<path class="strip-dim" d="M${n(xd)} ${n(y0)}V${n(y0 + w)}M${n(xd - 1)} ${n(y0)}H${n(xd + 1)}M${n(xd - 1)} ${n(y0 + w)}H${n(xd + 1)}"/>`);
   parts.push(`<text class="strip-label" x="${n(xd - 1.5)}" y="${n(y0 + w / 2)}" text-anchor="end" dominant-baseline="middle">${n(w)}</text>`);

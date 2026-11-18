@@ -11,7 +11,7 @@ import { sourceFromPaths } from '../src/geometry/segment';
 import { buildStrip } from '../src/geometry/strip';
 import { generateSign } from '../src/worker/generate';
 
-// Gli spigoli con tasca valgono per una striscia che segue le curve: la COB.
+// Cusps with a pocket apply to a strip that follows curves: the COB.
 const BENDABLE = resolveParams({ STRIP_ID: 'cob-5mm' });
 
 const readPublic: FontBytesReader = async (file) => {
@@ -66,7 +66,7 @@ describe('production geometry', () => {
     const b = build();
     try {
       expect(a.solid.status()).toBe('NoError');
-      // Il genus conta i fori passanti: i due dei capi (il cavo passa dal primo) e quelli piccoli.
+      // The genus counts the through holes: the two at the ends (the cable goes through the first) and the small ones.
       expect(a.holes.pathHoles.length).toBeGreaterThan(0);
       expect(a.solid.genus()).toBe(2 + a.holes.pathHoles.length);
       expect(b.solid.genus()).toBe(a.solid.genus());
@@ -125,8 +125,8 @@ describe('production geometry', () => {
         },
         readPublic,
       );
-      // Neonderthaw ha due strisce per tubo: da solo sta intorno ai 3 s.
-      // Il tetto è più alto perché la suite gira in parallelo.
+      // Neonderthaw has two strips per tube: on its own it takes around 3 s.
+      // The ceiling is higher because the suite runs in parallel.
       expect(performance.now() - t0).toBeLessThan(fontId === 'neonderthaw' ? 8000 : 3000);
       expect(result.centerlines.length).toBeGreaterThan(0);
       expect(result.housingMesh.triVerts.length).toBeGreaterThan(12);

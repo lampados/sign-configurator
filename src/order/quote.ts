@@ -1,6 +1,6 @@
-// Dal risultato del generatore al prezzo voce per voce (SPEC §12.5): raccoglie le misure dalla
-// distinta e i prezzi dai cataloghi (strisce, controller, alimentatori, scatole), poi chiama
-// `priceOrder`. Modulo puro: lo usa la pagina cliente e lo provano i test in Node.
+// From the generator's result to the line-by-line price (SPEC §12.5): it gathers the measurements from the
+// bill of materials and the prices from the catalogues (strips, controllers, power supplies, boxes), then calls
+// `priceOrder`. Pure module: used by the customer page and exercised by the tests in Node.
 import { ASSEMBLY_MIN_PER_CUT, controllerOf, stripProfileOf } from '../config';
 import type { Bom } from '../export/bom';
 import type { PlateBom } from '../geometry/plate';
@@ -10,21 +10,21 @@ import { midEur, priceOrder, STRIP_WASTE_FACTOR, type PriceQuote } from '../pric
 
 export interface QuoteInput {
   bom: Bom & { plate: PlateBom | null };
-  /** Larghezza dell'insegna (senza fondale), mm. */
+  /** Width of the sign (without backdrop), mm. */
   widthMm: number;
-  /** Id di `STRIP_PROFILES` e di `CONTROLLERS`; assenti: quelli standard. */
+  /** Ids from `STRIP_PROFILES` and `CONTROLLERS`; absent: the standard ones. */
   stripId?: string;
   controllerId?: string;
 }
 
 export interface SignQuote extends PriceQuote {
-  /** Metri di striscia da comprare: il tracciato più lo sfrido. */
+  /** Metres of strip to buy: the path plus the waste. */
   stripM: number;
-  /** Minuti di montaggio contati nel prezzo. */
+  /** Assembly minutes counted in the price. */
   assemblyMin: number;
   /**
-   * `false`: la striscia scelta non ha ancora un prezzo al metro. La sua voce vale 0 e il totale
-   * non la comprende: la pagina lo dice invece di mostrare un totale che sembra completo.
+   * `false`: the chosen strip has no price per metre yet. Its line counts 0 and the total
+   * does not include it: the page says so instead of showing a total that looks complete.
    */
   stripPriced: boolean;
 }
@@ -41,10 +41,10 @@ export function quoteSign(input: QuoteInput): SignQuote {
     widthMm: input.widthMm,
     stripMm,
     stripEurPerM: strip.eurPerM ?? 0,
-    // Un taglio in curva o un ponticello sono 10 minuti: gli stessi minuti del riepilogo.
+    // A cut on a bend or a jumper is 10 minutes: the same minutes as the summary.
     segments: assembly.assemblyMin / ASSEMBLY_MIN_PER_CUT,
     solderJoints: assembly.solderJoints,
-    // Senza LED non c'è niente da alimentare né da comandare.
+    // Without LEDs there is nothing to power or to control.
     controllerEur: assembly.totalLeds > 0 ? controllerOf(input.controllerId).priceEur : 0,
     supplyEur: family ? midEur(family.priceEur) : 0,
     boxEur: box ? midEur(box.priceEur) : 0,

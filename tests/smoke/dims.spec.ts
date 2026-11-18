@@ -11,7 +11,7 @@ for (const viewport of [
     await page.goto('index.html', { waitUntil: 'load' });
     await expect(page.locator('#preview-status')).toContainText('LED');
 
-    // «Ciao» a 12 cm è largo quasi 29 cm: la misura scelta è l'altezza delle lettere.
+    // "Ciao" at 12 cm is almost 29 cm wide: the chosen size is the height of the letters.
     await expect(page.locator('#dim-w')).toHaveText(/^width 2[89]\d mm$/);
     await expect(page.locator('#dim-h')).toHaveText(/^height 12\d mm$/);
     await expect(page.locator('#dims')).toBeVisible();

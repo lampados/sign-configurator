@@ -17,10 +17,10 @@ const readPublic: FontBytesReader = async (file) => {
 
 const FONT_ID = 'poppins';
 const draw = (text: string, heightMm = 200) => rasterize({ text, fontId: FONT_ID, heightMm }, readPublic);
-/** I gruppi (sillabe) che la pagina vede, da sinistra a destra. */
+/** The groups (syllables) the page sees, from left to right. */
 const groups = async (text: string) => (await draw(text)).glyphs.map((g) => g.char).filter((c) => c !== null);
 
-/** Larghezza del tratto sui pixel dello scheletro (scarto fra i decili), topologia e pezzi del grafo. */
+/** Stroke width on the skeleton pixels (spread between the deciles), topology and pieces of the graph. */
 async function strokeSpread(text: string, heightMm: number) {
   const raster = await draw(text, heightMm);
   const skel = skeletonize(raster.data, raster.width, raster.height);
@@ -87,7 +87,7 @@ describe('Hindi, Devanagari font (SPEC §4ter)', () => {
     expect(await groups('नमस्ते')).toEqual(['न', 'म', 'स्ते']);
     expect(await groups('प्रेम')).toEqual(['प्रे', 'म']);
     expect(await groups('शक्ति')).toEqual(['श', 'क्ति']);
-    // Fuse: स + ् + त è un glifo solo, più la vocale. Senza composizione sarebbero 6 glifi con il virama a vista.
+    // Fused: स + ् + त is a single glyph, plus the vowel sign. Without shaping there would be 6 glyphs with a visible virama.
     expect((await draw('नमस्ते')).glyphs).toHaveLength(4);
   });
 
@@ -130,7 +130,7 @@ describe('Hindi, Devanagari font (SPEC §4ter)', () => {
       const { spread, pieces, missing } = await strokeSpread(sample, 200);
       expect(missing, `«${sample}»`).toEqual([]);
       expect(spread, `«${sample}»`).toBeLessThan(0.25);
-      // श ha il ricciolo staccato dall'asta: due pezzi. Le altre parole sono un tratto continuo.
+      // श has its curl detached from the stem: two pieces. The other words are one continuous stroke.
       expect(pieces, `«${sample}»`).toBe(sample === 'शक्ति' ? 2 : 1);
     }
   }, 180_000);

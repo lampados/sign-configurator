@@ -37,12 +37,12 @@ describe('line-by-line price of the sign (SPEC §12.5)', () => {
     const quote = quoteSign({ bom: result.bom, widthMm: 400, stripId: 'ws2812b-60' });
     expect(quote.stripPriced).toBe(true);
     expect(amount(quote, 'controller')).toBe(controllerOf(undefined).priceEur);
-    // La striscia: il tracciato più il 20 %, al prezzo al metro del profilo.
+    // The strip: the path plus 20 %, at the price per metre of the profile.
     const stripMm = result.bom.segments.reduce((sum, segment) => sum + segment.cutLengthMm, 0);
     expect(quote.stripM).toBeCloseTo((stripMm / 1000) * STRIP_WASTE_FACTOR, 2);
     expect(amount(quote, 'strip')).toBeCloseTo(quote.stripM * 5.2, 1);
     expect(amount(quote, 'print')).toBe(7);
-    // Montaggio: 1 € al minuto, gli stessi minuti del riepilogo.
+    // Assembly: €1 per minute, the same minutes as the summary.
     expect(quote.assemblyMin).toBe(result.bom.assembly.assemblyMin);
     expect(amount(quote, 'segments')).toBe(result.bom.assembly.assemblyMin);
     expect(amount(quote, 'supply')).toBeGreaterThan(0);
@@ -60,7 +60,7 @@ describe('line-by-line price of the sign (SPEC §12.5)', () => {
     const xiao = quoteSign({ bom: result.bom, widthMm: 400, stripId: 'ws2812b-60', controllerId: 'xiao-led-driver' });
     expect(amount(xiao, 'controller')).toBe(18);
     expect(amount(base, 'controller') - amount(xiao, 'controller')).toBe(17);
-    // Sopra i 70 cm la stampa costa 14 €.
+    // Above 70 cm printing costs €14.
     expect(amount(quoteSign({ bom: result.bom, widthMm: 800, stripId: 'ws2812b-60' }), 'print')).toBe(14);
     const wood = await generateSign(order({ STRIP_ID: 'ws2812b-60' }, { shape: 'rect', material: 'wood', marginMm: 20, cornerRMm: 10 }), readPublic);
     expect(amount(quoteSign({ bom: wood.bom, widthMm: 400, stripId: 'ws2812b-60' }), 'plate')).toBe(18);
@@ -70,7 +70,7 @@ describe('line-by-line price of the sign (SPEC §12.5)', () => {
     const unpriced = STRIP_PROFILES.find((profile) => profile.eurPerM === null)!;
     expect(stripProfileOf('ws2812b-60').eurPerM).toBe(5.2);
     expect(stripProfileOf('cob-5mm').eurPerM).toBe(5.14);
-    // La striscia standard ha il suo prezzo: chi apre il sito vede un totale completo.
+    // The standard strip has its price: whoever opens the site sees a complete total.
     expect(stripProfileOf(undefined).id).toBe('ws2812b-144');
     expect(stripProfileOf(undefined).eurPerM).toBe(20);
     const result = await generateSign(order({ STRIP_ID: unpriced.id }), readPublic);

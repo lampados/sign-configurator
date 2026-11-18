@@ -10,7 +10,7 @@ const readPublic: FontBytesReader = async (file) => {
   return b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength) as ArrayBuffer;
 };
 
-/** Tratto 2 mm, luce 4 mm: gli assi distano 6 mm. */
+/** Stroke 2 mm, gap 4 mm: the axes are 6 mm apart. */
 const TUBE = { lineWidthMm: 2, gapMm: 4 };
 
 function bar(cx: number, cy: number, length: number, width: number, deg: number): Contour {
@@ -48,7 +48,7 @@ function arc(cx: number, cy: number, r: number, a0: number, a1: number, n: numbe
   });
 }
 
-/** Due pareti unite da un'estremità: gli assi distano `sep`. */
+/** Two walls joined at one end: the axes are `sep` apart. */
 function hairpin(leg: number, sep: number): Point[] {
   const R = sep / 2;
   const pts: Point[] = [];
@@ -96,7 +96,7 @@ describe('pairTubes (synthetic tubes, axes 6 mm apart)', () => {
     const pair = p.pairs[0]!;
     expect(pair.a).toBe(pair.b);
     expect(pair.distanceMm).toBeCloseTo(6, 1);
-    // La mediana è dritta, quindi dopo la semplificazione restano gli estremi.
+    // The median is straight, so after simplification the endpoints are left.
     const [x0, x1] = span(pair.midline);
     expect(x0).toBeLessThan(5);
     expect(x1).toBeGreaterThan(35);
@@ -184,7 +184,7 @@ describe('pairTubes on Neonderthaw (100 mm)', () => {
     expect(pair.a).toBe(pair.b);
     expect(pair.distanceMm).toBeGreaterThan(p.distanceMinMm);
     expect(pair.distanceMm).toBeLessThan(p.distanceMaxMm);
-    // La mediana percorre il tubo una volta: circa metà del giro delle due pareti.
+    // The median runs along the tube once: about half the round of the two walls.
     expect(pair.lengthMm / g.edges[0]!.lengthMm).toBeGreaterThan(0.4);
     expect(pair.lengthMm / g.edges[0]!.lengthMm).toBeLessThan(0.6);
     expect(p.singles).toHaveLength(0);

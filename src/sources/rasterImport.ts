@@ -1,5 +1,5 @@
-// Lettura PNG/JPG nel main thread (SPEC §4bis). createImageBitmap e il canvas una volta sola:
-// l'ordine riceve la bitmap binaria, e da lì la pipeline è pura.
+// Reading PNG/JPG in the main thread (SPEC §4bis). createImageBitmap and the canvas only once:
+// the order receives the binary bitmap, and from there the pipeline is pure.
 import { IMAGE_MAX_PX } from '../config';
 import type { RasterImageSource, TraceMode } from '../order/schema';
 import {
@@ -13,7 +13,7 @@ import { IMAGE_MAX_BYTES } from './svgImport';
 export interface RasterImportOptions {
   name?: string;
   trace?: TraceMode;
-  /** Se manca, la soglia è quella di Otsu. */
+  /** If missing, the threshold is Otsu's. */
   threshold?: number;
   invert?: boolean;
 }
@@ -21,13 +21,13 @@ export interface RasterImportOptions {
 export interface RasterImportResult {
   source: RasterImageSource;
   warnings: string[];
-  /** Luminanza dopo l'eventuale riduzione, prima della soglia e del ritaglio. */
+  /** Luminance after the possible reduction, before threshold and crop. */
   luminance: Uint8Array;
   width: number;
   height: number;
 }
 
-/** Decodifica, compone la trasparenza su bianco, riduce se serve, soglia e ritaglia. */
+/** Decodes, composites transparency on white, reduces if needed, thresholds and crops. */
 export async function importRaster(file: Blob, options: RasterImportOptions = {}): Promise<RasterImportResult> {
   if (file.size > IMAGE_MAX_BYTES) throw new Error('The file is over 10 MB.');
   const bitmap = await createImageBitmap(file);
@@ -68,7 +68,7 @@ export async function importRaster(file: Blob, options: RasterImportOptions = {}
   }
 }
 
-/** Ricalcola soglia e ritaglio dalla luminanza già letta, senza riaprire il file. */
+/** Recomputes threshold and crop from the luminance already read, without reopening the file. */
 export function rebuildRaster(
   luminance: Uint8Array,
   width: number,
@@ -78,7 +78,7 @@ export function rebuildRaster(
   return bitmapFromLuminance(luminance, width, height, options);
 }
 
-/** Anteprima della soglia: inchiostro chiaro su fondo scuro, al massimo 220 px di lato. */
+/** Threshold preview: light ink on a dark background, at most 220 px per side. */
 export function paintThresholdPreview(canvas: HTMLCanvasElement, binary: CroppedBitmap): void {
   const maxEdge = 220;
   const scale = Math.min(1, maxEdge / Math.max(binary.width, binary.height));
@@ -105,7 +105,7 @@ export function paintThresholdPreview(canvas: HTMLCanvasElement, binary: Cropped
   ctx.putImageData(image, 0, 0);
 }
 
-/** Rec. 709, dopo la composizione su bianco. Il canvas è già opaco; l'alfa residua si compone comunque. */
+/** Rec. 709, after compositing on white. The canvas is already opaque; residual alpha is composited anyway. */
 function rec709(image: ImageData): Uint8Array {
   const src = image.data;
   const out = new Uint8Array(image.width * image.height);

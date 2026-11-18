@@ -16,10 +16,10 @@ const readPublic: FontBytesReader = async (file) => {
 
 const FONT_ID = 'comfortaa';
 const RUSSIAN = 'АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯабвгдеёжзийклмнопрстуфхцчшщъыьэюя';
-// Lettere che il russo non ha: ucraino, bielorusso, serbo e macedone, bulgaro.
+// Letters Russian does not have: Ukrainian, Belarusian, Serbian and Macedonian, Bulgarian.
 const OTHER_SLAVIC = 'ҐґЄєІіЇїЎўЂђЈјЉљЊњЋћЏџЃѓЅѕЌќ';
 
-/** Larghezza del tratto sui pixel dello scheletro (scarto fra i decili) e topologia del grafo. */
+/** Stroke width on the skeleton pixels (spread between the deciles) and topology of the graph. */
 async function strokeSpread(text: string, heightMm: number) {
   const entry = getFont(FONT_ID)!;
   const font = await loadFont(FONT_ID, readPublic);

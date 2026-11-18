@@ -1,12 +1,12 @@
-// Caricamento dei TTF da public/fonts con opentype.js (SPEC §4).
-// Nessun DOM: funziona nel main thread, nel worker e (con un lettore diverso) in Node.
+// Loading of the TTFs from public/fonts with opentype.js (SPEC §4).
+// No DOM: it works in the main thread, in the worker and (with a different reader) in Node.
 import { parse, type Font } from 'opentype.js';
 import { getFont } from './registry';
 
-/** Legge i byte di un file relativo a `public/`. */
+/** Reads the bytes of a file relative to `public/`. */
 export type FontBytesReader = (file: string) => Promise<ArrayBuffer>;
 
-/** Browser e worker: `BASE_URL` è assoluto, quindi l'URL vale anche dentro il worker. */
+/** Browser and worker: `BASE_URL` is absolute, so the URL also works inside the worker. */
 export const fetchFontBytes: FontBytesReader = async (file) => {
   const url = `${import.meta.env.BASE_URL}${file}`;
   const res = await fetch(url);
@@ -16,7 +16,7 @@ export const fetchFontBytes: FontBytesReader = async (file) => {
 
 const cache = new Map<string, Promise<Font>>();
 
-/** Font del registro per id, analizzato una volta sola per contesto (main thread o worker). */
+/** Registry font by id, parsed only once per context (main thread or worker). */
 export function loadFont(id: string, read: FontBytesReader = fetchFontBytes): Promise<Font> {
   let font = cache.get(id);
   if (!font) {

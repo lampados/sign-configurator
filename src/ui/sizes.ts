@@ -1,4 +1,4 @@
-// Taglie dello strumento Misura (SPEC §12.2). L'altezza fa fede; la taglia è solo un'etichetta.
+// Sizes of the Size tool (SPEC §12.2). The height is what counts; the size is only a label.
 
 import type { SizePreset } from '../order/schema';
 

@@ -9,7 +9,7 @@ describe('power supply catalogue', () => {
     for (const family of SUPPLIES) {
       for (const v of family.variants) {
         expect([5, 12, 24]).toContain(v.volts);
-        // Corrente nominale coerente con la potenza della famiglia (Mean Well arrotonda i watt).
+        // Nominal current consistent with the power of the family (Mean Well rounds the watts).
         expect(v.volts * v.amps).toBeLessThanOrEqual(family.watts * 1.1);
       }
     }
@@ -24,7 +24,7 @@ describe('power supply catalogue', () => {
   });
 
   it('skips the families without the voltage, never the LPVs; null if none is enough', () => {
-    // LRS-150 non ha 5 V: da 18 A si passa all'LRS-200.
+    // LRS-150 has no 5 V: from 18 A it moves to the LRS-200.
     expect(pickSupply(5, 19)?.variant.model).toBe('LRS-200-5');
     expect(SUPPLIES.filter((f) => f.kind === 'waterproof').length).toBe(2);
     for (const a of [1, 3, 8, 14]) expect(pickSupply(24, a)?.family.kind).not.toBe('waterproof');

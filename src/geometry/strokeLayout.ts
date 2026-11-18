@@ -1,4 +1,4 @@
-// Testo in un font a tratto singolo → polilinee in mm e grafo [C]. Niente [A] né [B].
+// Text in a single-stroke font → polylines in mm and graph [C]. No [A] or [B].
 import { splineThroughPolyline } from './smooth';
 import { getFont, type FontEntry } from '../fonts/registry';
 import type { FontBytesReader } from '../fonts/loadFont';
@@ -43,7 +43,7 @@ function bboxOf(points: readonly Point[]): GlyphInfo['bbox'] {
   return { minX, minY, maxX, maxY };
 }
 
-/** Sommità di H e di x, in unità del font. Per compilare il registro. */
+/** Top of H and of x, in font units. To fill in the registry. */
 export function measureStrokeMetrics(font: StrokeFont): { capHeight: number | null; xHeight: number | null } {
   return { capHeight: strokeTop(font, 'H') ?? strokeTop(font, 'I'), xHeight: strokeTop(font, 'x') };
 }
@@ -88,7 +88,7 @@ export async function layoutStroke(
     const own: Point[] = [];
     for (const stroke of glyph.strokes) {
       const raw = stroke.points.map((p): Point => [pen + p[0] * mmPerUnit, p[1] * mmPerUnit]);
-      // I glifi sono spezzate: la spline passa per i vertici e ricostruisce le curve del font.
+      // The glyphs are polylines: the spline goes through the vertices and rebuilds the curves of the font.
       const points = splineThroughPolyline(raw, stroke.closed);
       if (points.length >= 2) {
         placed.push({ points, closed: stroke.closed });

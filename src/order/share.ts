@@ -1,4 +1,4 @@
-// Link e file dell'ordine (SPEC §12.6). Mai un'eccezione: un hash rotto diventa un avviso.
+// Link and file of the order (SPEC §12.6). Never an exception: a broken hash becomes a warning.
 
 import { BOX_AUTO, BOX_NONE, BOXES } from '../parts/boxes';
 import {
@@ -40,7 +40,7 @@ import {
   type TraceMode,
 } from './schema';
 
-/** Lunghezza massima del frammento `#o=…`, in byte UTF-8. */
+/** Maximum length of the `#o=…` fragment, in UTF-8 bytes. */
 export const SHARE_LINK_MAX_BYTES = 8192;
 export const SHARE_HEIGHT_MIN_MM = 40;
 export const SHARE_HEIGHT_MAX_MM = 800;
@@ -49,10 +49,10 @@ export const SHARE_WALL_MAX_MM = 5;
 const DEFAULT_COLOR = '#ff2fd6';
 
 export interface ShareLink {
-  /** `#o=…`, oppure null se il frammento supera 8 kB. */
+  /** `#o=…`, or null if the fragment exceeds 8 kB. */
   hash: string | null;
   bytes: number;
-  /** JSON dell'ordine normalizzato, anche quando il link non c'è. */
+  /** JSON of the normalized order, even when there is no link. */
   json: string;
 }
 
@@ -521,7 +521,7 @@ function noteGenerator(order: SignOrderV4, warnings: string[]): void {
   }
 }
 
-/** JSON normalizzato e, se ci sta in 8 kB, il frammento `#o=`. */
+/** Normalized JSON and, if it fits in 8 kB, the `#o=` fragment. */
 export function encodeShare(order: SignOrderV4): ShareLink {
   try {
     const json = JSON.stringify(migrateOrder(order));
@@ -540,7 +540,7 @@ function payloadOf(input: string): string | null {
   return null;
 }
 
-/** Hash `#o=`, URL con quell'hash, oppure il JSON del file. Non lancia. */
+/** `#o=` hash, URL with that hash, or the JSON of the file. It does not throw. */
 export function decodeShare(input: string): ShareRead {
   const warnings: string[] = [];
   try {

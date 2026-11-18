@@ -1,9 +1,9 @@
-// Disegni delle scatole per la pagina parts: vista obliqua, stessa scala per tutte
-// (`BOX_ART_SCALE`), dalle misure esterne (o interne, se l'esterno non è noto).
+// Drawings of the boxes for the parts page: oblique view, same scale for all
+// (`BOX_ART_SCALE`), from the outer measurements (or inner, if the outer is not known).
 
 import type { BoxSpec } from './boxes';
 
-/** px per mm: la più grande del catalogo (316 mm) resta sotto i 130 px. */
+/** px per mm: the largest in the catalogue (316 mm) stays under 130 px. */
 export const BOX_ART_SCALE = 0.4;
 const DEPTH = 0.45;
 const COS = Math.cos(Math.PI / 6);
@@ -36,17 +36,17 @@ export function boxArt(box: BoxSpec): string {
     `<polygon points="${pts([ftr, off(ftr), off(fbr), fbr])}" fill="${p.side}" stroke="${p.edge}" stroke-width="0.6"/>`,
     `<polygon points="${pts([ftl, ftr, off(ftr), off(ftl)])}" fill="${p.lid}" stroke="${p.edge}" stroke-width="0.6"/>`,
     `<rect x="${f(x0)}" y="${f(y0 - h)}" width="${f(l)}" height="${f(h)}" fill="${p.front}" stroke="${p.edge}" stroke-width="0.6"/>`,
-    // Giunto del coperchio.
+    // Lid joint.
     `<line x1="${f(x0)}" y1="${f(y0 - h + lidH)}" x2="${f(x0 + l)}" y2="${f(y0 - h + lidH)}" stroke="${p.edge}" stroke-width="0.6"/>`,
     `<line x1="${f(x0 + l)}" y1="${f(y0 - h + lidH)}" x2="${f(x0 + l + dx)}" y2="${f(y0 - h + lidH - dy)}" stroke="${p.edge}" stroke-width="0.6"/>`,
   ];
-  // Viti del coperchio negli angoli.
+  // Lid screws in the corners.
   for (const [u, t] of [[0.06, 0.15], [0.94, 0.15], [0.06, 0.85], [0.94, 0.85]] as const) {
     const c = off([x0 + l * u, y0 - h], t);
     parts.push(`<circle cx="${f(c[0])}" cy="${f(c[1])}" r="1.1" fill="${p.edge}" opacity="0.7"/>`);
   }
   if (box.brand === 'Gewiss') {
-    // Passacavi sul fianco.
+    // Cable glands on the side.
     const c: [number, number] = [x0 + l * 0.5, y0 - h * 0.45];
     parts.push(`<circle cx="${f(c[0])}" cy="${f(c[1])}" r="${f(Math.min(4, h * 0.18))}" fill="${p.side}" stroke="${p.edge}" stroke-width="0.5"/>`);
   }

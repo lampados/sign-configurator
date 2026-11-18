@@ -1,7 +1,7 @@
-// [F] Catena di cerniere (SPEC §5). Le corde sono lunghe HINGE_PITCH; l'angolo in una
-// cerniera è la deviazione fra due corde. Su un arco di raggio R vale
-// R = p / (2·sin(θ/2)), e la freccia è s = p² / (8R). La freccia allarga il canale
-// solo verso l'interno. Modulo puro.
+// [F] Chain of hinges (SPEC §5). The chords are HINGE_PITCH long; the angle at a
+// hinge is the deviation between two chords. On an arc of radius R,
+// R = p / (2·sin(θ/2)), and the sagitta is s = p² / (8R). The sagitta widens the channel
+// only inwards. Pure module.
 
 import type { Point } from './rasterize';
 
@@ -15,20 +15,20 @@ export interface ChainOptions {
 export interface ChainHinge {
   x: number;
   y: number;
-  /** Deviazione in gradi: 0 = dritto. */
+  /** Deviation in degrees: 0 = straight. */
   angleDeg: number;
-  /** null se il tratto è dritto. */
+  /** null if the stretch is straight. */
   radiusMm: number | null;
   sagittaMm: number;
   channelWMm: number;
-  /** Angolo maggiore di HINGE_MAX_DEG. */
+  /** Angle greater than HINGE_MAX_DEG. */
   over: boolean;
 }
 
 export interface ChainPath {
   points: Point[];
   closed: boolean;
-  /** Somma delle corde, mm. */
+  /** Sum of the chords, mm. */
   lengthMm: number;
   hinges: ChainHinge[];
   maxAngleDeg: number;
@@ -36,7 +36,7 @@ export interface ChainPath {
 }
 
 interface Cursor {
-  /** Indice del vertice ancora davanti. */
+  /** Index of the vertex still ahead. */
   next: number;
   p: Point;
   arc: number;
@@ -44,7 +44,7 @@ interface Cursor {
 
 const dist = (a: Point, b: Point): number => Math.hypot(b[0] - a[0], b[1] - a[1]);
 
-/** Primo punto del segmento a–b la cui distanza da origin è pitch. */
+/** First point of the segment a–b whose distance from origin is pitch. */
 function interpolateChord(origin: Point, a: Point, b: Point, pitch: number): Point {
   const ax = a[0] - origin[0];
   const ay = a[1] - origin[1];
@@ -153,7 +153,7 @@ function hingesOf(points: readonly Point[], options: ChainOptions): ChainHinge[]
   return out;
 }
 
-/** Ricampiona la polilinea a corde di `hingePitch` e calcola angolo, raggio, freccia e larghezza. */
+/** Resamples the polyline into chords of `hingePitch` and computes angle, radius, sagitta and width. */
 export function resampleChain(points: readonly Point[], options: ChainOptions): ChainPath {
   const pitch = options.hingePitch > 0 ? options.hingePitch : 10;
   const sampled = sampleChords(points, pitch, options.closed);
