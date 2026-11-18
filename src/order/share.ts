@@ -19,6 +19,7 @@ import {
 } from '../config';
 import {
   DEFAULT_CUSTOMER,
+  LIGHT_EFFECTS,
   migrateOrder,
   type CurveNode,
   type CustomerChoices,
@@ -363,7 +364,7 @@ function customerOf(value: unknown, warnings: string[]): CustomerChoices {
     warnings.push('Customer choices ignored.');
     return customer;
   }
-  const effect = oneOf(value.effect, ['colore fisso', 'arcobaleno'] as const satisfies readonly LightEffect[]);
+  const effect = oneOf(value.effect, LIGHT_EFFECTS);
   if (value.effect !== undefined) {
     if (effect) customer.effect = effect;
     else warnings.push('Unknown effect: solid colour used.');

@@ -358,6 +358,28 @@ select {
   line-height: 1.3;
 }
 
+/* × that hides the note next to the LED count: the count stays. */
+.status-close {
+  float: right;
+  width: 24px;
+  height: 24px;
+  margin: -3px -6px 2px 8px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius);
+  background: rgb(255 255 255 / 0.12);
+  color: inherit;
+  font: inherit;
+  line-height: 1;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.status-close::before { content: '×'; font-size: 1.1rem; }
+
+.status-close:hover,
+.status-close:focus-visible { background: rgb(255 255 255 / 0.28); }
+
 .stage-meta:has(#preview-supply:not([hidden])) #preview-status {
   max-width: calc(50% - 4px);
 }
@@ -706,6 +728,10 @@ input[type="color"] {
   display: flex;
   gap: 8px;
 }
+
+/* Five effects: two rows on a narrow sheet. */
+.choice.effects { flex-wrap: wrap; }
+.choice.effects label { flex: 1 1 28%; }
 
 .choice label {
   flex: 1;

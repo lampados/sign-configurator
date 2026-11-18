@@ -65,8 +65,12 @@ export interface SignScene {
   setSign(sign: SignViewData): void;
   setMode(mode: PreviewMode): void;
   setColor(hex: string): void;
-  /** colore fisso uses the picker; arcobaleno runs and stops with prefers-reduced-motion. */
-  setEffect(effect: 'fisso' | 'arcobaleno'): void;
+  /**
+   * `fisso` uses the picker and stands still. The others move: `arcobaleno` runs through the hues,
+   * `respiro` fades in and out, `scia` sends a comet along every piece of strip, `scintille` makes
+   * single LEDs flicker. They stop with prefers-reduced-motion and in the snapshot.
+   */
+  setEffect(effect: PreviewEffect): void;
   /** ACES exposure. The customer stays on the default. */
   setExposure(value: number): void;
   /** Radius of the halo. The bloom threshold does not go down. */
@@ -79,6 +83,9 @@ export interface SignScene {
   snapshot(): string | null;
   dispose(): void;
 }
+
+/** Effect of the preview: `fisso` is the solid colour, the others are animated. */
+export type PreviewEffect = 'fisso' | 'arcobaleno' | 'respiro' | 'scia' | 'scintille';
 
 const FRONT_LIMIT = (40 * Math.PI) / 180;
 /** Beyond this angle between two faces the edge stays sharp in the shading. */
@@ -246,13 +253,13 @@ export function mountSignScene(host: HTMLElement, options?: { background?: numbe
   let lights: readonly LightPoint[] = [];
   let ledGap = 6;
   let mode: PreviewMode = 'accesa';
-  let rainbowAsked = false;
+  let effect: PreviewEffect = 'fisso';
   let haloRadius = DEFAULT_HALO;
   const baseColor = new Color('#ff2fd6');
   const scratch = new Color();
   let maxIndex = new Map<number, number>();
 
-  const rainbowOn = (): boolean => rainbowAsked;
+  const animated = (): boolean => effect !== 'fisso';
 
   // Declared before resize(): the observer calls resize at once, with the sign still absent.
   let viewBox: Box3 | null = null;
@@ -409,15 +416,31 @@ export function mountSignScene(host: HTMLElement, options?: { background?: numbe
     const attr = splat.geometry.getAttribute('ledColor') as BufferAttribute | undefined;
     if (!attr) return;
     const data = attr.array as Float32Array;
-    const rainbow = rainbowOn();
-    const shift = rainbow && !reducedMotion.matches ? (time * 0.00008) % 1 : 0;
+    // Time 0 is the still frame (snapshot, reduced motion): full colour, or the rainbow standing still.
+    const moving = time > 0 && !reducedMotion.matches;
+    const shift = moving ? (time * 0.00008) % 1 : 0;
+    const breath = 0.2 + 0.8 * (0.5 + 0.5 * Math.cos(time * 0.0021));
+    const head = (time * 0.00035) % 1;
     for (let i = 0; i < lights.length; i++) {
       const light = lights[i]!;
-      if (rainbow) {
-        const span = Math.max(1, maxIndex.get(light.segment) ?? 1);
+      const span = Math.max(1, maxIndex.get(light.segment) ?? 1);
+      if (effect === 'arcobaleno') {
         scratch.setHSL((light.index / span + shift) % 1, 0.9, 0.58);
-      } else {
+      } else if (!moving || effect === 'fisso') {
         scratch.copy(baseColor);
+      } else if (effect === 'respiro') {
+        scratch.copy(baseColor).multiplyScalar(breath);
+      } else if (effect === 'scia') {
+        // Distance behind the head of the comet, along the piece of strip: a tail of a third.
+        const behind = (head - light.index / span + 1) % 1;
+        const tail = behind < 0.34 ? 1 - behind / 0.34 : 0;
+        scratch.copy(baseColor).multiplyScalar(0.12 + 0.88 * tail * tail);
+      } else {
+        // Every LED flickers with its own phase and speed, the same at every run.
+        const seed = Math.sin((i + 1) * 12.9898) * 43758.5453;
+        const phase = seed - Math.floor(seed);
+        const wave = 0.5 + 0.5 * Math.sin(time * (0.003 + phase * 0.006) + phase * 6.283);
+        scratch.copy(baseColor).multiplyScalar(0.25 + 0.75 * wave * wave);
       }
       data[i * 3] = scratch.r;
       data[i * 3 + 1] = scratch.g;
@@ -465,7 +488,7 @@ export function mountSignScene(host: HTMLElement, options?: { background?: numbe
     if (disposed) return;
     controls.update();
     const glowing = mode !== 'spenta';
-    if (glowing && rainbowOn() && !reducedMotion.matches) paintColors(time);
+    if (glowing && animated() && !reducedMotion.matches) paintColors(time);
     if (mode === 'accesa') renderGlow();
     if (glowing) composer.render();
     else renderer.render(scene, camera);
@@ -535,8 +558,8 @@ export function mountSignScene(host: HTMLElement, options?: { background?: numbe
       paintColors(0);
       if (mode === 'accesa') renderGlow();
     },
-    setEffect(effect: 'fisso' | 'arcobaleno'): void {
-      rainbowAsked = effect === 'arcobaleno';
+    setEffect(next: PreviewEffect): void {
+      effect = next;
       paintColors(reducedMotion.matches ? 0 : performance.now());
       if (mode === 'accesa') renderGlow();
     },

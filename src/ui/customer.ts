@@ -46,7 +46,7 @@ import { SIZES } from './sizes';
 import { PLUGS, plugOf } from './plugs';
 import { stripSvg } from './stripSvg';
 import { DEFAULT_LED_DENSITY, LED_DENSITIES, EDGE_PROFILES, TECH_FIELDS, TECH_GROUPS, ledDensityOptions, voltageOptions, controllerOptions, boxOptions, stripOptions, techFieldInvalid, techParams, type TechNumericKey } from './techParams';
-import { mountSignScene, type PreviewMode } from '../viewer/scene';
+import { mountSignScene, type PreviewEffect, type PreviewMode } from '../viewer/scene';
 import { createGenerator } from '../worker/api';
 
 const WALL_MIN_MM = 1.6;
@@ -86,6 +86,15 @@ const sizeChips = SIZES.map((size) => `
   <button type="button" class="size-chip" data-size="${size.heightMm}" aria-pressed="${size.id === 'M' ? 'true' : 'false'}">
     ${size.id}<span>${size.heightMm / 10} cm</span>
   </button>`).join('');
+/** Effects of the Color tool: value of the radio and of the preview, value saved in the order, label. */
+const EFFECTS: readonly (readonly [PreviewEffect, LightEffect, string])[] = [
+  ['fisso', 'colore fisso', S.color.fixed],
+  ['respiro', 'respiro', S.color.breathe],
+  ['arcobaleno', 'arcobaleno', S.color.rainbow],
+  ['scia', 'scia', S.color.chase],
+  ['scintille', 'scintille', S.color.twinkle],
+];
+
 const swatches = SWATCHES.map((hex) => `
   <button type="button" class="swatch" data-color="${hex}" aria-label="${hex}" aria-pressed="${hex === '#ff2fd6' ? 'true' : 'false'}"></button>`).join('');
 const tools = [
@@ -179,6 +188,7 @@ app.innerHTML = `
           <strong><span class="brand-short">${S.brand.name}</span><span class="brand-long">${S.brand.longName}</span></strong>
           <span>${S.brand.byline}</span>
           <a href="${S.brand.repo}" target="_blank" rel="noopener">${S.brand.contribute}</a>
+          <span id="wled-brand">${S.wled.brandLead} <a href="${S.wled.url}" target="_blank" rel="noopener">${S.wled.name}</a></span>
           ${SUPPORT_URL ? `<a id="support-brand" href="${SUPPORT_URL}" target="_blank" rel="noopener">${S.support.brand}</a>` : ''}
         </p>
         <div class="hud-actions">
@@ -237,10 +247,10 @@ app.innerHTML = `
         <div class="pane" data-pane="color" hidden>
           <div class="swatches">${swatches}</div>
           <label class="color-free">${S.color.free} <input type="color" name="color" value="#ff2fd6"></label>
-          <div class="choice" role="radiogroup" aria-label="${S.color.effectAria}">
-            <label><input type="radio" name="effect" value="fisso" checked><span>${S.color.fixed}</span></label>
-            <label><input type="radio" name="effect" value="arcobaleno"><span>${S.color.rainbow}</span></label>
+          <div class="choice effects" role="radiogroup" aria-label="${S.color.effectAria}">
+            ${EFFECTS.map(([value, , label], i) => `<label><input type="radio" name="effect" value="${value}"${i === 0 ? ' checked' : ''}><span>${label}</span></label>`).join('')}
           </div>
+          <p class="tech-note">${S.color.effectNote}</p>
         </div>
         <div class="pane" data-pane="image" hidden>
           <label class="image-drop">
@@ -315,6 +325,7 @@ app.innerHTML = `
             <dl id="price-lines"></dl>
             <p class="tech-note">${S.price.note}</p>
           </section>
+          <p id="wled-note" class="tech-note">${S.wled.noteLead} <a href="${S.wled.url}" target="_blank" rel="noopener">${S.wled.name}</a>, ${S.wled.note}</p>
           <p id="blocked-reason" hidden></p>
           <p id="request-note" class="tech-note"${SHOP ? '' : ' hidden'}>${S.order.next}</p>
           <div class="request-actions">
@@ -427,6 +438,28 @@ let lastAssembly = { cuts: 0, minutes: 0, jumpers: 0 };
 let lastQuote: SignQuote | null = null;
 /** Very close strokes: it does not block sending, but the customer reads it in the summary. */
 let closeNote = '';
+/** Note the customer closed with the ×: it stays hidden until its text changes or it goes away. */
+let dismissedNote = '';
+
+/** LED count bottom left, with the notes for the customer and a × to hide them. */
+function showStatus(leds: string, note: string): void {
+  if (!note) dismissedNote = '';
+  if (!note || note === dismissedNote) {
+    status.textContent = leds;
+    return;
+  }
+  status.textContent = `${leds} ${note}`;
+  const close = document.createElement('button');
+  close.type = 'button';
+  close.className = 'status-close';
+  close.title = S.status.dismiss;
+  close.setAttribute('aria-label', S.status.dismiss);
+  close.addEventListener('click', () => {
+    dismissedNote = note;
+    status.textContent = leds;
+  });
+  status.prepend(close);
+}
 
 function overallLabel(size: { w: number; h: number }): string {
   return `${cmLabel(size.w).replace(' cm', '')} × ${cmLabel(size.h)}`;
@@ -496,7 +529,7 @@ function diffuserOn(): boolean {
 
 function effectOf(): LightEffect {
   const effect = document.querySelector<HTMLInputElement>('input[name="effect"]:checked');
-  return effect?.value === 'arcobaleno' ? 'arcobaleno' : 'colore fisso';
+  return (EFFECTS.find(([value]) => value === effect?.value) ?? EFFECTS[0]!)[1];
 }
 
 function sizePresetOf(heightMm: number): SizePreset | null {
@@ -671,7 +704,7 @@ function detailRows(): [string, string][] {
     [t.assembly, lastAssembly.cuts + lastAssembly.jumpers > 0 ? t.assemblyValue(lastAssembly.cuts, lastAssembly.minutes, lastAssembly.jumpers) : t.assemblyNone],
     ...(closeNote ? [[t.warning, closeNote] as [string, string]] : []),
     [t.color, color.value],
-    [t.effect, effect?.value === 'arcobaleno' ? S.color.rainbow : S.color.fixed],
+    [t.effect, (EFFECTS.find(([value]) => value === effect?.value) ?? EFFECTS[0]!)[2]],
     [t.diffuser, diffuserOn() ? t.yes : t.no],
     [t.frame, `${wallMm().toFixed(1)} mm`],
   );
@@ -1000,7 +1033,7 @@ for (const swatch of document.querySelectorAll<HTMLButtonElement>('.swatch')) {
 }
 for (const input of document.querySelectorAll<HTMLInputElement>('input[name="effect"]')) {
   input.addEventListener('change', () => {
-    if (input.checked) scene.setEffect(input.value === 'arcobaleno' ? 'arcobaleno' : 'fisso');
+    if (input.checked) scene.setEffect((EFFECTS.find(([value]) => value === input.value) ?? EFFECTS[0]!)[0]);
   });
 }
 
@@ -1353,7 +1386,7 @@ async function showSign(): Promise<void> {
       return image && warning.startsWith('Outlines merging');
     });
     const extra = customerMessages([...notes, ...shown]).join(' ');
-    status.textContent = extra ? `${leds} ${extra}` : leds;
+    showStatus(leds, extra);
   } catch (err) {
     if (id !== request) return;
     // The font has none of these letters: it is not a fault, it says to change it.
@@ -1893,9 +1926,9 @@ function applyOrder(order: SignOrderV4): void {
   setSelect(techStripInput, params.STRIP_ID ?? DEFAULT_PARAMS.STRIP_ID, DEFAULT_PARAMS.STRIP_ID);
   drawStrip();
 
-  const rainbow = order.customer.effect === 'arcobaleno';
-  checkRadio('effect', rainbow ? 'arcobaleno' : 'fisso');
-  scene.setEffect(rainbow ? 'arcobaleno' : 'fisso');
+  const preview = (EFFECTS.find(([, saved]) => saved === order.customer.effect) ?? EFFECTS[0]!)[0];
+  checkRadio('effect', preview);
+  scene.setEffect(preview);
   checkRadio('diffuser', order.customer.diffuser ? 'on' : 'off');
   previewDiffuser = order.customer.diffuser;
   scene.setMode(previewDiffuser ? (litOn() ? 'accesa' : 'spenta') : 'senza diffusore');

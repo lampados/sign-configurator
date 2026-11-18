@@ -1,5 +1,5 @@
 // Texts of the customer page (SPEC §12.2): as little as possible, in short English. Icons, numbers and
-// units (mm, cm, V, A, LED/m) do the rest. The labels of the debug and bend-test pages stay in Italian.
+// units (mm, cm, V, A, LED/m) do the rest. The labels of the bend-test page stay in Italian.
 // Generator warnings are in English but technical (they serve whoever produces): `customerMessage`
 // reduces them to a few sentences for the customer and discards everything else.
 
@@ -13,6 +13,14 @@ export const S = {
     byline: 'v 0.2 designed by Davide Gomba',
     contribute: 'Contribute to this project on GitHub',
     repo: 'https://github.com/lampados/sign-configurator',
+  },
+  /** Credit to WLED, the firmware of the controllers. Ciao is a separate project: say both. */
+  wled: {
+    url: 'https://kno.wled.ge/',
+    name: 'WLED',
+    brandLead: 'Lights run on',
+    noteLead: 'The controller runs',
+    note: 'the open-source LED firmware: colours and effects are set from your phone. Ciao is an independent project, not affiliated with or endorsed by WLED.',
   },
   /** Line-by-line price in the Order panel (SPEC §12.5): every line is an `id` of `priceOrder`. */
   price: {
@@ -101,7 +109,17 @@ export const S = {
   heightStepUp: 'Plus 10 mm',
   heightAria: 'Height in millimetres',
   textAria: 'Text',
-  color: { free: 'Custom', effectAria: 'Effect', fixed: 'Solid', rainbow: 'Rainbow' },
+  color: {
+    free: 'Custom',
+    effectAria: 'Effect',
+    fixed: 'Solid',
+    rainbow: 'Rainbow',
+    /** Names as in WLED, so the customer finds the same effect on the controller. */
+    breathe: 'Breathe',
+    chase: 'Chase',
+    twinkle: 'Twinkle',
+    effectNote: 'A preview of the effects. The sign plays them, and many more, with any colour.',
+  },
   image: {
     upload: 'Upload an image',
     hint: 'SVG · PNG · JPG',
@@ -190,6 +208,8 @@ export const S = {
   status: {
     leds: (n: number) => `${n} LED`,
     noLeds: 'No LEDs',
+    /** The × on the note next to the LED count. */
+    dismiss: 'Hide this note',
     needHeight: 'Enter a height.',
     needText: 'Enter a text and a height.',
     needImage: 'Upload an SVG, PNG or JPG file.',

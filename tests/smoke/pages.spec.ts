@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { expectClean, trackPage } from './guard';
 
-const PAGES = ['index.html', 'debug.html', 'bend-test.html', 'spec.html'] as const;
+const PAGES = ['index.html', 'bend-test.html', 'spec.html'] as const;
 
 for (const file of PAGES) {
   test(`${file} opens without console or network errors`, async ({ page }) => {
@@ -13,10 +13,6 @@ for (const file of PAGES) {
     }
     if (file === 'spec.html') {
       await expect(page.locator('#spec h1').first()).toBeVisible();
-    }
-    if (file === 'debug.html') {
-      await expect(page.locator('#raster')).toHaveAttribute('data-ok', 'true');
-      expect(track.wasmOk(), 'manifold.wasm not loaded').toBe(true);
     }
     if (file === 'bend-test.html') {
       await expect(page.locator('#download-arcs')).toBeEnabled();

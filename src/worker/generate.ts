@@ -1,7 +1,7 @@
 // [A]–[I] in the worker: from the order to the meshes, the holes and the bill of materials (SPEC §5, §6).
 import { buildPlate, plateBom, type PlateBom, type PlateModel } from '../geometry/plate';
 import type { Manifold, Mesh } from 'manifold-3d';
-import { ASSEMBLY_MIN_PER_CUT, resolveParams, stripFitWarnings, stripProfileOf } from '../config';
+import { assemblyMinutes, resolveParams, stripFitWarnings, stripProfileOf } from '../config';
 import type { Bom } from '../export/bom';
 import type { FontBytesReader } from '../fonts/loadFont';
 import { buildGraph, type SkeletonGraph } from '../geometry/graph';
@@ -234,7 +234,7 @@ export async function generateSign(order: AnyOrder, read?: FontBytesReader): Pro
     strip.bom.assembly.bendCuts = cuts;
   }
   // Cuts on bends and jumpers cost the same: cut, arrange, resolder.
-  strip.bom.assembly.assemblyMin = (strip.bom.assembly.bendCuts + strip.bom.assembly.jumpers) * ASSEMBLY_MIN_PER_CUT;
+  strip.bom.assembly.assemblyMin = assemblyMinutes(strip.bom.assembly.bendCuts + strip.bom.assembly.jumpers);
 
   const wasm = await getManifold();
   const housing = buildHousing(wasm, {

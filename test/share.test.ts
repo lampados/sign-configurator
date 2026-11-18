@@ -73,5 +73,13 @@ describe('sharing', () => {
     expect(unknown.order?.customer.effect).toBe('colore fisso');
     expect(unknown.warnings.some((warning) => warning.includes('backdrop'))).toBe(true);
     expect(unknown.warnings.some((warning) => warning.includes('effect'))).toBe(true);
+
+    // The animated effects travel with the design.
+    for (const effect of ['arcobaleno', 'respiro', 'scia', 'scintille']) {
+      raw.customer.effect = effect;
+      const kept = decodeShare(JSON.stringify(raw));
+      expect(kept.order?.customer.effect).toBe(effect);
+      expect(kept.warnings.some((warning) => warning.includes('effect'))).toBe(false);
+    }
   });
 });

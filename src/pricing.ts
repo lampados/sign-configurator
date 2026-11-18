@@ -1,7 +1,7 @@
 // Customer price, excluding VAT (SPEC §12.5). Pure module: the component lines come from the
 // caller (strip from the profile, power supply and box from the parts average). Shipping separate.
 
-export const PRICING_VERSION = '2026-11-17';
+export const PRICING_VERSION = '2026-11-18';
 
 // Length of strip to buy compared with the path, +20%
 export const STRIP_WASTE_FACTOR = 1.2;
@@ -9,7 +9,8 @@ export const STRIP_WASTE_FACTOR = 1.2;
 export const PRINT_EUR_NARROW = 7;
 export const PRINT_EUR_WIDE = 14;
 export const PRINT_WIDE_FROM_MM = 700;
-// Labour: €1/min, 10 min per strip cut; soldering included
+// Labour: €1/min, soldering included. One segment is 10 minutes: the minutes come from
+// `assemblyMinutes` (first 5 cuts 10 min each, then 4 min each).
 export const EUR_PER_SEGMENT = 10;
 export const EUR_PER_JOINT = 0;
 // Backdrop: laser €15 fixed per job; acrylic €50/m²; wood sheet €3
@@ -34,7 +35,7 @@ export interface PriceMeasure {
   stripMm: number;
   /** €/m of strip from the profile chosen in the menu. */
   stripEurPerM: number;
-  /** Number of strip cuts (one cut = one segment of labour). */
+  /** Labour in units of 10 minutes (assembly minutes / 10): not always a whole number. */
   segments: number;
   solderJoints: number;
   /** Chosen controller: `priceEur` from `CONTROLLERS` (€35 the standard one). */

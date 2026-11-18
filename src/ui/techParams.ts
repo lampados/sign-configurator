@@ -103,7 +103,7 @@ export const EDGE_PROFILES: readonly { value: EdgeProfile; label: string }[] = [
 
 /**
  * LED densities per metre the customer can choose. The default is 144: the strip profile
- * in `config.ts` (the 160 COB, used by admin and debug) is not on the scale, so the
+ * in `config.ts` (the 160 COB) is not on the scale, so the
  * customer page always writes the density into the order. It changes only the number and pitch of the LEDs
  * (preview, BOM, power supply), not the cut pitch.
  */

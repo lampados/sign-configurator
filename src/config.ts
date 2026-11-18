@@ -302,14 +302,29 @@ export const CUT_BEND_STIFF_DEG = 10;
  */
 export const CUT_BEND_FLEX_DEG = 30;
 
-/** Assembly minutes for every cut on a bend: cut, orient the piece, resolder three pads. */
+/** Assembly minutes for each of the first cuts: cut, orient the piece, resolder three pads. */
 export const ASSEMBLY_MIN_PER_CUT = 10;
+/** Cuts counted at the full time. After these the work is a routine and goes faster. */
+export const ASSEMBLY_FULL_CUTS = 5;
+/** Assembly minutes for every cut after the first `ASSEMBLY_FULL_CUTS`. */
+export const ASSEMBLY_MIN_PER_EXTRA_CUT = 4;
+
+/**
+ * Assembly minutes for `cuts` cuts (cuts on bends and jumpers together): the first
+ * `ASSEMBLY_FULL_CUTS` at `ASSEMBLY_MIN_PER_CUT`, the others at `ASSEMBLY_MIN_PER_EXTRA_CUT`.
+ * Davide's choice of 18 November 2026: a flat 10 minutes per cut priced cursive signs out of the market.
+ */
+export function assemblyMinutes(cuts: number): number {
+  const count = Math.max(0, Math.floor(cuts));
+  const full = Math.min(count, ASSEMBLY_FULL_CUTS);
+  return full * ASSEMBLY_MIN_PER_CUT + (count - full) * ASSEMBLY_MIN_PER_EXTRA_CUT;
+}
 
 /**
  * Classic WS2812B family on a flexible circuit: 10 mm wide, 2 mm thick, one LED
  * per cut unit. **It does not bend sideways**, but it can be cut at every LED: on a bend it becomes a chain
  * of short straight pieces one cut unit long, reconnected to each other. So there is no bend
- * limit of the strip: every cut costs assembly time (`ASSEMBLY_MIN_PER_CUT`). Catalogue
+ * limit of the strip: every cut costs assembly time (`assemblyMinutes`). Catalogue
  * measurements (SK6812/WS2812B 5050, 10 mm), to be confirmed with the caliper.
  */
 /**

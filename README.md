@@ -1,5 +1,13 @@
-# sign-configurator
-a sign configurator
+# Ciao, a WYSIWYG Sign Configurator
+
+Design a 3D light sign in the browser: type a word, pick a font and a size, then download the STL
+files to print it yourself or send a request. Live at [ciao.lighting](https://ciao.lighting).
+
+## WLED
+
+The signs are driven by ESP32 controllers running [WLED](https://kno.wled.ge/), the open-source
+firmware for addressable LEDs: colours and effects are set from the WLED interface. Ciao is an
+independent project and is not affiliated with or endorsed by WLED.
 
 
 ## Download and request counters (optional)

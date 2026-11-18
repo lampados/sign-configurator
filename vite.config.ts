@@ -4,13 +4,12 @@ import type { Connect, Plugin } from 'vite';
 
 const root = import.meta.dirname;
 
-// `vite build --mode public` (npm run build:public): the customer page and the parts page. Debug, bend test
+// `vite build --mode public` (npm run build:public): the customer page and the parts page. Bend test
 // and spec are used locally (SPEC §7).
 const PUBLIC_PAGES = ['index', 'parts'];
 const ALL_PAGES: Record<string, string> = {
   index: 'index.html',
   parts: 'parts.html',
-  debug: 'debug.html',
   bendTest: 'bend-test.html',
   spec: 'spec.html',
 };

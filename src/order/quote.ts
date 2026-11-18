@@ -41,7 +41,8 @@ export function quoteSign(input: QuoteInput): SignQuote {
     widthMm: input.widthMm,
     stripMm,
     stripEurPerM: strip.eurPerM ?? 0,
-    // A cut on a bend or a jumper is 10 minutes: the same minutes as the summary.
+    // Labour is priced by the minute, the same minutes as the summary: `segments` is in units of
+    // `ASSEMBLY_MIN_PER_CUT` minutes, so it is a fraction once the cuts go past the full-time ones.
     segments: assembly.assemblyMin / ASSEMBLY_MIN_PER_CUT,
     solderJoints: assembly.solderJoints,
     // Without LEDs there is nothing to power or to control.

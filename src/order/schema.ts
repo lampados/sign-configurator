@@ -104,7 +104,12 @@ export interface PlateChoice {
   cornerRMm: number;
 }
 
-export type LightEffect = 'colore fisso' | 'arcobaleno';
+/**
+ * Light effects the customer can pick. They are WLED effects: the preview animates them, the
+ * controller plays them. Solid, Rainbow, Breathe, Chase and Twinkle in the page.
+ */
+export const LIGHT_EFFECTS = ['colore fisso', 'arcobaleno', 'respiro', 'scia', 'scintille'] as const;
+export type LightEffect = (typeof LIGHT_EFFECTS)[number];
 
 /** Plug of the power supply (universal 100–240 V): only the shape changes. */
 export type PlugType = 'EU' | 'UK' | 'CH' | 'US';

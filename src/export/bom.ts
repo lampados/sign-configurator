@@ -50,7 +50,7 @@ export interface BomAssembly {
   bendCuts: number;
   /** Wire jumpers where two strokes are closer than the width of the strip. */
   jumpers: number;
-  /** Assembly time of the cuts on bends, minutes: `bendCuts · ASSEMBLY_MIN_PER_CUT`. */
+  /** Assembly time of cuts on bends and jumpers, minutes: `assemblyMinutes` in `src/config.ts`. */
   assemblyMin: number;
   segments: number;
   /** DIN/DOUT connections to solder. Corner joints do not count. */

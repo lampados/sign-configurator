@@ -701,7 +701,7 @@ arrow on every segment.
 ```
 
 - `customer` collects the customer's choices that **do not change the geometry**: `effect`
-  (`"colore fisso"` | `"arcobaleno"`), `diffuser`, `mount` (`"wall"`), `plug` (`"EU"` | `"UK"` | `"CH"` | `"US"`, default `"EU"`; unknown → EU with a warning), `proof`
+  (`LIGHT_EFFECTS`: `"colore fisso"` | `"arcobaleno"` | `"respiro"` | `"scia"` | `"scintille"`, shown as Solid, Rainbow, Breathe, Chase, Twinkle: WLED effects, animated in the preview only; the snapshot for the shop is always the still frame), `diffuser`, `mount` (`"wall"`), `plug` (`"EU"` | `"UK"` | `"CH"` | `"US"`, default `"EU"`; unknown → EU with a warning), `proof`
   (approval draft). The diffuser only changes whether `diffuser.stl` is exported; the edge profile
   and the frame thickness stay in `params` (`EDGE_PROFILE`, `WALL`), as today.
 - `sizePreset` is informative: `heightMm` is what counts. `pricingVersion` pins the price table (§12.5).
@@ -726,6 +726,10 @@ arrow on every segment.
 
 The same JSON and the same `generatorVersion` produce the same files (determinism, no randomness).
 
+> **18 November 2026.** The debug page (`debug.html`, `src/ui/debug.ts`) has been removed, after the
+> admin page: where this document still says "in the debug page", it describes what that page showed.
+> The checks it carried live in the `vitest` tests and in the customer page.
+
 ## 7. Stack
 
 - Vite + TypeScript (strict), no heavy UI framework (vanilla TS or Preact)
@@ -736,7 +740,7 @@ The same JSON and the same `generatorVersion` produce the same files (determinis
 - Tests: `vitest` on the pure geometry modules
 - End-of-phase check: `npm run check`. In sequence it runs `tsc --noEmit`, `vitest run`,
   `vite build`, then starts `vite preview` and the Playwright tests in `tests/smoke/` (Chromium only,
-  headless). It covers `index.html`, `admin.html`, `debug.html`, `bend-test.html` and `spec.html`
+  headless). It covers `index.html`, `bend-test.html` and `spec.html`
   (console error or failed network request, the `.wasm` included), the "Test manifold" button
   (`vertici: 8, triangoli: 12`), the rasterization of "Ciao Torino" with both fonts (skeleton
   and graph visible) and the STLs of parts A and B, which must not be empty. It must be run at the end
@@ -753,7 +757,7 @@ The same JSON and the same `generatorVersion` produce the same files (determinis
     source must be **GitHub Actions**. As long as the source is the `main` branch, that branch
     directly hosts the content of `dist` (the already compiled page) and `index.dev.html` keeps
     the source of the page.
-  - `admin.html`, `debug.html`, `bend-test.html` and `spec.html` are used **only locally** with
+  - `bend-test.html` and `spec.html` are used **only locally** with
     `npm run dev`; `npm run build` compiles them all, as a check.
 
 ## 8. Folder structure
@@ -774,11 +778,10 @@ src/
   pricing.ts                      (§12.5, pure)
   order/share.ts                  (§12.6)
   ui/copy.it.ts, sizes.ts
-  ui/customer.ts, customer.css, admin.ts, debug.ts
+  ui/customer.ts, customer.css
   tools/bendTest.ts (page), bendTestGeometry.ts (test parts A arcs / B corners, testable in Node)
 index.html   (customer, §12)
 admin.html   (admin: paste or upload JSON, download ZIP)
-debug.html   (bitmap of [A], or the font lines if it is single-stroke; then graph, segments, hinges)
 bend-test.html
 tests/smoke/          Playwright (headless Chromium), launched by `npm run check`
 playwright.config.ts
@@ -1066,6 +1069,11 @@ price       = BASE
             + options
 customerPrice = max(PRICE_MIN, round_up(price · MARGIN, €5))
 ```
+
+**Assembly time (18 November 2026).** Labour is €1 per minute. The minutes come from `assemblyMinutes`
+(`src/config.ts`), on the cuts on bends plus the jumpers: the first `ASSEMBLY_FULL_CUTS` (5) count
+`ASSEMBLY_MIN_PER_CUT` (10 min) each, the following ones `ASSEMBLY_MIN_PER_EXTRA_CUT` (4 min) each.
+41 cuts are 5 · 10 + 36 · 4 = 194 minutes, not 410. `PRICING_VERSION` is `2026-11-18`.
 
 `priceOrder` receives the diffuser choice and the 2D measurements (areas, sum of the `cutLengthMm`,
 `assembly`, `supplyA`, thicknesses, area and perimeter of the backdrop cuts): it does not wait for the meshes. The
