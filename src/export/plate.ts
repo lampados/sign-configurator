@@ -36,8 +36,8 @@ export function plateToSvg(plate: Pick<PlateModel, 'outline' | 'holes' | 'choice
     .join('\n');
   return `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="${num(width)}mm" height="${num(height)}mm" viewBox="0 0 ${num(width)} ${num(height)}">
-  <title>Fondale — ${material.label}, ${num(plate.thicknessMm)} mm, visto dal retro</title>
-  <desc>Unità: mm. Blu: fori, da tagliare per primi. Rosso: contorno, per ultimo. ${num(maxX - minX)} × ${num(maxY - minY)} mm.</desc>
+  <title>Backdrop — ${material.label}, ${num(plate.thicknessMm)} mm, seen from the back</title>
+  <desc>Units: mm. Blue: holes, to be cut first. Red: outline, last. ${num(maxX - minX)} × ${num(maxY - minY)} mm.</desc>
   <g id="fori" fill="none" stroke="${CUT_HOLES}" stroke-width="${STROKE}">
 ${holes}
   </g>

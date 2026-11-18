@@ -464,7 +464,7 @@ let svgMarkup: string | null = null;
 let loadedSource: SvgImageSource | RasterImageSource | null = null;
 /** L'ultimo ordine generato: è quello che si salva e si condivide (SPEC §12.6). */
 let lastOrder: SignOrderV4 | null = null;
-let svgName = 'immagine.svg';
+let svgName = 'image.svg';
 let lastTool = 'text';
 let blockReason = '';
 
@@ -1192,7 +1192,7 @@ downloadButton?.addEventListener('click', () => {
       });
     }
     if (ready.plate) {
-      files.push({ name: stlFileName(ready.label, ready.heightMm, 'fondale'), data: ready.plate.stl });
+      files.push({ name: stlFileName(ready.label, ready.heightMm, 'backdrop'), data: ready.plate.stl });
       files.push({ name: plateSvgFileName(ready.label, ready.heightMm), data: ready.plate.svg });
     }
     const zip = zipStore(files);
@@ -1202,7 +1202,7 @@ downloadButton?.addEventListener('click', () => {
   saveStl(stlFileName(ready.label, ready.heightMm, 'housing'), ready.housing);
   if (ready.diffuserOn) saveStl(stlFileName(ready.label, ready.heightMm, 'diffuser'), ready.diffuser);
   if (ready.plate) {
-    saveStl(stlFileName(ready.label, ready.heightMm, 'fondale'), ready.plate.stl);
+    saveStl(stlFileName(ready.label, ready.heightMm, 'backdrop'), ready.plate.stl);
     saveStl(plateSvgFileName(ready.label, ready.heightMm), ready.plate.svg, 'image/svg+xml');
   }
 });
@@ -1284,7 +1284,7 @@ async function showSign(): Promise<void> {
         diffuserOn: withDiffuser,
         plate:
           result.plate && result.plateMesh
-            ? { stl: meshToStl(result.plateMesh, 'fondale'), svg: plateToSvg(result.plate) }
+            ? { stl: meshToStl(result.plateMesh, 'backdrop'), svg: plateToSvg(result.plate) }
             : null,
         parts: result.split
           ? {
@@ -1605,7 +1605,7 @@ async function loadImage(file: File): Promise<void> {
   }
   if (isSvgFile(file)) {
     svgMarkup = await file.text();
-    svgName = file.name || 'immagine.svg';
+    svgName = file.name || 'image.svg';
     void showSign();
     return;
   }
@@ -1617,7 +1617,7 @@ async function loadImage(file: File): Promise<void> {
     return;
   }
   try {
-    const imported = await importRaster(file, { name: file.name || 'immagine' });
+    const imported = await importRaster(file, { name: file.name || 'image' });
     raster = {
       name: imported.source.name,
       luminance: imported.luminance,

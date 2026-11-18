@@ -54,7 +54,7 @@ export async function importRaster(file: Blob, options: RasterImportOptions = {}
     const image = ctx.getImageData(0, 0, width, height, { colorSpace: 'srgb' });
     const luminance = rec709(image);
     const threshold = options.threshold ?? otsuThreshold(luminance);
-    const name = options.name ?? 'immagine';
+    const name = options.name ?? 'image';
     const built = bitmapFromLuminance(luminance, width, height, {
       name,
       threshold,

@@ -241,7 +241,7 @@ function sourceOf(value: unknown, warnings: string[]): OrderSource | null {
     return { kind: 'text', text, fontId };
   }
   if (value.kind !== 'image') return null;
-  const name = typeof value.name === 'string' && value.name ? value.name : 'immagine';
+  const name = typeof value.name === 'string' && value.name ? value.name : 'image';
   let trace = oneOf(value.trace, ['centerline', 'outline'] as const satisfies readonly TraceMode[]);
   if (!trace) {
     trace = 'centerline';

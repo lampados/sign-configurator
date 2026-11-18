@@ -11,10 +11,10 @@ export function signSlug(value: string): string {
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
   const cut = ascii.slice(0, SLUG_MAX).replace(/-+$/g, '');
-  return cut || 'insegna';
+  return cut || 'sign';
 }
 
-export function stlFileName(source: string, heightMm: number, part: 'housing' | 'diffuser' | 'fondale'): string {
+export function stlFileName(source: string, heightMm: number, part: 'housing' | 'diffuser' | 'backdrop'): string {
   return `${signSlug(source)}-${heightMm}mm-${part}.stl`;
 }
 
@@ -30,5 +30,5 @@ export function zipFileName(source: string, heightMm: number): string {
 
 /** File di taglio laser del fondale (SPEC §13): stesso nome dell'STL, in SVG. */
 export function plateSvgFileName(source: string, heightMm: number): string {
-  return `${signSlug(source)}-${heightMm}mm-fondale.svg`;
+  return `${signSlug(source)}-${heightMm}mm-backdrop.svg`;
 }

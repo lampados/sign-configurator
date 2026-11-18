@@ -8,11 +8,11 @@ describe('STL file slug', () => {
     expect(signSlug('  foo---BAR  ')).toBe('foo-bar');
   });
 
-  it('stays within 40 characters and, if empty, uses insegna', () => {
+  it('stays within 40 characters and, if empty, uses sign', () => {
     expect(signSlug('a'.repeat(50))).toBe('a'.repeat(40));
     expect(signSlug(`${'a'.repeat(39)}-b`)).toBe('a'.repeat(39));
-    expect(signSlug('   !!!  ')).toBe('insegna');
-    expect(signSlug('')).toBe('insegna');
+    expect(signSlug('   !!!  ')).toBe('sign');
+    expect(signSlug('')).toBe('sign');
   });
 
   it('builds the housing and diffuser names', () => {

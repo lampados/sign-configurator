@@ -1027,7 +1027,7 @@ async function loadDebugImage(file: File): Promise<void> {
     return;
   }
   if (isSvgFile(file)) {
-    imageLoad = { kind: 'svg', markup: await file.text(), name: file.name || 'immagine.svg' };
+    imageLoad = { kind: 'svg', markup: await file.text(), name: file.name || 'image.svg' };
     imageError = null;
     void run();
     return;
@@ -1038,7 +1038,7 @@ async function loadDebugImage(file: File): Promise<void> {
     return;
   }
   try {
-    const imported = await importRaster(file, { name: file.name || 'immagine' });
+    const imported = await importRaster(file, { name: file.name || 'image' });
     imageLoad = {
       kind: 'raster',
       name: imported.source.name,

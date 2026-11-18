@@ -78,15 +78,15 @@ test('index: with the backdrop the download adds the plate as STL and the laser 
   const names = downloads.map((d) => d.suggestedFilename()).sort();
   expect(names).toEqual([
     'ciao-120mm-diffuser.stl',
-    'ciao-120mm-fondale.stl',
-    'ciao-120mm-fondale.svg',
+    'ciao-120mm-backdrop.stl',
+    'ciao-120mm-backdrop.svg',
     'ciao-120mm-housing.stl',
   ]);
   const svg = downloads.find((d) => d.suggestedFilename().endsWith('.svg'))!;
   const text = await readFile((await svg.path())!, 'utf8');
   expect(text).toContain('<svg');
   expect(text).toMatch(/width="[\d.]+mm"/);
-  const plate = downloads.find((d) => d.suggestedFilename() === 'ciao-120mm-fondale.stl')!;
+  const plate = downloads.find((d) => d.suggestedFilename() === 'ciao-120mm-backdrop.stl')!;
   expect(await bytesOf(plate)).toBeGreaterThan(84);
   expectClean(track.problems);
 });

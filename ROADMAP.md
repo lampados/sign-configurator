@@ -30,8 +30,7 @@ Last updated: November 2026.
   minutes each. A small cursive sign can mean a cut per LED: the page should say so early and
   suggest a bendable strip or a bigger size.
 - **A drawing of the channel** in Technical settings, with every parameter explained in a line.
-- **This documentation in English.** The specification is detailed but written in Italian and
-  partly out of date.
+- **An up-to-date specification.** It is detailed and now in English, but partly out of date.
 
 ## Later
 
@@ -43,6 +42,8 @@ Last updated: November 2026.
 
 ## Done recently
 
+- English everywhere in the repository: specification, code comments, test titles, generator
+  warnings and the names of the downloaded files.
 - Cutting the sign into parts that fit your printer's plate, set in Technical settings.
 - A menu of LED strips that fills in the measurements, with a scale drawing of each strip.
 - Hindi (Poppins), with letters that join and reorder as they should. It also takes Latin:

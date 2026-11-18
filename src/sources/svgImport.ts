@@ -177,7 +177,7 @@ export function importSvg(svgText: string, options: SvgImportOptions): SvgImport
     source: {
       kind: 'image',
       format: 'svg',
-      name: options.name?.trim() || 'immagine.svg',
+      name: options.name?.trim() || 'image.svg',
       trace: options.trace ?? 'centerline',
       svg: { elements: normalizeShapes(shapes, options.heightMm) },
     },

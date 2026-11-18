@@ -1,544 +1,544 @@
-# SPEC — Configuratore insegne neon LED (browser)
+# SPEC — Neon LED sign configurator (browser)
 
-Documento di riferimento del progetto. Ogni prompt a Cursor lo richiama con `@SPEC.md`.
-Se il codice e questo documento divergono, si aggiorna prima il documento.
+Reference document of the project. Every prompt to Cursor recalls it with `@SPEC.md`.
+If the code and this document diverge, the document is updated first.
 
-## 1. Obiettivo
+## 1. Goal
 
-Web app 100% client-side (sito statico, nessun backend per la geometria):
+A 100% client-side web app (static site, no backend for the geometry):
 
-- **Cliente**: scrive un testo e sceglie il font, oppure carica un'immagine (SVG, PNG, JPG, §4bis); sceglie altezza, spessore della cornice (`WALL`, da 1,6 a 5 mm), colore ed eventuale fondale (§13); se vuole ritocca i tracciati nell'editor (§5bis); vede un'anteprima 3D dell'insegna accesa, invia l'ordine e può scaricare gli STL dell'insegna. Cambiare lo spessore rigenera l'anteprima.
-- **Admin (Davide)**: dallo stesso JSON d'ordine rigenera in modo deterministico i file di produzione:
-  1. `housing.stl` — cornice/canale da stampare in nero
-  2. `diffuser.stl` — coperchio diffusore opzionale (bianco/naturale)
-  3. `back.dxf` (+ `back.svg`) — fori sul retro per la CNC, visti dal retro
-  4. `bom.json` — distinta: spezzoni di striscia, LED, fori, lunghezze
-  5. `plate.svg` (+ `plate.dxf`) — fondale da tagliare al laser, se scelto (§13)
+- **Customer**: types a text and picks the font, or uploads an image (SVG, PNG, JPG, §4bis); picks height, frame thickness (`WALL`, from 1.6 to 5 mm), colour and an optional backdrop (§13); can retouch the paths in the editor (§5bis); sees a 3D preview of the lit sign, sends the order and can download the STLs of the sign. Changing the thickness regenerates the preview.
+- **Admin (Davide)**: from the same order JSON deterministically regenerates the production files:
+  1. `housing.stl` — frame/channel to print in black
+  2. `diffuser.stl` — optional diffuser cover (white/natural)
+  3. `back.dxf` (+ `back.svg`) — holes on the back for the CNC, seen from the back
+  4. `bom.json` — bill of materials: strip segments, LEDs, holes, lengths
+  5. `plate.svg` (+ `plate.dxf`) — backdrop to laser cut, if chosen (§13)
 
-Unità: **millimetri** ovunque. Piano XY = piano dell'insegna, Z verso chi guarda. Il retro sta a Z = 0.
+Units: **millimetres** everywhere. XY plane = plane of the sign, Z towards the viewer. The back is at Z = 0.
 
-## 2. Hardware (vincoli fisici)
+## 2. Hardware (physical constraints)
 
-Striscia standard: **larga 10 mm, spessa 6 mm** (profilo `strip-10mm`), indirizzabile. Resta in elenco
-la TOPAI WS2812B COB 5 mm (RGBIC, 160 IC/m, connettori 3 pin), per cui sono disegnati i pezzi del
-bend test.
+Standard strip: **10 mm wide, 6 mm thick** (profile `strip-10mm`), addressable. The TOPAI WS2812B
+COB 5 mm (RGBIC, 160 IC/m, 3-pin connectors) stays in the list: the bend test parts are designed
+for it.
 
-| Parametro | Valore | Note |
+| Parameter | Value | Notes |
 |---|---|---|
-| `STRIP_W` | 10.0 | larghezza striscia (COB: 5.0) |
-| `STRIP_T` | 6.0 | spessore striscia (COB: 2.0) |
-| `BANK_TRANSITION_L` | 25 | pezzo D del campione di piegatura: transizione lineare dell'inclinazione prima e dopo l'arco. Non usata da [H]/[I] |
-| `HINGE_PITCH` | 10.0 | intagli sui bordi ogni ~1 cm: la striscia piegata di lato si comporta come una catena di tratti rigidi. Per la striscia da 10 mm **DA MISURARE** (oggi il valore della COB) |
-| `HINGE_MAX_DEG` | 40 | sul pezzo B la striscia segue fino a 45° con leggera tensione; 40° è il margine del generatore |
-| `CUT_PITCH` | 10.0 | passo di taglio (verificare se coincide con gli intagli) |
-| `LED_PER_M` | 144 | striscia da 10 mm (COB: 160); il cliente sceglie fra 30, 60, 74, 96, 144 |
-| `LED_MAX_MA` | 60 | corrente di un LED a bianco pieno a 5 V, per la stima dell'alimentatore |
-| `STRIP_V` | 5 | tensione della striscia: 5, 12 o 24 V (`STRIP_VOLTAGES`). A parità di potenza per LED la corrente scala come 5 / `STRIP_V` |
-| `BOX_ID` | `auto` | scatola dell'elettronica: `auto`, `none` o un id di `BOXES` (vedi Scatola) |
-| `CONTROLLER_ID` | `gl-c-309wl` | controller WLED, id di `CONTROLLERS` (vedi Controller): cambia i limiti di corrente e LED della distinta |
+| `STRIP_W` | 10.0 | strip width (COB: 5.0) |
+| `STRIP_T` | 6.0 | strip thickness (COB: 2.0) |
+| `BANK_TRANSITION_L` | 25 | part D of the bending sample: linear transition of the tilt before and after the arc. Not used by [H]/[I] |
+| `HINGE_PITCH` | 10.0 | notches on the edges every ~1 cm: a strip bent sideways behaves like a chain of rigid stretches. For the 10 mm strip **TO BE MEASURED** (today the COB value) |
+| `HINGE_MAX_DEG` | 40 | on part B the strip follows up to 45° with slight tension; 40° is the generator's margin |
+| `CUT_PITCH` | 10.0 | cut pitch (check whether it matches the notches) |
+| `LED_PER_M` | 144 | 10 mm strip (COB: 160); the customer chooses among 30, 60, 74, 96, 144 |
+| `LED_MAX_MA` | 60 | current of one LED at full white at 5 V, for the power supply estimate |
+| `STRIP_V` | 5 | strip voltage: 5, 12 or 24 V (`STRIP_VOLTAGES`). For the same power per LED the current scales as 5 / `STRIP_V` |
+| `BOX_ID` | `auto` | electronics box: `auto`, `none` or an id from `BOXES` (see Box) |
+| `CONTROLLER_ID` | `gl-c-309wl` | WLED controller, id from `CONTROLLERS` (see Controller): changes the current and LED limits of the bill of materials |
 
-Montaggio: striscia **piatta sul fondo del canale, LED verso chi guarda**, piegata di lato sfruttando le cerniere.
+Mounting: strip **flat on the channel floor, LEDs towards the viewer**, bent sideways using the hinges.
 
-Controller (`CONTROLLER` in `src/config.ts`): **GLEDOPTO ESP32 Ultra Mini, GL-C-309WL**, firmware WLED,
-dietro l'insegna, 40 × 40 × 20 mm. Dalle schede dei rivenditori: ingresso 5–24 V DC, 10 A, 2 uscite dati, fino a 800 IC.
-Un rivenditore dice «10 A per canale» e 240 W, che non tornano fra loro: si usa 10 A in totale finché
-non si verifica sul manuale. Gli IC si contano come i LED (una striscia a 12 o 24 V con un IC ogni
-3 LED ne usa meno).
+Controller (`CONTROLLER` in `src/config.ts`): **GLEDOPTO ESP32 Ultra Mini, GL-C-309WL**, WLED firmware,
+behind the sign, 40 × 40 × 20 mm. From the resellers' sheets: 5–24 V DC input, 10 A, 2 data outputs, up to 800 ICs.
+One reseller says "10 A per channel" and 240 W, which do not agree: 10 A in total is used until
+it is checked against the manual. ICs are counted like LEDs (a 12 or 24 V strip with one IC every
+3 LEDs uses fewer).
 
-Raggio minimo derivato dal profilo: `R_MIN = HINGE_PITCH / (2·sin(HINGE_MAX_DEG/2))` (≈ 14,6 mm con 40°).
-Altezza minima di lettera derivata: `MIN_LETTER_H = 2·R_MIN`, il diametro della piega più stretta.
+Minimum radius derived from the profile: `R_MIN = HINGE_PITCH / (2·sin(HINGE_MAX_DEG/2))` (≈ 14.6 mm at 40°).
+Derived minimum letter height: `MIN_LETTER_H = 2·R_MIN`, the diameter of the tightest bend.
 
 ### Controller (`CONTROLLERS` in `src/config.ts`)
 
-Controller WLED su ESP32; la tensione d'ingresso è quella della striscia. Standard il GLEDOPTO
-ESP32 Ultra Mini (GL-C-309WL: 5–24 V, 10 A, 800 LED, 2 uscite). Opzionali, nel menu Tech
-`CONTROLLER_ID`: GLEDOPTO GL-C-616WL (5–24 V, 15 A totali, 10 A per uscita, 2 uscite, Wi-Fi ed
-Ethernet), QuinLED Dig-Uno v3.1 (5–24 V, 15 A, 2 uscite, 50 × 40 × 25 mm), Seeed
-Studio LED Driver Board for XIAO con una XIAO ESP32 (5–12 V, 3 A a 5 V e 2 A a 12 V, 1 uscita,
-63 × 30 × 14,4 mm con la XIAO montata; WLED va caricato). Ogni controller ha un prezzo (`priceEur`, un
-pezzo, IVA esclusa: 35, 40, 35 e 18 €) che entra nel prezzo dell'insegna (§12.5) e nella pagina parts.
-Se la striscia ha una tensione che il controller non accetta (24 V con la scheda Seeed) la distinta
-avvisa; il limite di corrente può dipendere dalla tensione (`ampsAt`). Dove il costruttore non dà un limite di LED: ~600 per uscita, la soglia che WLED
-suggerisce per un buon frame rate. Il controller cambia solo gli avvisi della distinta (corrente e LED),
-non la geometria; va nell'ordine (`params.CONTROLLER_ID`) solo se diverso dallo standard, e un id
-sconosciuto nel link torna allo standard con un avviso.
+WLED controllers on ESP32; the input voltage is that of the strip. The standard one is the GLEDOPTO
+ESP32 Ultra Mini (GL-C-309WL: 5–24 V, 10 A, 800 LEDs, 2 outputs). Optional, in the Tech menu
+`CONTROLLER_ID`: GLEDOPTO GL-C-616WL (5–24 V, 15 A total, 10 A per output, 2 outputs, Wi-Fi and
+Ethernet), QuinLED Dig-Uno v3.1 (5–24 V, 15 A, 2 outputs, 50 × 40 × 25 mm), Seeed
+Studio LED Driver Board for XIAO with a XIAO ESP32 (5–12 V, 3 A at 5 V and 2 A at 12 V, 1 output,
+63 × 30 × 14.4 mm with the XIAO mounted; WLED must be flashed). Every controller has a price (`priceEur`, one
+piece, excluding VAT: €35, €40, €35 and €18) that enters the price of the sign (§12.5) and the parts page.
+If the strip has a voltage the controller does not accept (24 V with the Seeed board) the bill of materials
+warns; the current limit can depend on the voltage (`ampsAt`). Where the maker gives no LED limit: ~600 per output, the threshold WLED
+suggests for a good frame rate. The controller only changes the warnings of the bill of materials (current and LEDs),
+not the geometry; it goes into the order (`params.CONTROLLER_ID`) only if different from the standard, and an unknown
+id in the link falls back to the standard with a warning.
 
-### Scatola (`src/parts/boxes.ts`)
+### Box (`src/parts/boxes.ts`)
 
-La scatola contiene il controller e, se è da quadro (LRS), l'alimentatore; l'adattatore con spina
-(GST60A) resta fuori e dentro entra solo il suo cavo DC. Catalogo `BOXES`: Hammond 1591XXLSBK,
-1591XXGSBK, 1591XXTSBK (ABS nero, IP54; misure esterne, interno stimato con pareti da 2,5 mm e 7 mm
-fra fondo e coperchio) e Gewiss serie 44 CE GW44204–GW44209 (tecnopolimero grigio, IP56, IP55 la
-GW44209; misure interne dal codice), con prezzo medio. Ingombri (`boxNeeds`): i componenti affiancati
-in fila lungo L o lungo W, 5 mm dalle pareti (`BOX_WALL_GAP_MM`), 10 mm fra loro (`BOX_ITEM_GAP_MM`),
-10 mm d'aria sopra per i cavi (`BOX_TOP_GAP_MM`); la scatola può essere girata. Un controller senza
-misure pubblicate conta 60 × 35 × 20 mm (`CONTROLLER_FALLBACK_MM`). Menu Tech `BOX_ID`: `auto` (default,
-la più piccola per volume interno che basta), `none` o l'id di una scatola; dopo ogni generazione
-le scatole che non bastano sono segnate «too small». Una scatola scelta troppo piccola, o nessuna che
-basti in automatico, dà un avviso nel riepilogo. Va nell'ordine solo se diversa da `auto`.
+The box holds the controller and, if it is a panel type (LRS), the power supply; the plug-in adapter
+(GST60A) stays outside and only its DC cable goes in. Catalogue `BOXES`: Hammond 1591XXLSBK,
+1591XXGSBK, 1591XXTSBK (black ABS, IP54; outer measurements, inside estimated with 2.5 mm walls and 7 mm
+between floor and lid) and Gewiss 44 CE series GW44204–GW44209 (grey technopolymer, IP56, IP55 for the
+GW44209; inner measurements from the code), with an average price. Footprints (`boxNeeds`): the components side by side
+in a row along L or along W, 5 mm from the walls (`BOX_WALL_GAP_MM`), 10 mm between them (`BOX_ITEM_GAP_MM`),
+10 mm of air above for the cables (`BOX_TOP_GAP_MM`); the box can be rotated. A controller without
+published measurements counts as 60 × 35 × 20 mm (`CONTROLLER_FALLBACK_MM`). Tech menu `BOX_ID`: `auto` (default,
+the smallest by inner volume that is enough), `none` or the id of a box; after every generation
+the boxes that are not enough are marked "too small". A chosen box that is too small, or none that is
+enough in automatic mode, gives a warning in the summary. It goes into the order only if different from `auto`.
 
-### Profilo striscia (`src/config.ts`)
+### Strip profile (`src/config.ts`)
 
-`STRIP_W`, `STRIP_T`, `CHANNEL_W`, `HINGE_PITCH`, `HINGE_MAX_DEG`, `CUT_PITCH` e `LED_PER_M`
-stanno nel profilo della striscia: `strip-10mm` (standard, `DEFAULT_STRIP`) e `cob-5mm` (TOPAI WS2812B
-COB 5 mm), le due voci di `STRIP_PROFILES`.
-Le altre strisce si aggiungono lì, senza un secondo elenco di numeri. `DEFAULT_PARAMS` copia
-questi campi dal profilo di default. `R_MIN` e `MIN_LETTER_H` non si impostano: `resolveParams`
-ricalcola `MIN_LETTER_H` da cerniera e passo.
+`STRIP_W`, `STRIP_T`, `CHANNEL_W`, `HINGE_PITCH`, `HINGE_MAX_DEG`, `CUT_PITCH` and `LED_PER_M`
+live in the strip profile: `strip-10mm` (standard, `DEFAULT_STRIP`) and `cob-5mm` (TOPAI WS2812B
+COB 5 mm), the two entries of `STRIP_PROFILES`.
+Other strips are added there, without a second list of numbers. `DEFAULT_PARAMS` copies
+these fields from the default profile. `R_MIN` and `MIN_LETTER_H` are not set: `resolveParams`
+recomputes `MIN_LETTER_H` from hinge and pitch.
 
-## 3. Parametri geometrici (tutti in `src/config.ts`, sovrascrivibili)
+## 3. Geometric parameters (all in `src/config.ts`, overridable)
 
-| Parametro | Default | Significato |
+| Parameter | Default | Meaning |
 |---|---|---|
-| `CHANNEL_W` | 10.4 | larghezza canale su tratto dritto (STRIP_W + 0,4 di tolleranza; COB: 5.4) |
-| `CHANNEL_DEPTH` | 12.0 | profondità canale: la striscia (6) più 6 mm fra i LED e il diffusore, come con la COB (8 = 2 + 6) |
-| `WALL` | 2.2 | spessore parete (la "cornice") |
-| `WALL_MIN` | 1.2 | spessore minimo della parete interna: la freccia non la assottiglia oltre |
-| `MIN_GAP` | 1.0 | aria minima fra due sagome che non devono fondersi |
-| `FLOOR` | 4.0 | spessore fondo |
-| `ANCHOR_HOLE_D` | 3.2 | fori di ancoraggio sul retro (ciechi) |
+| `CHANNEL_W` | 10.4 | channel width on a straight (STRIP_W + 0.4 tolerance; COB: 5.4) |
+| `CHANNEL_DEPTH` | 12.0 | channel depth: the strip (6) plus 6 mm between the LEDs and the diffuser, as with the COB (8 = 2 + 6) |
+| `WALL` | 2.2 | wall thickness (the "frame") |
+| `WALL_MIN` | 1.2 | minimum thickness of the inner wall: the sagitta does not thin it further |
+| `MIN_GAP` | 1.0 | minimum air between two outlines that must not merge |
+| `FLOOR` | 4.0 | floor thickness |
+| `ANCHOR_HOLE_D` | 3.2 | anchor holes on the back (blind) |
 | `ANCHOR_HOLE_DEPTH` | 3.0 | |
-| `ANCHOR_SPACING` | 70 | distanza target fra fori lungo il percorso |
+| `ANCHOR_SPACING` | 70 | target distance between holes along the path |
 | `ANCHOR_MIN_PER_SEGMENT` | 2 | |
-| `ANCHOR_BOSS` | false | se true: distanziali cilindrici sul retro |
+| `ANCHOR_BOSS` | false | if true: cylindrical standoffs on the back |
 | `ANCHOR_BOSS_D` / `_H` | 8 / 6 | |
-| `WIRE_SLOT_W` | 10.4 | larghezza asola fili, di default = `CHANNEL_W`: tutta l'estremità del canale |
-| `WIRE_SLOT_L` | 6.0 | ultimi mm dello spezzone occupati dall'asola, a filo della terminazione arrotondata |
-| `SLOT_LIP_CHAMFER` | 1.0 | smusso a 45° sul labbro interno dell'asola, lato spezzone |
-| `WIRE_HOLE_D` | 8.0 | foro tondo grande a ogni capo di spezzone, al posto dell'asola; al più largo quanto il canale. 0: l'asola |
-| `PATH_HOLE_D` | 4.0 | fori piccoli lungo tutto il percorso, sul fondo del canale. 0: nessuno |
-| `PATH_HOLE_PITCH` | 12.0 | passo dei fori piccoli: distanze uguali, vicine a questa |
-| `CORNER_MERGE_DIST` | 4.0 | sotto questa distanza due asole DIN/DOUT diventano una tasca d'angolo |
-| `CABLE_HOLE_D` | 6.0 | ingresso del cavo principale |
-| `CROSSING_GAP` | 3.0 | interruzione della striscia per lato a un incrocio |
-| `DIFFUSER_T` | 1.2 | spessore diffusore (incastro a pressione in cima al canale) |
+| `WIRE_SLOT_W` | 10.4 | wire slot width, by default = `CHANNEL_W`: the whole end of the channel |
+| `WIRE_SLOT_L` | 6.0 | last mm of the segment taken by the slot, flush with the rounded end |
+| `SLOT_LIP_CHAMFER` | 1.0 | 45° chamfer on the inner lip of the slot, segment side |
+| `WIRE_HOLE_D` | 8.0 | large round hole at each end of a segment, instead of the slot; at most as wide as the channel. 0: the slot |
+| `PATH_HOLE_D` | 4.0 | small holes along the whole path, in the channel floor. 0: none |
+| `PATH_HOLE_PITCH` | 12.0 | pitch of the small holes: equal distances, close to this |
+| `CORNER_MERGE_DIST` | 4.0 | under this distance two DIN/DOUT slots become a corner pocket |
+| `CABLE_HOLE_D` | 6.0 | main cable entry |
+| `CROSSING_GAP` | 3.0 | interruption of the strip per side at a crossing |
+| `DIFFUSER_T` | 1.2 | diffuser thickness (press fit on top of the channel) |
 | `DIFFUSER_CLEARANCE` | 0.15 | |
-| `MIN_LETTER_H` | `2·R_MIN` | derivato dal profilo striscia: diametro della piega più stretta |
-| `CUSP_MODE` | `"split"` | `"split"` taglia lo spezzone nello spigolo; `"warn"` lo segnala soltanto |
-| `I_DOT_MODE` | `"dot"` | puntino sotto R_MIN: `"dot"` spezzone con due fori, `"dash"` trattino con asole, `"omit"` lo esclude, `"unlit"` rilievo senza striscia |
-| `DOT_WIRE_HOLE_D` | 2.5 | foro passante sotto ciascuna piazzola del puntino |
-| `DOT_OVERHANG_MM` | 1.5 | di quanto la pillola, parete compresa, può uscire dal puntino |
-| `COVERAGE_MIN` | 0.85 | sotto questa frazione di linea centrale illuminata, la lettera avvisa |
-| `EDGE_PROFILE` | `"square"` | profilo dello spigolo superiore della parete: `"square"` \| `"outer"` \| `"inner"` \| `"both"` |
-| `CHAMFER_SIZE` | 1.5 | altezza **verticale** dello smusso (≤ `CHANNEL_DEPTH`) |
-| `CHAMFER_ANGLE` | 45 | angolo dello smusso rispetto all'orizzontale (0° < α < 90°) |
-| `LAYER_STEP` | 0.2 | altezza delle fette dello smusso a gradini (= altezza layer di stampa) |
-| `IMAGE_MAX_PX` | 4096 | lato lungo massimo di una bitmap caricata, dopo il ritaglio (§4bis) |
-| `EDIT_FIT_TOL` | 0.3 | tolleranza della conversione spezzone → Bézier all'apertura dell'editor (§5bis) |
-| `EDIT_MIN_NODE_DIST` | 0.5 | distanza minima fra due nodi consecutivi nell'editor |
+| `MIN_LETTER_H` | `2·R_MIN` | derived from the strip profile: diameter of the tightest bend |
+| `CUSP_MODE` | `"split"` | `"split"` cuts the segment at the cusp; `"warn"` only reports it |
+| `I_DOT_MODE` | `"dot"` | dot under R_MIN: `"dot"` segment with two holes, `"dash"` dash with slots, `"omit"` excludes it, `"unlit"` raised shape with no strip |
+| `DOT_WIRE_HOLE_D` | 2.5 | through hole under each pad of the dot |
+| `DOT_OVERHANG_MM` | 1.5 | how far the pill, wall included, may stick out of the dot |
+| `COVERAGE_MIN` | 0.85 | under this fraction of lit centreline, the letter warns |
+| `EDGE_PROFILE` | `"square"` | profile of the top edge of the wall: `"square"` \| `"outer"` \| `"inner"` \| `"both"` |
+| `CHAMFER_SIZE` | 1.5 | **vertical** height of the chamfer (≤ `CHANNEL_DEPTH`) |
+| `CHAMFER_ANGLE` | 45 | angle of the chamfer from the horizontal (0° < α < 90°) |
+| `LAYER_STEP` | 0.2 | height of the slices of the stepped chamfer (= print layer height) |
+| `IMAGE_MAX_PX` | 4096 | maximum long side of an uploaded bitmap, after cropping (§4bis) |
+| `EDIT_FIT_TOL` | 0.3 | tolerance of the segment → Bézier conversion when the editor opens (§5bis) |
+| `EDIT_MIN_NODE_DIST` | 0.5 | minimum distance between two consecutive nodes in the editor |
 
-Altezza totale = `FLOOR + CHANNEL_DEPTH`.
+Total height = `FLOOR + CHANNEL_DEPTH`.
 
-I parametri del fondale (`PLATE_*`) sono in §13.
+The backdrop parameters (`PLATE_*`) are in §13.
 
-### Profilo dei bordi (`src/geometry/edgeProfile.ts`)
+### Edge profile (`src/geometry/edgeProfile.ts`)
 
-- `"square"`: spigoli vivi, geometria invariata.
-- `"outer"`: smusso sullo spigolo superiore esterno della parete.
-- `"inner"`: smusso sullo spigolo superiore interno, verso il canale: allarga l'apertura.
-- `"both"`: entrambi.
+- `"square"`: sharp edges, geometry unchanged.
+- `"outer"`: chamfer on the outer top edge of the wall.
+- `"inner"`: chamfer on the inner top edge, towards the channel: widens the opening.
+- `"both"`: both.
 
-Lo smusso è alto `CHAMFER_SIZE` e largo in orizzontale `run = CHAMFER_SIZE / tan(CHAMFER_ANGLE)`.
-Si costruisce a gradini, con fette alte `LAYER_STEP`: per ogni fetta, offset con giunzioni
-arrotondate (valore preso a metà fetta, crescente verso l'alto) del profilo esterno verso
-l'interno e del canale verso l'esterno; tutte le fette si uniscono al corpo sottostante con
-**un'unica** union.
+The chamfer is `CHAMFER_SIZE` high and `run = CHAMFER_SIZE / tan(CHAMFER_ANGLE)` wide horizontally.
+It is built in steps, with slices `LAYER_STEP` high: for each slice, an offset with rounded
+joins (value taken at mid slice, growing upwards) of the outer profile inwards
+and of the channel outwards; all the slices are joined to the body below with
+**a single** union.
 
-Validazione (con avviso):
-- `CHAMFER_SIZE` ≤ `CHANNEL_DEPTH`, altrimenti ridotto a `CHANNEL_DEPTH`.
-- `"inner"` / `"both"`: la parete che resta in cima (`WALL − run`, o `WALL − 2·run`) deve essere
-  ≥ 0.8 mm, altrimenti `CHAMFER_SIZE` viene ridotto finché lo è.
-- `CHAMFER_ANGLE` fuori da (0°, 90°) o `LAYER_STEP` ≤ 0: smusso ignorato (profilo `"square"`).
+Validation (with a warning):
+- `CHAMFER_SIZE` ≤ `CHANNEL_DEPTH`, otherwise reduced to `CHANNEL_DEPTH`.
+- `"inner"` / `"both"`: the wall left on top (`WALL − run`, or `WALL − 2·run`) must be
+  ≥ 0.8 mm, otherwise `CHAMFER_SIZE` is reduced until it is.
+- `CHAMFER_ANGLE` outside (0°, 90°) or `LAYER_STEP` ≤ 0: chamfer ignored (`"square"` profile).
 
-## 4. Font
+## 4. Fonts
 
-- **Sacramento** e **Neonderthaw** (Google Fonts, SIL OFL), font a contorno (`kind: "outline"`). Gli TTF vanno in `public/fonts/` insieme a `OFL.txt`.
-- **Hershey Script Simplex** e **EMS Allure**, font a tratto singolo (`kind: "stroke"`). Non si rasterizzano: i path dei glifi sono già la linea della striscia. I glifi però sono spezzate grossolane (la «S» di EMS Allure ha 24 vertici): prima del grafo ogni tratto diventa una spline Catmull-Rom centripeta che passa per ogni vertice, campionata a 1 mm (`splineThroughPolyline` in `smooth.ts`). Le svolte oltre 75° (`STROKE_CORNER_DEG`) restano spigoli, come la punta dove il tratto sale e ridiscende. Hershey è di pubblico dominio con obbligo di attribuzione (`LICENSE.txt`). EMS Allure è un derivato OFL di Allura (`OFL.txt`); il nome riservato Allura non è usato.
-- I font a contorno hanno tratto costante: la linea centrale si ricava per scheletrizzazione (sezione 5).
-  - **Sacramento**: tratto pieno, monolinea; ogni lettera è un'unica regione (la *i* ha anche il puntino).
-  - **Neonderthaw**: disegna il **tubo neon cavo** ed è il più adatto al prodotto. Ogni tubo è una
-    **coppia di linee parallele**, spesso contorni separati (la *o* ne ha 4), a volte unite da una curva a U
-    a un capo; le estremità delle due linee sono spesso sfalsate e il tubo si interrompe dove "passa
-    dietro" un altro. Alcuni elementi sono **a linea singola** (barra della *t*, puntino della *i* ad
-    anello). Lo spazio fra tubi vicini è largo quanto la luce interna: un criterio di sola larghezza sulla
-    bitmap non distingue "dentro il tubo" da "fra due tubi", quindi la luce **non si riempie** in [A]
+- **Sacramento** and **Neonderthaw** (Google Fonts, SIL OFL), outline fonts (`kind: "outline"`). The TTFs go in `public/fonts/` together with `OFL.txt`.
+- **Hershey Script Simplex** and **EMS Allure**, single-stroke fonts (`kind: "stroke"`). They are not rasterized: the glyph paths already are the line of the strip. The glyphs, however, are coarse polylines (the "S" of EMS Allure has 24 vertices): before the graph every stroke becomes a centripetal Catmull-Rom spline that passes through every vertex, sampled at 1 mm (`splineThroughPolyline` in `smooth.ts`). Turns beyond 75° (`STROKE_CORNER_DEG`) stay cusps, like the tip where the stroke goes up and comes back down. Hershey is public domain with an attribution requirement (`LICENSE.txt`). EMS Allure is an OFL derivative of Allura (`OFL.txt`); the reserved name Allura is not used.
+- Outline fonts have a constant stroke: the centreline is obtained by skeletonization (section 5).
+  - **Sacramento**: solid stroke, monoline; every letter is a single region (the *i* also has the dot).
+  - **Neonderthaw**: draws the **hollow neon tube** and is the best fit for the product. Every tube is a
+    **pair of parallel lines**, often separate contours (the *o* has 4), sometimes joined by a U curve
+    at one end; the ends of the two lines are often staggered and the tube breaks where it "passes
+    behind" another. Some elements are **single-line** (the bar of the *t*, the ring-shaped dot of
+    the *i*). The space between neighbouring tubes is as wide as the inner gap: a width-only criterion on the
+    bitmap cannot tell "inside the tube" from "between two tubes", so the gap **is not filled** in [A]
     (§5, [B]/[C]).
-- Il registro dei font (`src/fonts/registry.ts`) è estendibile:
+- The font registry (`src/fonts/registry.ts`) is extensible:
   `{ id, name, kind, file, defaultTracking, capHeightMeasured, xHeightMeasured, hollowTubes, tube?, stripMode, notes }`,
-  con `file` relativo a `public/`. `kind` è `"outline"` (TTF) o `"stroke"` (tratto singolo).
-  Per aggiungere un font basta il file in `public/fonts/` e una voce nel registro; le misure si
-  ricavano una volta per font e un test verifica che corrispondano al glifo.
-- `src/fonts/loadFont.ts` analizza il TTF con `opentype.parse`. `src/fonts/strokeFont.ts` legge i tratti
-  singoli: SVG 1.1 `<font><glyph d="...">` (con avanzamento `horiz-adv-x` e kerning `hkern`, se ci sono)
-  e JSON (glifi con `advance`, oppure l'array Hershey `chars` con avanzamento `o` e Y verso il basso).
-  Niente DOM: funziona nel main thread, nel worker e in Node. I byte arrivano da un lettore iniettabile:
-  `fetch` su `BASE_URL + file` nel browser, `fs` nei test.
-- **Altezza**: le metriche dichiarate (OS/2) dei font script sono inaffidabili, quindi l'altezza richiesta
-  dal cliente è la **sommità reale del glifo "H"** (ripiego "I"), misurata sul contorno dalla linea di base
-  al punto più alto: `capHeightMeasured`. La **x-height** è la sommità del glifo "x": `xHeightMeasured`.
-  Vale anche per i tratti singoli: la sommità è il punto più alto del path di "H", non il `cap-height`
-  dichiarato. Valori (unità font): Sacramento 1523 / 627 (upm 2048), Neonderthaw 789 / 391 (upm 1000),
-  Hershey Script Simplex 662 / 284, EMS Allure 699 / 346. Le altre
-  maiuscole dei corsivi possono stare sopra o sotto la "H" (Neonderthaw: N ≈ +10 %).
-- **`hollowTubes`**: `true` per Neonderthaw, `false` per Sacramento. Con `hollowTubes` il registro riporta
-  `tube = { lineWidth, gap }` (unità font), misurati con `measureTubes` (`src/geometry/tubes.ts`) su
-  maiuscole e minuscole: spessore della linea = moda delle larghezze sull'asse dei tratti pieni; luce =
-  mediana delle larghezze sull'asse dei vuoti fra 0.5 e 4 spessori. Neonderthaw: linea 19, luce 41
-  (varia circa da 25 a 75 lungo il tubo). La luce non si riempie in [A].
-- **`stripMode`**: `"centerline"` o `"walls"`. Sacramento è `"centerline"`: lo scheletro è già la
-  linea della striscia. Neonderthaw è `"walls"`: ogni parete del tubo è una linea monolinea e diventa
-  un percorso di striscia, come Sacramento, da [B] a [D] senza accoppiamento.
-- **Tratto singolo** (`src/geometry/strokeLayout.ts`, `strokeGraph.ts`): ogni sotto-path del glifo è
-  una polilinea. L'avanzamento e il kerning, se il font li ha, spostano la penna. Gli estremi che
-  distano al più 0,3 mm (lettere legate, o un estremo che cade sul filo di un altro tratto) diventano
-  lo stesso nodo. Un incrocio fra due tratti diventa un nodo di grado 4. Non ci sono rami spuri da
-  potare. In debug le linee del font stanno al posto della bitmap.
+  with `file` relative to `public/`. `kind` is `"outline"` (TTF) or `"stroke"` (single stroke).
+  To add a font, the file in `public/fonts/` and a registry entry are enough; the measurements are
+  taken once per font and a test checks that they match the glyph.
+- `src/fonts/loadFont.ts` parses the TTF with `opentype.parse`. `src/fonts/strokeFont.ts` reads the single
+  strokes: SVG 1.1 `<font><glyph d="...">` (with `horiz-adv-x` advance and `hkern` kerning, if present)
+  and JSON (glyphs with `advance`, or the Hershey `chars` array with advance `o` and Y pointing down).
+  No DOM: it works in the main thread, in the worker and in Node. The bytes come from an injectable reader:
+  `fetch` on `BASE_URL + file` in the browser, `fs` in the tests.
+- **Height**: the declared metrics (OS/2) of script fonts are unreliable, so the height the customer
+  asks for is the **real top of the "H" glyph** (fallback "I"), measured on the outline from the baseline
+  to the highest point: `capHeightMeasured`. The **x-height** is the top of the "x" glyph: `xHeightMeasured`.
+  This also holds for single strokes: the top is the highest point of the "H" path, not the declared
+  `cap-height`. Values (font units): Sacramento 1523 / 627 (upm 2048), Neonderthaw 789 / 391 (upm 1000),
+  Hershey Script Simplex 662 / 284, EMS Allure 699 / 346. The other
+  capitals of the cursives can sit above or below the "H" (Neonderthaw: N ≈ +10 %).
+- **`hollowTubes`**: `true` for Neonderthaw, `false` for Sacramento. With `hollowTubes` the registry carries
+  `tube = { lineWidth, gap }` (font units), measured with `measureTubes` (`src/geometry/tubes.ts`) on
+  capitals and lowercase: line thickness = mode of the widths on the axis of the solid strokes; gap =
+  median of the widths on the axis of the voids between 0.5 and 4 thicknesses. Neonderthaw: line 19, gap 41
+  (it varies from about 25 to 75 along the tube). The gap is not filled in [A].
+- **`stripMode`**: `"centerline"` or `"walls"`. Sacramento is `"centerline"`: the skeleton already is the
+  line of the strip. Neonderthaw is `"walls"`: every wall of the tube is a monoline and becomes
+  a strip path, like Sacramento, from [B] to [D] without pairing.
+- **Single stroke** (`src/geometry/strokeLayout.ts`, `strokeGraph.ts`): every sub-path of the glyph is
+  a polyline. Advance and kerning, if the font has them, move the pen. Endpoints at most
+  0.3 mm apart (joined letters, or an endpoint that lands on another stroke) become
+  the same node. A crossing between two strokes becomes a degree-4 node. There are no spurious branches to
+  prune. In debug the font lines take the place of the bitmap.
 
-## 4bis. Sorgenti immagine
+## 4bis. Image sources
 
-Al posto di testo + font il cliente può caricare un'immagine. Formati: **SVG**, **PNG**, **JPG**
-(file ≤ 10 MB). L'immagine non lascia il browser finché l'ordine non è inviato.
+Instead of text + font the customer can upload an image. Formats: **SVG**, **PNG**, **JPG**
+(file ≤ 10 MB). The image does not leave the browser until the order is sent.
 
-Principio: la lettura del file (DOM, decodifica, gestione del colore) può cambiare da un browser
-all'altro, quindi avviene **una volta sola, nel main thread**, e produce una forma normalizzata che
-va nell'ordine (§6). La pipeline parte da quella forma, con moduli puri: stesso ordine, stessi file.
-L'immagine originale non entra nell'ordine.
+Principle: reading the file (DOM, decoding, colour management) can change from one browser
+to another, so it happens **only once, in the main thread**, and produces a normalized form that
+goes into the order (§6). The pipeline starts from that form, with pure modules: same order, same files.
+The original image does not enter the order.
 
-### Dimensioni
+### Dimensions
 
-- `heightMm` per un'immagine è l'**altezza del riquadro d'ingombro** del disegno (tracciati SVG o
-  pixel di inchiostro), non la sommità di una «H». La larghezza segue, a proporzioni bloccate.
-- L'origine è l'angolo in basso a sinistra del riquadro d'ingombro; Y verso l'alto, come §5 [A].
+- `heightMm` for an image is the **height of the bounding box** of the drawing (SVG paths or
+  ink pixels), not the top of an "H". The width follows, with locked proportions.
+- The origin is the bottom-left corner of the bounding box; Y points up, as in §5 [A].
 
-### SVG (`src/sources/svgImport.ts` nel main thread, `src/sources/svgPaths.ts` puro)
+### SVG (`src/sources/svgImport.ts` in the main thread, `src/sources/svgPaths.ts` pure)
 
-- **Lettura** (main thread, `DOMParser`): si raccolgono `path`, `line`, `polyline`, `polygon`, `rect`,
-  `circle`, `ellipse`, con le trasformazioni (`transform` di elemento e gruppi, `viewBox`) applicate
-  e le coordinate portate in mm a `heightMm`. Ogni forma diventa un `d` assoluto (solo `M L C Q Z`),
-  numeri arrotondati a 0,001 mm. `text`, `image`, `use` verso file esterni, maschere e filtri si
-  ignorano, con un avviso per tipo.
-- **Classificazione** per elemento, dagli stili calcolati:
-  - `stroke` visibile e `fill` assente o `none` → **tratto** (`kind: "stroke"`): il path è già la
-    linea della striscia ed entra in [C] come i font a tratto singolo (§4), senza [A] né [B].
-    Gli estremi entro 0,3 mm diventano lo stesso nodo. Lo spessore del tratto SVG si ignora.
-  - `fill` visibile → **area** (`kind: "fill"`, con `fillRule` `nonzero` o `evenodd`): i poligoni
-    appiattiti (tolleranza 0,02 mm) entrano nel rasterizzatore [A], che accetta anche `evenodd`.
-    Da lì prosegue secondo `trace` (sotto).
-  - né l'uno né l'altro → ignorato, con avviso.
-- Un SVG con tratti e aree insieme è valido: le due strade si uniscono in [C].
+- **Reading** (main thread, `DOMParser`): `path`, `line`, `polyline`, `polygon`, `rect`,
+  `circle`, `ellipse` are collected, with the transforms (`transform` of element and groups, `viewBox`) applied
+  and the coordinates brought to mm at `heightMm`. Every shape becomes an absolute `d` (only `M L C Q Z`),
+  numbers rounded to 0.001 mm. `text`, `image`, `use` towards external files, masks and filters are
+  ignored, with one warning per type.
+- **Classification** per element, from the computed styles:
+  - visible `stroke` and `fill` absent or `none` → **stroke** (`kind: "stroke"`): the path already is the
+    line of the strip and enters [C] like the single-stroke fonts (§4), without [A] or [B].
+    Endpoints within 0.3 mm become the same node. The thickness of the SVG stroke is ignored.
+  - visible `fill` → **area** (`kind: "fill"`, with `fillRule` `nonzero` or `evenodd`): the flattened
+    polygons (tolerance 0.02 mm) enter the rasterizer [A], which also accepts `evenodd`.
+    From there it continues according to `trace` (below).
+  - neither → ignored, with a warning.
+- An SVG with strokes and areas together is valid: the two routes join in [C].
 
-### PNG / JPG (`src/sources/rasterImport.ts` nel main thread, `src/sources/bitmapCodec.ts` puro)
+### PNG / JPG (`src/sources/rasterImport.ts` in the main thread, `src/sources/bitmapCodec.ts` pure)
 
-- **Decodifica** (main thread): `createImageBitmap`, poi `getImageData` in `srgb`. La trasparenza si
-  compone su bianco. Luminanza Rec. 709.
-- **Soglia**: default Otsu, regolabile con uno slider 0–255; opzione `invert` (default: scuro =
-  tratto). L'anteprima della soglia si aggiorna dal vivo.
-- **Ritaglio** al riquadro dei pixel di inchiostro; lato lungo al massimo `IMAGE_MAX_PX` (4096):
-  oltre si riduce prima della soglia, con avviso.
-- **Bitmap nell'ordine**: binaria, alla risoluzione nativa dopo il ritaglio, codificata da
-  `bitmapCodec.ts` in RLE: righe dall'alto, sequenze alternate che iniziano da 0, lunghezze in
-  varint LEB128, tutto in base64.
-- **Risoluzione**: `pxPerMm` = altezza in px / `heightMm`. Sotto 8 px/mm (limite noto di [B])
-  avviso «immagine a bassa risoluzione per questa altezza», con l'altezza massima a 8 px/mm.
-  Cambiare `heightMm` non richiede di rileggere l'immagine. Si aggiungono i 5 px vuoti di [A].
+- **Decoding** (main thread): `createImageBitmap`, then `getImageData` in `srgb`. Transparency is
+  composited on white. Rec. 709 luminance.
+- **Threshold**: Otsu by default, adjustable with a 0–255 slider; `invert` option (default: dark =
+  stroke). The threshold preview updates live.
+- **Crop** to the box of the ink pixels; long side at most `IMAGE_MAX_PX` (4096):
+  beyond that it is reduced before the threshold, with a warning.
+- **Bitmap in the order**: binary, at native resolution after the crop, encoded by
+  `bitmapCodec.ts` in RLE: rows from the top, alternating runs starting from 0, lengths as
+  LEB128 varints, all in base64.
+- **Resolution**: `pxPerMm` = height in px / `heightMm`. Under 8 px/mm (known limit of [B])
+  a "low-resolution image for this height" warning, with the maximum height at 8 px/mm.
+  Changing `heightMm` does not require reading the image again. The 5 empty px of [A] are added.
 
-### `trace`: linea centrale o contorno
+### `trace`: centreline or outline
 
-Vale per le aree SVG e per le bitmap.
+Applies to SVG areas and to bitmaps.
 
-- `"centerline"` (default): [B] → [C] come Sacramento. Adatto a firme e disegni a tratto uniforme.
-  Se lo spessore del tratto (distance transform sui pixel dello scheletro) ha coefficiente di
-  variazione > 0,35, avviso «tratto non uniforme: prova Contorno».
-- `"outline"`: il **bordo** di ogni regione (e di ogni buco ≥ 0,05 mm²) è un percorso di striscia
-  chiuso, come le pareti di `stripMode` `"walls"`. Contorni estratti con marching squares sulla
-  bitmap, semplificati con Douglas-Peucker a 0,75 px. Adatto a loghi pieni. Le regioni più strette
-  di `CHANNEL_W + 2·WALL + MIN_GAP` danno il solito avviso di fusione con l'altezza che le separa.
+- `"centerline"` (default): [B] → [C] like Sacramento. Suited to signatures and uniform-stroke drawings.
+  If the stroke thickness (distance transform on the skeleton pixels) has a coefficient of
+  variation > 0.35, an "uneven stroke: try Outline" warning.
+- `"outline"`: the **border** of every region (and of every hole ≥ 0.05 mm²) is a closed strip
+  path, like the walls of `stripMode` `"walls"`. Contours extracted with marching squares on the
+  bitmap, simplified with Douglas-Peucker at 0.75 px. Suited to solid logos. Regions narrower
+  than `CHANNEL_W + 2·WALL + MIN_GAP` give the usual merge warning with the height that separates them.
 
-### Copertura e avvisi
+### Coverage and warnings
 
-Al posto delle lettere, il riferimento della copertura (§5) sono le **componenti connesse** del
-disegno, numerate da sinistra a destra («regione 1», «regione 2»…). Tutto il resto (curve, spigoli,
-puntini, `I_DOT_MODE`, fori, BOM) è invariato.
+Instead of letters, the reference for coverage (§5) is the **connected components** of the
+drawing, numbered from left to right ("region 1", "region 2"…). Everything else (curves, cusps,
+dots, `I_DOT_MODE`, holes, BOM) is unchanged.
 
 ## 5. Pipeline
 
-Vista di fronte, il solido è solo `offset(linea centrale levigata [E], CHANNEL_W/2 + WALL)`, con giunzioni e terminazioni arrotondate. Niente sporge da questa sagoma: asole, tasche, fori, canaline e distanziali stanno dentro la sagoma o sul retro. Il profilo esterno ha larghezza costante. La catena [F] non disegna il profilo: serve a validare le pieghe e a calcolare la freccia, che si ricava dalla parete interna e non la porta sotto `WALL_MIN`.
+Seen from the front, the solid is only `offset(smoothed centreline [E], CHANNEL_W/2 + WALL)`, with rounded joins and ends. Nothing sticks out of this outline: slots, pockets, holes, wire ducts and standoffs sit inside the outline or on the back. The outer profile has constant width. The chain [F] does not draw the profile: it validates the bends and computes the sagitta, which is taken from the inner wall without bringing it under `WALL_MIN`.
 
 ```
-testo + font + altezza, oppure immagine (§4bis)
- → con "paths" nell'ordine (editor, §5bis): le curve entrano direttamente in [E], senza [A]–[D]
- → SVG a tratto: i path, in mm, entrano direttamente in [C]; aree SVG e bitmap: [A] con trace (§4bis)
- → con kind "stroke": i path dei glifi, in mm, entrano direttamente in [C] (niente [A] né [B])
- → [A] rasterizzazione, solo kind "outline" (rasterizzatore proprio, non canvas: contorni opentype.js → bitmap binaria)
- → [B] scheletro (thinning Zhang-Suen; fallback: asse mediano via d3-delaunay)
- → [C] grafo (nodi = estremi/giunzioni, archi = polilinee in mm), potatura rami spuri < larghezza tratto,
-        fusione delle coppie di Y in incroci di grado 4.
-        Con stripMode "walls" ogni parete è già un arco e prosegue in [D] come una monolinea.
- → [D] segmentazione:
-        - nodi grado 4 = INCROCI: si accoppiano i rami per continuità di tangente; una coppia prosegue,
-          l'altra viene interrotta di CROSSING_GAP per lato
-        - componenti sconnesse (puntini, accenti) = spezzoni separati; un anello chiuso più piccolo del
-          raggio minimo (es. puntino della i) segue `I_DOT_MODE`: `"dot"` (default) è uno spezzone
-          con due fori, `"dash"` un trattino, `"omit"` lo esclude, `"unlit"` è un rilievo senza striscia
-        - nodi grado 3: si sceglie la continuazione più dritta, il ramo restante diventa spezzone
- → [E] levigatura (Chaikin o spline) + ricampionamento
- → [F] simulazione catena: ricampionamento a corde di HINGE_PITCH, verifica angolo ≤ HINGE_MAX_DEG,
-        freccia locale s = HINGE_PITCH² / (8R) → allarga il canale localmente
- → [G] validazione: ogni piega oltre il massimo è una curva (il raggio cresce con la scala) o uno
-        spigolo (angolo in al più 2 cerniere, raggio che non cresce). L'altezza minima è la più alta
-        fra curve, spezzoni corti e tratti non contigui che si fonderebbero.
-        Gli spigoli si elencano a parte. `CUSP_MODE` `"split"` taglia lo spezzone nello spigolo
- → [H] 2D (manifold-3d CrossSection): offset della linea levigata [E] → canale (CHANNEL_W/2) e
-        profilo esterno (CHANNEL_W/2 + WALL), giunzioni e terminazioni arrotondate, larghezza esterna costante;
-        la freccia della catena allarga solo il lato interno, senza scendere sotto WALL_MIN:
-        lungo la linea levigata l'allargamento vale la freccia entro mezzo HINGE_PITCH da ogni
-        cerniera e scende a zero in un HINGE_PITCH di rampa (`innerWidening`), senza gradini;
-        chiusura e apertura morfologica del canale di raggio WALL_MIN (`closeChannel`, tre offset:
-        +r, −2r, +r): buchi e tacche più stretti di 2·WALL_MIN si riempiono e gli spigoli in fuori
-        si arrotondano (lenti fra una banda della freccia e il canale, spicchi di
-        parete agli incroci e alle giunzioni); sarebbero pilastrini o punte di parete non stampabili
-        e fessure scure nel diffusore. Il canale resta dentro il profilo esterno;
-        ai CROSSING_GAP il canale resta continuo, solo la striscia si interrompe;
-        l'asola è gli ultimi WIRE_SLOT_L dello spezzone, a filo della terminazione arrotondata;
-        con un fondale (§13): contorno della lastra e suoi fori, dallo stesso outline
- → [I] 3D (manifold-3d): estrusione profilo esterno (con smusso EDGE_PROFILE in cima) − canale
-        − fori (ancoraggio, cavo) − asole fili e tasche d'angolo, con smusso SLOT_LIP_CHAMFER (+ boss);
-        con un fondale: estrusione della lastra di PLATE_T, fori compresi
- → [J] export: STL binario, DXF/SVG, BOM JSON, plate.svg/plate.dxf
+text + font + height, or an image (§4bis)
+ → with "paths" in the order (editor, §5bis): the curves enter [E] directly, without [A]–[D]
+ → stroke SVG: the paths, in mm, enter [C] directly; SVG areas and bitmaps: [A] with trace (§4bis)
+ → with kind "stroke": the glyph paths, in mm, enter [C] directly (no [A] or [B])
+ → [A] rasterization, kind "outline" only (own rasterizer, not canvas: opentype.js contours → binary bitmap)
+ → [B] skeleton (Zhang-Suen thinning; fallback: medial axis via d3-delaunay)
+ → [C] graph (nodes = endpoints/junctions, edges = polylines in mm), pruning of spurious branches < stroke width,
+        merging of Y pairs into degree-4 crossings.
+        With stripMode "walls" every wall already is an edge and goes on to [D] like a monoline.
+ → [D] segmentation:
+        - degree-4 nodes = CROSSINGS: branches are paired by tangent continuity; one pair continues,
+          the other is interrupted by CROSSING_GAP per side
+        - disconnected components (dots, accents) = separate segments; a closed loop smaller than the
+          minimum radius (e.g. the dot of the i) follows `I_DOT_MODE`: `"dot"` (default) is a segment
+          with two holes, `"dash"` a dash, `"omit"` excludes it, `"unlit"` is a raised shape with no strip
+        - degree-3 nodes: the straightest continuation is chosen, the remaining branch becomes a segment
+ → [E] smoothing (Chaikin or spline) + resampling
+ → [F] chain simulation: resampling into chords of HINGE_PITCH, check angle ≤ HINGE_MAX_DEG,
+        local sagitta s = HINGE_PITCH² / (8R) → widens the channel locally
+ → [G] validation: every bend beyond the maximum is a curve (the radius grows with scale) or a
+        cusp (angle in at most 2 hinges, radius that does not grow). The minimum height is the highest
+        among curves, short segments and non-adjacent strokes that would merge.
+        Cusps are listed separately. `CUSP_MODE` `"split"` cuts the segment at the cusp
+ → [H] 2D (manifold-3d CrossSection): offset of the smoothed line [E] → channel (CHANNEL_W/2) and
+        outer profile (CHANNEL_W/2 + WALL), rounded joins and ends, constant outer width;
+        the chain sagitta widens only the inner side, without going under WALL_MIN:
+        along the smoothed line the widening equals the sagitta within half a HINGE_PITCH of every
+        hinge and drops to zero over one HINGE_PITCH of ramp (`innerWidening`), without steps;
+        morphological closing and opening of the channel with radius WALL_MIN (`closeChannel`, three offsets:
+        +r, −2r, +r): holes and notches narrower than 2·WALL_MIN are filled and outward corners
+        are rounded (lenses between a sagitta band and the channel, wedges of
+        wall at crossings and junctions); they would be unprintable pillars or wall tips
+        and dark slits in the diffuser. The channel stays inside the outer profile;
+        at the CROSSING_GAPs the channel stays continuous, only the strip is interrupted;
+        the slot is the last WIRE_SLOT_L of the segment, flush with the rounded end;
+        with a backdrop (§13): outline of the plate and its holes, from the same outline
+ → [I] 3D (manifold-3d): extrusion of the outer profile (with the EDGE_PROFILE chamfer on top) − channel
+        − holes (anchor, cable) − wire slots and corner pockets, with the SLOT_LIP_CHAMFER chamfer (+ bosses);
+        with a backdrop: extrusion of the plate by PLATE_T, holes included
+ → [J] export: binary STL, DXF/SVG, BOM JSON, plate.svg/plate.dxf
 ```
 
-Tutto ciò che va da [A] a [J] gira in un **Web Worker** (Comlink). L'interfaccia non si blocca mai.
+Everything from [A] to [J] runs in a **Web Worker** (Comlink). The interface never blocks.
 
-`generate(order)` esegue [A]–[I] nel worker e restituisce
+`generate(order)` runs [A]–[I] in the worker and returns
 `{ housingMesh, diffuserMesh, plateMesh, holes, slots, pockets, outline, plateOutline, plateHoles, centerlines, lightPoints, ledGapMm, bom, warnings }`.
-Le mesh sono i triangoli in mm, nello stesso riferimento dell'STL. `holes` sono gli ancoraggi (ciechi)
-e il cavo; `slots` e `pockets` i contorni reali di asole e tasche; `outline` il profilo esterno;
-`centerlines` le linee centrali degli spezzoni. `plateMesh`, `plateOutline` e `plateHoles` sono
-`null` senza fondale (§13). `lightPoints` sono i LED sulla parte illuminata di
-ogni linea centrale (`pos`, `dir` da DIN a DOUT, `segment`, `index`): oggi a `LED_PER_M` (160 al metro
-della striscia COB); un pixel a passo libero userà lo stesso elenco. `ledGapMm` è
-`CHANNEL_DEPTH − STRIP_T`, la distanza fra la faccia del LED e il diffusore.
-La pagina di debug mostra il solido in grigio, senza
-effetti, e scarica `housing.stl` e `diffuser.stl`. «Ciao Torino» con entrambi i font resta sotto i 3 secondi.
-L'interfaccia non aspetta il solido: la generazione 3D parte dopo il disegno 2D.
+The meshes are the triangles in mm, in the same frame as the STL. `holes` are the anchors (blind)
+and the cable; `slots` and `pockets` the real outlines of slots and pockets; `outline` the outer profile;
+`centerlines` the centrelines of the segments. `plateMesh`, `plateOutline` and `plateHoles` are
+`null` without a backdrop (§13). `lightPoints` are the LEDs on the lit part of
+every centreline (`pos`, `dir` from DIN to DOUT, `segment`, `index`): today at `LED_PER_M` (160 per metre
+of COB strip); a free-pitch pixel will use the same list. `ledGapMm` is
+`CHANNEL_DEPTH − STRIP_T`, the distance between the face of the LED and the diffuser.
+The debug page shows the solid in grey, without
+effects, and downloads `housing.stl` and `diffuser.stl`. "Ciao Torino" with both fonts stays under 3 seconds.
+The interface does not wait for the solid: the 3D generation starts after the 2D drawing.
 
-### Anteprima (`src/viewer/scene.ts`)
+### Preview (`src/viewer/scene.ts`)
 
-La scena three.js non sa se la sorgente è una striscia COB o un pixel: legge `lightPoints`.
+The three.js scene does not know whether the source is a COB strip or a pixel: it reads `lightPoints`.
 
-- **Housing**: nero opaco, appena satinato. Il **diffusore** è una mesh a parte. Le normali sono a
-  spigolo (`toCreasedNormals`, 35°): pareti curve morbide, facce piane piane, senza ventagli.
-- **Fondale** (§13): mesh a parte dietro l'housing, con il materiale scelto, lo spessore e i fori
-  reali; sul trasparente si vedono fori e fili dietro la lastra.
-- **Spenta**: diffusore bianco opaco, luce ambiente diurna, niente bloom.
-- **Accesa**: sul diffusore la luminosità è la somma di gaussiane centrate sui `lightPoints`.
-  La sigma è `ledGapMm`, così se il passo è grande rispetto alla profondità i punti restano
-  visibili, e se è fitto si fondono. Il bloom (`UnrealBloomPass`) ha soglia alta, intensità e
-  raggio bassi: il nucleo resta del colore del LED e non sbianca. Sulla parete la stessa
-  gaussiana disegna l'alone, che si spegne entro circa 2–3 volte la larghezza del tratto.
-  Il tone mapping è ACES; l'esposizione si regola.
-- **Senza diffusore**: la mesh del coperchio si nasconde e i LED sono piccoli emettitori nel canale.
-- **Effetto**: `"colore fisso"` (default) dà a ogni LED esattamente il colore scelto;
-  `"arcobaleno"` lo fa scorrere lungo lo spezzone, dal DIN al DOUT. Con `prefers-reduced-motion`
-  lo scorrimento si ferma.
-- In admin due slider, intensità (esposizione, default 0,85) e alone (gaussiana sulla parete
-  e raggio del bloom, default 0,16), per tarare. Il cliente non li vede e usa quei default.
-- Sfondo a muro. `OrbitControls` restano sulla vista frontale, ±40° in azimut e in altezza.
-- Su un laptop si punta ai 60 fps (pixel ratio al massimo 1,5, mappa di luminosità fino a 512 px).
-  Su mobile il pixel ratio è 1, la mappa arriva a 256 px e il bloom è calcolato a metà risoluzione.
-- **STL del cliente** (`index.html`), se `CUSTOMER_STL_DOWNLOAD` in `src/config.ts` è vero: un pulsante
-  «Scarica STL» accanto all'invio, visibile senza scorrere. Scarica `housing.stl` e, se il diffusore
-  è attivo nell'anteprima, anche `diffuser.stl`, dalle mesh già calcolate per la scena (niente
-  seconda generazione). È disabilitato, con la scritta «Generazione…», finché `generate()` non ha
-  restituito `housingMesh`; testo, font, altezza o diffusore lo disabilitano di nuovo e non si
-  scarica mai una mesh precedente. BOM, DXF, SVG e file del fondale restano solo in admin.
+- **Housing**: matt black, barely satin. The **diffuser** is a separate mesh. Normals are
+  creased (`toCreasedNormals`, 35°): soft curved walls, flat faces flat, no fans.
+- **Backdrop** (§13): a separate mesh behind the housing, with the chosen material, the thickness and the real
+  holes; on the transparent one, holes and wires show behind the plate.
+- **Off**: opaque white diffuser, daytime ambient light, no bloom.
+- **On**: on the diffuser the brightness is the sum of gaussians centred on the `lightPoints`.
+  Sigma is `ledGapMm`, so if the pitch is large compared with the depth the points stay
+  visible, and if it is dense they blend. The bloom (`UnrealBloomPass`) has a high threshold, low intensity and
+  radius: the core keeps the LED colour and does not wash out. On the wall the same
+  gaussian draws the halo, which fades within about 2–3 times the stroke width.
+  Tone mapping is ACES; exposure is adjustable.
+- **Without diffuser**: the cover mesh is hidden and the LEDs are small emitters in the channel.
+- **Effect**: `"colore fisso"` (solid colour, default) gives every LED exactly the chosen colour;
+  `"arcobaleno"` (rainbow) makes it run along the segment, from DIN to DOUT. With `prefers-reduced-motion`
+  the motion stops.
+- In admin two sliders, intensity (exposure, default 0.85) and halo (gaussian on the wall
+  and bloom radius, default 0.16), for tuning. The customer does not see them and uses those defaults.
+- Wall background. `OrbitControls` stay on the front view, ±40° in azimuth and elevation.
+- On a laptop the target is 60 fps (pixel ratio at most 1.5, brightness map up to 512 px).
+  On mobile the pixel ratio is 1, the map goes up to 256 px and the bloom is computed at half resolution.
+- **Customer STL** (`index.html`), if `CUSTOMER_STL_DOWNLOAD` in `src/config.ts` is true: a
+  "Download STL" button next to sending, visible without scrolling. It downloads `housing.stl` and, if the diffuser
+  is on in the preview, `diffuser.stl` too, from the meshes already computed for the scene (no
+  second generation). It is disabled, with the label "Generating…", until `generate()` has
+  returned `housingMesh`; text, font, height or diffuser disable it again and an earlier mesh is never
+  downloaded. BOM, DXF, SVG and backdrop files stay in admin only.
 
-### [A] Rasterizzazione (`src/geometry/rasterize.ts`)
+### [A] Rasterization (`src/geometry/rasterize.ts`)
 
-Modulo puro, **senza DOM e senza canvas**: lo stesso codice dà gli stessi byte nel worker, nel main
-thread e in Node. Canvas e OffscreenCanvas sono esclusi perché applicano l'antialiasing e il risultato
-dipende da browser e GPU, il che romperebbe il determinismo (§6).
+A pure module, **without DOM and without canvas**: the same code gives the same bytes in the worker, in the main
+thread and in Node. Canvas and OffscreenCanvas are excluded because they apply antialiasing and the result
+depends on browser and GPU, which would break determinism (§6).
 
-- **Input**: testo su una riga (gli a capo diventano spazi, con avviso), `fontId`, `heightMm` (= sommità
-  della "H", `capHeightMeasured`, §4), risoluzione `pxPerMm` (default 10).
-- **Contorni**: `font.forEachGlyph` con kerning attivo e `letterSpacing` 0 (`defaultTracking` non si
-  applica qui); le legature standard del font restano attive. Le curve di Bézier quadratiche e cubiche
-  sono appiattite in poligoni con tolleranza **0.02 mm** (numero di segmenti dalla stima della curvatura
-  massima). Coordinate in mm, origine sulla linea di base all'inizio del testo, Y verso l'alto.
-- **Riempimento**: scanline scritto a mano, regola **nonzero**, un campione al centro di ogni pixel, nessun
-  antialiasing. Un pixel vale 1 se il suo centro sta dentro il contorno.
-- **Output**: `Uint8Array` binaria (0/1, riga per riga dall'alto), `width`, `height`, con **5 px vuoti** su
-  ogni lato. La trasformazione px→mm è `x = originX + px · mmPerPx`, `y = originY − py · mmPerPx` (bordi
-  dei pixel su coordinate intere, centri a +0.5). La griglia è allineata all'origine del testo, quindi
-  la linea di base cade su un bordo di pixel.
-- **Misure esposte (mm)**: altezza (sommità della "H"), x-height (sommità della "x"), **ingombro totale
-  reale** (bbox dei contorni: larghezza × altezza, discendenti e svolazzi compresi) e di ogni glifo,
-  avanzamento totale, corpo del font (em); per i font `hollowTubes` anche spessore della linea e luce del
-  tubo alla scala del testo. Con `stripMode` `"walls"` non servono all'accoppiamento: le pareti sono le strisce.
-- **Font a tubi cavi**: la bitmap è fedele al font, con due linee per tubo; nessun riempimento della luce
-  (§4). La pagina di debug lo segnala con un avviso.
-- **Tetto di 40 milioni di pixel**: oltre, la risoluzione si riduce in proporzione, con avviso.
-- **Avvisi**: un avviso per ogni carattere senza glifo nel font (con il codice U+XXXX); il carattere viene
-  saltato, senza il riquadro `.notdef`.
-- **Test** (`test/rasterize.test.ts`, `test/distance.test.ts`): misure del registro uguali al TTF; sommità
-  di "H" e "x" alle altezze attese e maiuscole entro ±1 px; determinismo byte per byte; area di rettangolo
-  e anello sintetici entro 1%; topologia (regioni e buchi ≥ 0.05 mm²) di ogni lettera identica a 10 e a
-  30 px/mm; carattere mancante → avviso; distance transform uguale alla forza bruta; `measureTubes` su
-  tubi sintetici e coerente con il registro.
+- **Input**: text on one line (line breaks become spaces, with a warning), `fontId`, `heightMm` (= top
+  of the "H", `capHeightMeasured`, §4), resolution `pxPerMm` (default 10).
+- **Contours**: `font.forEachGlyph` with kerning on and `letterSpacing` 0 (`defaultTracking` does not
+  apply here); the font's standard ligatures stay on. Quadratic and cubic Bézier curves
+  are flattened into polygons with tolerance **0.02 mm** (number of segments from the estimate of the maximum
+  curvature). Coordinates in mm, origin on the baseline at the start of the text, Y pointing up.
+- **Fill**: hand-written scanline, **nonzero** rule, one sample at the centre of every pixel, no
+  antialiasing. A pixel is 1 if its centre is inside the contour.
+- **Output**: binary `Uint8Array` (0/1, row by row from the top), `width`, `height`, with **5 empty px** on
+  every side. The px→mm transform is `x = originX + px · mmPerPx`, `y = originY − py · mmPerPx` (pixel
+  edges on integer coordinates, centres at +0.5). The grid is aligned to the text origin, so
+  the baseline falls on a pixel edge.
+- **Exposed measurements (mm)**: height (top of the "H"), x-height (top of the "x"), **real total
+  footprint** (bbox of the contours: width × height, descenders and flourishes included) and that of every glyph,
+  total advance, font body (em); for `hollowTubes` fonts also line thickness and tube gap
+  at the scale of the text. With `stripMode` `"walls"` they are not needed for pairing: the walls are the strips.
+- **Hollow-tube fonts**: the bitmap is faithful to the font, with two lines per tube; the gap is not filled
+  (§4). The debug page reports it with a warning.
+- **Cap of 40 million pixels**: beyond it, the resolution is reduced in proportion, with a warning.
+- **Warnings**: one warning for every character without a glyph in the font (with the U+XXXX code); the character is
+  skipped, without the `.notdef` box.
+- **Tests** (`test/rasterize.test.ts`, `test/distance.test.ts`): registry measurements equal to the TTF; tops
+  of "H" and "x" at the expected heights and capitals within ±1 px; byte-for-byte determinism; area of synthetic
+  rectangle and ring within 1%; topology (regions and holes ≥ 0.05 mm²) of every letter identical at 10 and at
+  30 px/mm; missing character → warning; distance transform equal to brute force; `measureTubes` on
+  synthetic tubes and consistent with the registry.
 
-### [B] Scheletro (`src/geometry/skeleton.ts`) e [C] grafo (`src/geometry/graph.ts`)
+### [B] Skeleton (`src/geometry/skeleton.ts`) and [C] graph (`src/geometry/graph.ts`)
 
-Moduli puri e deterministici come [A]. Valgono per i font monolinea e, con `stripMode` `"walls"`, per
-ogni parete di un tubo cavo: gli archi del grafo sono già i percorsi della striscia.
+Pure, deterministic modules like [A]. They apply to monoline fonts and, with `stripMode` `"walls"`, to
+every wall of a hollow tube: the edges of the graph already are the strip paths.
 
-- **Forellini**: prima del thinning si riempiono i buchi con area < (tratto/6)² (`HOLE_FILL_MAX_W`), nati
-  dalla sovrapposizione dei contorni del font (in Sacramento < 0,1 mm² a 100 mm). I buchi veri (puntino
-  della *i*, occhielli, da ~2 mm²) restano.
-- **[B]**: thinning di **Zhang-Suen** (solo i pixel del fronte, stesso risultato del metodo classico),
-  poi pulizia dei pixel semplici con almeno 2 vicini (gradini, angoli): scheletro 8-connesso largo 1 px,
-  con la stessa topologia della bitmap.
-- **Larghezza del tratto**: mediana di 2·d − 1 px sui pixel dello scheletro, con d dalla distance
-  transform euclidea esatta (`distance.ts`). È il metro di tutte le soglie del grafo.
-- **[C] nodi**: pixel con un numero di vicini ≠ 2 o crossing number ≠ 2; i pixel-nodo adiacenti formano
-  **un solo nodo** (baricentro). Un anello senza nodi (puntino della *i*) riceve un nodo di grado 2.
-  **Archi**: polilinee in mm da nodo a nodo, semplificate con Douglas-Peucker a 0,75 px (la catena di
-  pixel a gradini allungherebbe gli archi del 5–8%).
-- **Semplificazione**, ripetuta finché il grafo cambia:
-  1. **rami spuri**: arco estremo–giunzione più corto della larghezza del tratto → potato;
-  2. piccoli anelli (< π · tratto) su una giunzione → potati; **bolle** (due archi fra gli stessi nodi,
-     somma < π · tratto) → resta il più corto;
-  3. **incroci**: il thinning restituisce un incrocio come due Y unite da un arco corto. Si contrae in
-     un nodo di grado 4 (a metà dell'arco) se l'arco è più corto del tratto; oppure, fra due giunzioni di
-     grado 3, se è entro 2 tratti e i quattro rami formano due percorsi passanti con deviazione ≤ 60°;
-     oppure se è entro 5 tratti e i rami esterni tornano indietro di almeno 120° rispetto all'arco e
-     proseguono in linea retta (± 35°) dall'altra parte (X stretta, fino a ~20°). Due T a 3 tratti
-     (come in una "H") restano distinte;
-  4. nodi di grado 2 fra due archi diversi → archi uniti.
-- **Lettere isolate**: in Sacramento "l", "e", "b" da sole non hanno tratto d'attacco. Il tratto parte
-  dentro l'asola e finisce di testa sull'asta, quindi il nodo è di grado 3. In una parola il tratto
-  arriva dalla lettera precedente e l'asola diventa un incrocio di grado 4.
-- **Limite noto**: sotto gli 8 px/mm un varco di ~0,2 mm fra due tratti (occhiello della "d" di
-  Sacramento) si chiude nella bitmap e cambia la topologia; a 10 px/mm (default) è corretto.
-- **Debug**: scheletro sopra la bitmap schiarita, archi come polilinee, nodi colorati per grado
-  (1 verde, 2 grigio, 3 arancio, 4 rosso, ≥ 5 viola), conteggi di nodi per grado e archi, larghezza del
-  tratto, rami potati, giunzioni fuse, forellini riempiti, tempo nel worker.
-- **Test** (`test/graph.test.ts`): linea, anello (lunghezza 2π·r ± 3%), "X" a 20°/30°/40°/60°/90° →
-  un nodo di grado 4, "T" → grado 3, "H" stretta → due T distinte, forellino riempito, determinismo;
-  Sacramento: in "alebe" le asole di l, e, b sono nodi di grado 4 e gli estremi sono solo i 4 veri,
-  topologia uguale a 8, 10 e 15 px/mm; l/e/b isolate senza incroci né rami spuri; alfabeto senza rami
-  più corti del tratto, uguale a 8, 10 e 12 px/mm; i puntini delle *i* di "Ciao Torino" restano anelli.
+- **Pinholes**: before thinning, holes with area < (stroke/6)² (`HOLE_FILL_MAX_W`) are filled; they come
+  from overlapping font contours (in Sacramento < 0.1 mm² at 100 mm). Real holes (the dot
+  of the *i*, counters, from ~2 mm²) stay.
+- **[B]**: **Zhang-Suen** thinning (front pixels only, same result as the classic method),
+  then cleanup of simple pixels with at least 2 neighbours (steps, corners): an 8-connected skeleton 1 px wide,
+  with the same topology as the bitmap.
+- **Stroke width**: median of 2·d − 1 px over the skeleton pixels, with d from the exact Euclidean
+  distance transform (`distance.ts`). It is the yardstick for all the graph thresholds.
+- **[C] nodes**: pixels with a number of neighbours ≠ 2 or crossing number ≠ 2; adjacent node pixels form
+  **a single node** (centroid). A loop without nodes (the dot of the *i*) gets a degree-2 node.
+  **Edges**: polylines in mm from node to node, simplified with Douglas-Peucker at 0.75 px (the stepped
+  pixel chain would lengthen the edges by 5–8%).
+- **Simplification**, repeated while the graph changes:
+  1. **spurious branches**: endpoint–junction edge shorter than the stroke width → pruned;
+  2. small loops (< π · stroke) on a junction → pruned; **bubbles** (two edges between the same nodes,
+     sum < π · stroke) → the shorter one stays;
+  3. **crossings**: thinning returns a crossing as two Ys joined by a short edge. It is contracted into
+     a degree-4 node (at the middle of the edge) if the edge is shorter than the stroke; or, between two
+     degree-3 junctions, if it is within 2 strokes and the four branches form two through paths with deviation ≤ 60°;
+     or if it is within 5 strokes and the outer branches turn back by at least 120° from the edge and
+     continue in a straight line (± 35°) on the other side (narrow X, down to ~20°). Two Ts 3 strokes apart
+     (as in an "H") stay distinct;
+  4. degree-2 nodes between two different edges → edges joined.
+- **Isolated letters**: in Sacramento "l", "e", "b" alone have no lead-in stroke. The stroke starts
+  inside the loop and ends head-on against the stem, so the node has degree 3. In a word the stroke
+  comes from the previous letter and the loop becomes a degree-4 crossing.
+- **Known limit**: under 8 px/mm a gap of ~0.2 mm between two strokes (the counter of Sacramento's
+  "d") closes in the bitmap and changes the topology; at 10 px/mm (default) it is correct.
+- **Debug**: skeleton over the lightened bitmap, edges as polylines, nodes coloured by degree
+  (1 green, 2 grey, 3 orange, 4 red, ≥ 5 purple), counts of nodes by degree and of edges, stroke
+  width, pruned branches, merged junctions, filled pinholes, time in the worker.
+- **Tests** (`test/graph.test.ts`): line, ring (length 2π·r ± 3%), "X" at 20°/30°/40°/60°/90° →
+  one degree-4 node, "T" → degree 3, narrow "H" → two distinct Ts, filled pinhole, determinism;
+  Sacramento: in "alebe" the loops of l, e, b are degree-4 nodes and the endpoints are only the 4 real ones,
+  same topology at 8, 10 and 15 px/mm; l/e/b isolated without crossings or spurious branches; alphabet without branches
+  shorter than the stroke, the same at 8, 10 and 12 px/mm; the dots of the *i*s in "Ciao Torino" stay loops.
 
-### Font a tubi cavi (`stripMode` `"walls"`)
+### Hollow-tube fonts (`stripMode` `"walls"`)
 
-Neonderthaw ha `stripMode` `"walls"`. La luce del tubo non si riempie sulla bitmap (§4), lo scheletro
-resta due linee, e **ogni parete è un percorso di striscia**: [B] → [C] → [D] come per Sacramento.
+Neonderthaw has `stripMode` `"walls"`. The tube gap is not filled on the bitmap (§4), the skeleton
+stays two lines, and **every wall is a strip path**: [B] → [C] → [D] as for Sacramento.
 
-`src/geometry/tubePairing.ts` accoppiava le due pareti lungo la normale reciproca e le sostituiva con
-la linea mediana. **Non è nella pipeline.** Gli occhielli piccoli non si accoppiano in modo
-affidabile: sono archi concentrici di lunghezza molto diversa. Sulla *g* di «Ciao» a 200 mm il tratto
-reciproco era 26,5 mm, sotto i 30,4 mm richiesti (2 volte la distanza nominale), e la parete restava
-senza compagna. Allargare le soglie avrebbe accoppiato tubi diversi. Il modulo resta nel codice, con
-i suoi test, ma `generate` e il worker non lo chiamano.
+`src/geometry/tubePairing.ts` used to pair the two walls along the mutual normal and replace them with
+the median line. **It is not in the pipeline.** Small counters do not pair
+reliably: they are concentric arcs of very different length. On the *g* of "Ciao" at 200 mm the mutual
+stretch was 26.5 mm, under the 30.4 mm required (twice the nominal distance), and the wall was left
+without a partner. Widening the thresholds would have paired different tubes. The module stays in the code, with
+its tests, but `generate` and the worker do not call it.
 
-Le due pareti dello stesso tubo sono due tratti non contigui. La validazione delle distanze vale
-anche fra loro: l'altezza minima tiene i due canali affiancati, con almeno `MIN_GAP` fra le sagome
-(`CHANNEL_W + 2·WALL + MIN_GAP` fra le linee centrali).
+The two walls of the same tube are two non-adjacent strokes. Distance validation applies
+between them too: the minimum height keeps the two channels side by side, with at least `MIN_GAP` between the outlines
+(`CHANNEL_W + 2·WALL + MIN_GAP` between the centrelines).
 
-### Curve, spigoli e puntini
+### Curves, cusps and dots
 
-Una cerniera oltre `HINGE_MAX_DEG` si classifica confrontando la catena con la stessa geometria a scala ×2:
+A hinge beyond `HINGE_MAX_DEG` is classified by comparing the chain with the same geometry at ×2 scale:
 
-- **curva**: il raggio locale cresce (almeno ×1,5). Si risolve ingrandendo il testo. L'altezza minima
-  consigliata è la più piccola che porta ogni curva almeno a R_MIN, cioè altezza × R_MIN / raggio,
-  e che tiene i tratti non contigui della linea centrale ad almeno `CHANNEL_W + 2·WALL + MIN_GAP`.
-  Con `stripMode` `"walls"` le due pareti dello stesso tubo sono due tratti non contigui: l'altezza
-  minima garantisce due canali affiancati con `MIN_GAP` fra le sagome.
-  Se due tratti non contigui sono più vicini, le sagome si fondono: avviso con la posizione e
-  l'altezza che li separa (le distanze scalano con l'altezza). Quel valore entra nel riepilogo
-  «altezza minima». Le giunzioni a T (nodo di grado 3: il ramo restante finisce sul tratto che
-  prosegue) non sono fusioni: lì le sagome si toccano per disegno, come a un incrocio, e la distanza
-  resta 0 a ogni scala. Si riconoscono sulle linee prima della levigatura (un capo aperto entro 0,5 mm
-  da un altro tratto, `touchPoints` in `validate.ts`) e si escludono come gli incroci, entro
-  `CHANNEL_W + 2·WALL + MIN_GAP` dal contatto. Oltre quel raggio due rami vicini contano ancora. Se non ci sono curve né fusioni, l'altezza può scendere fino al passo di taglio.
-  Gli spigoli non entrano nel conto.
-- **spigolo**: l'angolo è concentrato in al più 2 cerniere e il raggio non cresce (cuspide del font o
-  dello scheletro). Non si risolve con la scala. Si riporta a parte, con conteggio e posizione.
-  Con `CUSP_MODE` `"split"` (default) lo spezzone si taglia nello spigolo in due spezzoni, ma solo se
-  entrambi restano almeno a `CUT_PITCH` di luce dopo le asole. Altrimenti lo spigolo resta un errore
-  e la striscia non si interrompe. Uno spezzone sotto quella luce si unisce al capo vicino, se i due
-  estremi si toccano; non si scarta in silenzio. Ciascuno spezzone ha
-  il proprio verso (DIN = estremità con x minore, poi y minore). Se l'asola d'uscita di uno e quella
-  d'ingresso dell'altro si sovrappongono, o i labbri distano meno di `CORNER_MERGE_DIST`, diventano
-  un'unica tasca `CORNER_POCKET` (unione delle due asole, a piena larghezza del canale, con
-  `SLOT_LIP_CHAMFER` su entrambi i lati d'ingresso) e il filo fra i due spezzoni è 0 mm.
-  Con `"warn"` lo spigolo resta un errore e lo spezzone non si taglia.
+- **curve**: the local radius grows (at least ×1.5). It is solved by making the text bigger. The recommended
+  minimum height is the smallest that brings every curve to at least R_MIN, that is height × R_MIN / radius,
+  and that keeps the non-adjacent strokes of the centreline at least `CHANNEL_W + 2·WALL + MIN_GAP` apart.
+  With `stripMode` `"walls"` the two walls of the same tube are two non-adjacent strokes: the minimum
+  height guarantees two channels side by side with `MIN_GAP` between the outlines.
+  If two non-adjacent strokes are closer, the outlines merge: a warning with the position and
+  the height that separates them (distances scale with height). That value enters the
+  "minimum height" summary. T junctions (degree-3 node: the remaining branch ends on the stroke that
+  continues) are not merges: there the outlines touch by design, as at a crossing, and the distance
+  stays 0 at every scale. They are recognized on the lines before smoothing (an open end within 0.5 mm
+  of another stroke, `touchPoints` in `validate.ts`) and are excluded like crossings, within
+  `CHANNEL_W + 2·WALL + MIN_GAP` of the contact. Beyond that radius two close branches still count. If there are no curves or merges, the height can go down to the cut pitch.
+  Cusps do not enter the count.
+- **cusp**: the angle is concentrated in at most 2 hinges and the radius does not grow (a cusp of the font or
+  of the skeleton). It is not solved by scale. It is reported separately, with count and position.
+  With `CUSP_MODE` `"split"` (default) the segment is cut at the cusp into two segments, but only if
+  both keep at least `CUT_PITCH` of lit length after the slots. Otherwise the cusp stays an error
+  and the strip is not interrupted. A segment under that lit length is joined to the neighbouring end, if the two
+  endpoints touch; it is not dropped silently. Each segment has
+  its own direction (DIN = end with the smaller x, then the smaller y). If the exit slot of one and the
+  entry slot of the other overlap, or the lips are less than `CORNER_MERGE_DIST` apart, they become
+  a single `CORNER_POCKET` (union of the two slots, at full channel width, with
+  `SLOT_LIP_CHAMFER` on both entry sides) and the wire between the two segments is 0 mm.
+  With `"warn"` the cusp stays an error and the segment is not cut.
 
-`I_DOT_MODE` vale per ogni anello chiuso di raggio equivalente sotto R_MIN:
+`I_DOT_MODE` applies to every closed loop with equivalent radius under R_MIN:
 
-- `"omit"`: l'anello non entra nella striscia e genera un avviso.
-- `"dot"` (default): uno spezzone dritto lungo `CUT_PITCH`, centrato sul puntino e orientato come
-  l'asta più vicina. Il canale è una pillola (la linea più le testate tonde). Al posto delle asole
-  ci sono due fori passanti `DOT_WIRE_HOLE_D` sotto le piazzole, uno per estremità. I `WIRE_SLOT_L`
-  non si sottraggono: la luce è tutto lo spezzone. Il puntino porta **un solo LED**, al centro
-  (`DOT_LED_COUNT` in `lights.ts`), nell'anteprima e nella BOM.
-  Nella BOM è uno spezzone a sé e non conta fra le asole. L'ingombro del puntino è il contorno
-  dell'inchiostro (lo scheletro allargato di mezzo spessore del tratto), non la linea dello scheletro.
-  **Il puntino è sempre un LED.** Se il rettangolo lungo `CUT_PITCH` e largo `CHANNEL_W + 2·WALL`
-  esce più di `DOT_OVERHANG_MM` da quell'ingombro (i font a tratto singolo, le misure piccole), la
-  pillola resta accesa e più grande del disegno, con un avviso solo per l'admin («Puntino più
-  piccolo della pillola del LED: sporge di X mm»). Se la pillola tocca l'asta, la fusione ([G])
-  blocca l'invio e indica l'altezza che li separa.
-- **Segni isolati** (l'accento di «ì», «è», …), con `"dot"`: un tratto aperto che non passa a meno di
-  `max(CORNER_MERGE_DIST, 2·CROSSING_GAP + 1,5)` da nessun altro e più corto di
-  `CUT_PITCH + 2·WIRE_SLOT_L` (troppo corto per due asole e la luce minima) si comporta come il
-  puntino: spezzone a sé senza asole, fori sotto le piazzole, **un LED**. Sotto `CUT_PITCH` si
-  allunga a `CUT_PITCH`, centrato e orientato come il tratto (`markPieces` in `strip.ts`).
-- `"dash"`: come sopra, ma con le asole normali. Il trattino, parete compresa, deve stare nel puntino
-  allargato al massimo di `WALL`. Se non ci sta, `"unlit"` con la posizione.
-- `"unlit"`: sagoma piena in rilievo, senza canale e senza striscia, quindi senza LED.
+- `"omit"`: the loop does not enter the strip and produces a warning.
+- `"dot"` (default): a straight segment `CUT_PITCH` long, centred on the dot and oriented like
+  the nearest stem. The channel is a pill (the line plus the round ends). Instead of slots
+  there are two through holes `DOT_WIRE_HOLE_D` under the pads, one per end. The `WIRE_SLOT_L`s
+  are not subtracted: the lit length is the whole segment. The dot carries **a single LED**, in the centre
+  (`DOT_LED_COUNT` in `lights.ts`), in the preview and in the BOM.
+  In the BOM it is a segment of its own and does not count among the slots. The footprint of the dot is the outline
+  of the ink (the skeleton widened by half a stroke width), not the skeleton line.
+  **The dot is always an LED.** If the rectangle `CUT_PITCH` long and `CHANNEL_W + 2·WALL` wide
+  sticks out more than `DOT_OVERHANG_MM` from that footprint (single-stroke fonts, small sizes), the
+  pill stays lit and larger than the drawing, with a warning for the admin only ("Dot smaller
+  than the LED pill: it sticks out X mm"). If the pill touches the stem, the merge ([G])
+  blocks sending and gives the height that separates them.
+- **Isolated marks** (the accent of "ì", "è", …), with `"dot"`: an open stroke that does not pass within
+  `max(CORNER_MERGE_DIST, 2·CROSSING_GAP + 1.5)` of any other and is shorter than
+  `CUT_PITCH + 2·WIRE_SLOT_L` (too short for two slots and the minimum lit length) behaves like the
+  dot: a segment of its own without slots, holes under the pads, **one LED**. Under `CUT_PITCH` it
+  is lengthened to `CUT_PITCH`, centred and oriented like the stroke (`markPieces` in `strip.ts`).
+- `"dash"`: as above, but with normal slots. The dash, wall included, must fit in the dot
+  widened by at most `WALL`. If it does not fit, `"unlit"` with the position.
+- `"unlit"`: a solid raised shape, without channel and without strip, hence without LEDs.
 
-### Copertura
+### Coverage
 
-Nessun tratto della lettera resta spento o sparisce senza un motivo. La lunghezza di riferimento,
-per lettera, sono gli archi del grafo. Con `stripMode` `"walls"` ogni parete del tubo entra nel
-riferimento, quindi la striscia è circa il doppio della linea mediana.
+No stroke of the letter stays unlit or disappears without a reason. The reference length,
+per letter, is the edges of the graph. With `stripMode` `"walls"` every wall of the tube enters the
+reference, so the strip is about twice the median line.
 
-La parte illuminata è la luce dello spezzone dopo le asole, arrotondata al passo di taglio. Il resto
-è spento e ha un motivo: asola, tasca d'angolo, gap d'incrocio, avanzo di taglio, spezzone troppo
-corto. Il puntino della *i* segue `I_DOT_MODE` e non entra in questo
-conto come tratto spento. Acceso più spento ricostruisce il
-riferimento. Sotto `COVERAGE_MIN` (0,85) la lettera avvisa, con l'altezza che la porta sopra la
-soglia quando il buco è fatto di asole, gap e avanzi fissi.
+The lit part is the lit length of the segment after the slots, rounded to the cut pitch. The rest
+is unlit and has a reason: slot, corner pocket, crossing gap, cut leftover, segment too
+short. The dot of the *i* follows `I_DOT_MODE` and does not enter this
+count as an unlit stretch. Lit plus unlit rebuilds the
+reference. Under `COVERAGE_MIN` (0.85) the letter warns, with the height that brings it above the
+threshold when the gap is made of fixed slots, gaps and leftovers.
 
-Nella pagina di debug i tratti spenti sono tratteggiati in grigio con l'etichetta del motivo, e una
-tabella riporta riferimento, millimetri illuminati e percentuale per lettera. Gli avvisi sono
-raggruppati per spezzone, in una lista comprimibile, con in cima
-il riepilogo (curve, spigoli, incroci, altezza minima) e la tabella di copertura per lettera.
-Un errore di validazione non spegne la striscia: il tratto resta illuminato e marcato. Sul disegno ogni piega ha un
-marcatore numerato: cerchio per la curva, triangolo per lo spigolo. Un clic sull'avviso ingrandisce
-la vista su quel punto.
+In the debug page the unlit stretches are dashed in grey with the label of the reason, and a
+table lists reference, lit millimetres and percentage per letter. Warnings are
+grouped by segment, in a collapsible list, with on top
+the summary (curves, cusps, crossings, minimum height) and the coverage table per letter.
+A validation error does not turn the strip off: the stretch stays lit and marked. On the drawing every bend has a
+numbered marker: a circle for a curve, a triangle for a cusp. A click on the warning zooms
+the view to that point.
 
-### Fori
+### Holes
 
-- **Ancoraggio**: sulla linea centrale, sotto la striscia, ciechi dal retro. Distribuiti ogni `ANCHOR_SPACING`, almeno `ANCHOR_MIN_PER_SEGMENT` per spezzone, lontani dall'asola, dalla tasca d'angolo, dagli incroci e dagli altri fori (≥ 10 mm). Se una stazione interseca uno di questi ostacoli, il foro si sposta lungo la linea centrale verso il punto valido più vicino: non si elimina. Se nello spezzone ne restano meno del minimo, c'è un avviso con la posizione.
-- **Fili, com'è oggi (18 novembre 2026)**: un **foro tondo** passante di diametro `WIRE_HOLE_D` a inizio e fine di ogni spezzone, centrato a metà degli ultimi `WIRE_SLOT_L` (il tratto senza striscia, fra il labbro e l'estremità). È il disco ritagliato sul canale, mai più largo del canale: il fondo resta tutto attorno e sotto le pareti, quindi il pezzo esce **intero**. Un giunto d'angolo ha un solo foro, nel vertice. Se il primo spezzone comincia con un foro grande almeno quanto `CABLE_HOLE_D`, il cavo passa di lì e non ha un foro suo. **Lungo tutto il percorso** ci sono poi fori piccoli (`PATH_HOLE_D`, ogni `PATH_HOLE_PITCH` circa, a distanze uguali): dove la striscia si taglia in una curva, i fili passano dal più vicino. Vengono per ultimi e lasciano il posto agli altri: uno che starebbe a meno di 1,5 mm di fondo da un foro grande, un ancoraggio, il cavo, un incrocio o un altro foro piccolo non si fa. I puntini hanno i loro due fori e niente altro. Dal foro passano i fili, non la striscia: non c'è più lo smusso sul labbro. `test/onePiece.test.ts` controlla che i solidi dell'housing siano tanti quante le parti volute dell'insegna (il puntino della *i* è una parte a sé). L'asola che segue resta disponibile con `WIRE_HOLE_D` 0: larga quanto il canale, dove i canali si fondono toglieva il fondo sotto un pezzo di parete e lo lasciava staccato da tutto.
-- **Fili, l'asola (`WIRE_HOLE_D` 0)**: asola passante attraverso il fondo, a inizio e fine di ogni spezzone. Occupa gli ultimi `WIRE_SLOT_L` dello spezzone stesso, a filo della terminazione arrotondata: larga quanto il canale (`WIRE_SLOT_W` = `CHANNEL_W` per default) e con la stessa forma del fondo. Non c'è prolungamento oltre la sagoma. La parte illuminata finisce dove inizia l'asola (il labbro) e lì la striscia scende verso il retro. Sullo spigolo interno del labbro, lato spezzone, c'è uno smusso di `SLOT_LIP_CHAMFER` a 45°.
-- **Tasca d'angolo**: quando due asole, l'uscita di uno spezzone e l'ingresso del successivo, si sovrappongono o distano meno di `CORNER_MERGE_DIST`, al loro posto c'è una sola tasca passante, intersezione con il canale (mai oltre), con lo smusso del labbro su entrambi i lati da cui entra la striscia.
-- **Cavo**: all'inizio del primo spezzone.
+- **Anchor**: on the centreline, under the strip, blind from the back. Distributed every `ANCHOR_SPACING`, at least `ANCHOR_MIN_PER_SEGMENT` per segment, away from the slot, the corner pocket, the crossings and the other holes (≥ 10 mm). If a station intersects one of these obstacles, the hole moves along the centreline to the nearest valid point: it is not removed. If fewer than the minimum are left in the segment, there is a warning with the position.
+- **Wires, as it is today (18 November 2026)**: a **round through hole** of diameter `WIRE_HOLE_D` at the start and end of every segment, centred halfway along the last `WIRE_SLOT_L` (the stretch without strip, between the lip and the end). It is the disc cut out of the channel, never wider than the channel: the floor stays all around and under the walls, so the part comes out **in one piece**. A corner joint has a single hole, at the vertex. If the first segment starts with a hole at least as large as `CABLE_HOLE_D`, the cable goes through it and has no hole of its own. **Along the whole path** there are then small holes (`PATH_HOLE_D`, about every `PATH_HOLE_PITCH`, at equal distances): where the strip is cut on a curve, the wires go through the nearest one. They come last and give way to the others: one that would sit less than 1.5 mm of floor from a large hole, an anchor, the cable, a crossing or another small hole is not made. Dots have their two holes and nothing else. Wires go through the hole, not the strip: there is no longer a chamfer on the lip. `test/onePiece.test.ts` checks that the solids of the housing are as many as the intended parts of the sign (the dot of the *i* is a part of its own). The slot described next stays available with `WIRE_HOLE_D` 0: as wide as the channel, where channels merge it removed the floor under a piece of wall and left it detached from everything.
+- **Wires, the slot (`WIRE_HOLE_D` 0)**: a through slot in the floor, at the start and end of every segment. It takes the last `WIRE_SLOT_L` of the segment itself, flush with the rounded end: as wide as the channel (`WIRE_SLOT_W` = `CHANNEL_W` by default) and with the same shape as the floor. There is no extension beyond the outline. The lit part ends where the slot starts (the lip) and there the strip goes down towards the back. On the inner edge of the lip, segment side, there is a `SLOT_LIP_CHAMFER` chamfer at 45°.
+- **Corner pocket**: when two slots, the exit of one segment and the entry of the next, overlap or are less than `CORNER_MERGE_DIST` apart, there is a single through pocket in their place, intersected with the channel (never beyond), with the lip chamfer on both sides from which the strip enters.
+- **Cable**: at the start of the first segment.
 
-I fori corrispondenti nel fondale sono descritti in §13.
+The matching holes in the backdrop are described in §13.
 
-### Verso degli spezzoni
+### Direction of the segments
 
-La striscia è indirizzabile (WS2812B): il segnale entra da **DIN** ed esce da **DOUT**.
-Ogni spezzone ha quindi un verso: l'inizio del percorso è il DIN, la fine è il DOUT, e la
-striscia va montata in quel verso (freccia stampata sulla striscia). L'asola d'inizio porta i
-fili d'ingresso, quella di fine i fili d'uscita. La BOM indica il verso di ogni spezzone.
+The strip is addressable (WS2812B): the signal enters at **DIN** and leaves at **DOUT**.
+Every segment therefore has a direction: the start of the path is the DIN, the end is the DOUT, and the
+strip must be mounted in that direction (arrow printed on the strip). The start slot carries the
+input wires, the end slot the output wires. The BOM gives the direction of every segment.
 
 ### DXF
 
-Visto **dal retro**, cioè specchiato in X, nello stesso sistema di riferimento dell'STL.
-Layer: `ANCHOR_HOLES` (CIRCLE), `WIRE_SLOTS` (LWPOLYLINE chiusa del contorno reale dell'asola), `CORNER_POCKETS` (LWPOLYLINE chiusa della tasca d'angolo), `CABLE_HOLE` (CIRCLE), `OUTLINE` (LWPOLYLINE).
+Seen **from the back**, that is mirrored in X, in the same reference frame as the STL.
+Layers: `ANCHOR_HOLES` (CIRCLE), `WIRE_SLOTS` (closed LWPOLYLINE of the real outline of the slot), `CORNER_POCKETS` (closed LWPOLYLINE of the corner pocket), `CABLE_HOLE` (CIRCLE), `OUTLINE` (LWPOLYLINE).
 
 ### BOM
 
@@ -555,114 +555,114 @@ Layer: `ANCHOR_HOLES` (CIRCLE), `WIRE_SLOTS` (LWPOLYLINE chiusa del contorno rea
   "warnings": [] }
 ```
 
-`lengthMm` è la lunghezza della linea centrale. LED e `cutLengthMm` usano la parte illuminata:
-lo spezzone meno `WIRE_SLOT_L` a ogni capo libero (un anello chiuso e un puntino `"dot"` non hanno
-asole: la luce è tutta la lunghezza). `cutLengthMm` è
-quella lunghezza arrotondata per difetto a multipli di `CUT_PITCH`.
-`din` / `dout` = posizione (mm, vista frontale) del labbro, dove finisce la parte illuminata;
-`dinDir` / `doutDir` = tangente unitaria del percorso in quei punti, nel verso DIN → DOUT.
-`wireSlotW` / `wireSlotL` = dimensioni dell'asola. `wireSlots` = asole rimaste singole: due per spezzone,
-meno le due assorbite da ogni tasca. Uno spigolo diviso (`CUSP_MODE` `"split"`), un trattino
-(`"dash"`) o un puntino (`"dot"`) aggiunge uno spezzone. Il puntino `"dot"` non ha asole: ha due
-fori `DOT_WIRE_HOLE_D` e `ledCount` 1. Un puntino `"unlit"` non entra nella BOM.
-`corners` = giunti d'angolo: posizione del labbro comune, spezzoni collegati, filo 0 mm.
-`plate` = riepilogo del fondale (§13), `null` senza fondale.
+`lengthMm` is the length of the centreline. LEDs and `cutLengthMm` use the lit part:
+the segment minus `WIRE_SLOT_L` at every free end (a closed loop and a `"dot"` dot have no
+slots: the lit length is the whole length). `cutLengthMm` is
+that length rounded down to multiples of `CUT_PITCH`.
+`din` / `dout` = position (mm, front view) of the lip, where the lit part ends;
+`dinDir` / `doutDir` = unit tangent of the path at those points, in the DIN → DOUT direction.
+`wireSlotW` / `wireSlotL` = size of the slot. `wireSlots` = slots left single: two per segment,
+minus the two absorbed by every pocket. A split cusp (`CUSP_MODE` `"split"`), a dash
+(`"dash"`) or a dot (`"dot"`) adds a segment. The `"dot"` dot has no slots: it has two
+`DOT_WIRE_HOLE_D` holes and `ledCount` 1. An `"unlit"` dot does not enter the BOM.
+`corners` = corner joints: position of the shared lip, connected segments, wire 0 mm.
+`plate` = summary of the backdrop (§13), `null` without a backdrop.
 
-`assembly` è il riepilogo di montaggio, in cima alla tabella BOM nella pagina di debug:
+`assembly` is the assembly summary, on top of the BOM table in the debug page:
 
-- `segments`: spezzoni
-- `solderJoints`: collegamenti DIN/DOUT da saldare (i giunti d'angolo non contano); ogni collegamento porta 3 fili (`wires`)
-- `corners`: giunti d'angolo
-- `wireM`: metri di filo stimati, somma in linea d'aria fra ogni DOUT libero e il DIN libero più vicino, più 0,2 m per ogni capo non accoppiato (alimentazione). I giunti d'angolo valgono 0
+- `segments`: segments
+- `solderJoints`: DIN/DOUT connections to solder (corner joints do not count); every connection carries 3 wires (`wires`)
+- `corners`: corner joints
+- `wireM`: estimated metres of wire, sum as the crow flies between every free DOUT and the nearest free DIN, plus 0.2 m for every unpaired end (power). Corner joints count 0
 - `totalLeds`
-- `voltageV`: tensione della striscia e dell'alimentatore (`STRIP_V`)
-- `maxCurrentA`: `totalLeds · LED_MAX_MA / 1000 · 5 / STRIP_V`, bianco pieno
-- `supplyA`: alimentatore consigliato, il minimo intero di ampere che copre la corrente massima con il 25% di margine
-- `supply`: modello consigliato dal catalogo, `{ model, family, watts, amps }` (`amps` nominali del
-  modello), o `null` se nessuno regge `supplyA`. Il catalogo (`src/parts/supplies.ts`) ha dieci famiglie
-  Mean Well, 100–240 V in ingresso, ciascuna a 5, 12 e 24 V dove esiste: l'adattatore con spina GST60A,
-  gli LRS-35/50/75/100/150/200/350 da quadro e gli LPV-60/100 stagni IP67, con correnti, misure (mm),
-  prezzo medio (€ per pezzo, IVA esclusa, novembre 2026) e scheda tecnica. `pickSupply(V, A)` sceglie il
-  GST60A se basta, altrimenti l'LRS più piccolo che regge la corrente alla tensione della striscia; gli
-  LPV (esterno) non vengono scelti
-- `box`: scatola `{ id, model, brand, innerMm, fits, auto, contents }` o `null` (nessun LED, `none`,
-  o nessuna basta); `boxWarnings`; `boxesThatFit`: id delle scatole che bastano, dalla più piccola
-- `controller`: id del controller scelto (`CONTROLLER_ID`, default `gl-c-309wl`)
-- `controllerWarnings`: avvisi se `supplyA` supera i 10 A del controller (serve iniettare corrente o un
-  secondo controller) o se i LED superano i suoi 800 IC. Non bloccano l'invio; entrano negli avvisi
-  del generatore. Nella pagina cliente la pillola dell'alimentatore («12 V · 4 A») diventa rossa e
-  Richiedi mostra controller, alimentatore e avvisi.
+- `voltageV`: voltage of the strip and of the power supply (`STRIP_V`)
+- `maxCurrentA`: `totalLeds · LED_MAX_MA / 1000 · 5 / STRIP_V`, full white
+- `supplyA`: recommended power supply, the smallest whole number of amperes that covers the maximum current with a 25% margin
+- `supply`: model recommended from the catalogue, `{ model, family, watts, amps }` (nominal `amps` of the
+  model), or `null` if none holds `supplyA`. The catalogue (`src/parts/supplies.ts`) has ten Mean Well
+  families, 100–240 V input, each at 5, 12 and 24 V where it exists: the GST60A plug-in adapter,
+  the panel-mount LRS-35/50/75/100/150/200/350 and the sealed IP67 LPV-60/100, with currents, measurements (mm),
+  average price (€ per piece, excluding VAT, November 2026) and datasheet. `pickSupply(V, A)` picks the
+  GST60A if it is enough, otherwise the smallest LRS that holds the current at the strip voltage; the
+  LPVs (outdoor) are never picked
+- `box`: box `{ id, model, brand, innerMm, fits, auto, contents }` or `null` (no LEDs, `none`,
+  or none is enough); `boxWarnings`; `boxesThatFit`: ids of the boxes that are enough, smallest first
+- `controller`: id of the chosen controller (`CONTROLLER_ID`, default `gl-c-309wl`)
+- `controllerWarnings`: warnings if `supplyA` exceeds the controller's 10 A (power injection or a
+  second controller is needed) or if the LEDs exceed its 800 ICs. They do not block sending; they enter the
+  generator's warnings. In the customer page the power supply pill ("12 V · 4 A") turns red and
+  Request shows controller, power supply and warnings.
 
-## 5bis. Editor dei tracciati (`src/editor/`, lato cliente)
+## 5bis. Path editor (`src/editor/`, customer side)
 
-Il cliente può ritoccare le linee della striscia dopo la generazione, sia da testo sia da immagine.
-L'editor è nella pagina cliente (`index.html`) e anche in `admin.html`. Usa **Paper.js**, caricato
-con `import()` dinamico solo quando si apre l'editor: la pagina iniziale non lo scarica.
+The customer can retouch the lines of the strip after generation, from text as well as from an image.
+The editor is in the customer page (`index.html`) and also in `admin.html`. It uses **Paper.js**, loaded
+with a dynamic `import()` only when the editor is opened: the initial page does not download it.
 
-### Congelamento
+### Freezing
 
-- «Modifica tracciati» prende gli spezzoni dopo [D] (prima della levigatura) e li converte in
-  curve di Bézier cubiche con `Path.simplify` di Paper.js (tolleranza `EDIT_FIT_TOL`, 0,3 mm).
-  Da quel momento l'ordine contiene `paths` (§6) e la pipeline **riparte da [E]**: [A]–[D] non si
-  rieseguono più.
-- Con `paths`, [E] **non leviga** (niente Chaikin): appiattisce le Bézier in polilinee (tolleranza
-  0,02 mm) e ricampiona. La curva disegnata dal cliente è quella prodotta.
-- Cambiare `heightMm` scala tutte le curve in modo uniforme rispetto all'origine (fattore nuova /
-  vecchia altezza). Cambiare testo, font o immagine **scarta** le modifiche, dopo una conferma.
-- «Ripristina originale» toglie `paths` e torna alla generazione automatica.
+- "Edit paths" takes the segments after [D] (before smoothing) and converts them into
+  cubic Bézier curves with Paper.js `Path.simplify` (tolerance `EDIT_FIT_TOL`, 0.3 mm).
+  From that moment the order contains `paths` (§6) and the pipeline **restarts from [E]**: [A]–[D] are not
+  run again.
+- With `paths`, [E] **does not smooth** (no Chaikin): it flattens the Béziers into polylines (tolerance
+  0.02 mm) and resamples. The curve drawn by the customer is the one produced.
+- Changing `heightMm` scales all the curves uniformly about the origin (factor new /
+  old height). Changing text, font or image **discards** the edits, after a confirmation.
+- "Restore original" removes `paths` and goes back to automatic generation.
 
-### Formato delle curve
+### Curve format
 
-Ogni spezzone è un `path` con `id` stabile (`p1`, `p2`…, assegnati da sinistra a destra al
-congelamento; i nuovi prendono il primo numero libero). Nodi nel formato dei segmenti di Paper.js:
-punto e maniglie relative, in mm, arrotondati a 0,001 mm.
+Every segment is a `path` with a stable `id` (`p1`, `p2`…, assigned from left to right at
+freezing; new ones take the first free number). Nodes in the format of Paper.js segments:
+point and relative handles, in mm, rounded to 0.001 mm.
 
 ```json
 { "id": "p1", "closed": false,
   "nodes": [{ "p": [0, 0], "in": [0, 0], "out": [4.2, 1.1] }] }
 ```
 
-Puntini (`I_DOT_MODE`): `{ "id": "d1", "type": "dot", "center": [x, y], "angle": 0 }`. Si spostano e
-si ruotano, non si modificano come curve; si possono eliminare.
+Dots (`I_DOT_MODE`): `{ "id": "d1", "type": "dot", "center": [x, y], "angle": 0 }`. They are moved and
+rotated, not edited like curves; they can be deleted.
 
-### Operazioni
+### Operations
 
-- Selezionare un nodo, trascinarlo; le maniglie compaiono solo sul nodo selezionato.
-- Aggiungere un nodo (doppio clic / doppio tocco sulla curva), eliminarlo (tasto Canc o pulsante).
-- Spigolo ↔ curva su un nodo (maniglie azzerate o allineate).
-- Tagliare uno spezzone in un punto (diventa due spezzoni); unire due estremi distanti ≤ 1 mm.
-- Eliminare uno spezzone; disegnare uno spezzone nuovo (strumento penna).
-- Spostare l'intero disegno o un solo spezzone.
-- **Annulla / Ripeti** (Ctrl+Z / Ctrl+Shift+Z e pulsanti), almeno 50 passi.
-- Zoom e pan (rotella, pinch); bersagli dei nodi ≥ 44 px su touch.
-- Due nodi consecutivi non stanno più vicini di `EDIT_MIN_NODE_DIST` (0,5 mm): il trascinamento
-  si ferma prima.
+- Select a node, drag it; handles appear only on the selected node.
+- Add a node (double click / double tap on the curve), delete it (Delete key or button).
+- Cusp ↔ curve on a node (handles zeroed or aligned).
+- Cut a segment at a point (it becomes two segments); join two endpoints ≤ 1 mm apart.
+- Delete a segment; draw a new segment (pen tool).
+- Move the whole drawing or a single segment.
+- **Undo / Redo** (Ctrl+Z / Ctrl+Shift+Z and buttons), at least 50 steps.
+- Zoom and pan (wheel, pinch); node targets ≥ 44 px on touch.
+- Two consecutive nodes are never closer than `EDIT_MIN_NODE_DIST` (0.5 mm): dragging
+  stops before that.
 
-### Incroci
+### Crossings
 
-Senza grafo, un **incrocio** è un'intersezione fra due spezzoni (o di uno spezzone con sé stesso).
-Uno dei due passa sotto e la sua striscia si interrompe di `CROSSING_GAP` per lato (§5 [D]).
-Default: passa sopra lo spezzone con `id` minore. Un clic sull'incrocio scambia. Le scelte si
-salvano in `crossings` (§6) con la posizione; alla rigenerazione ognuna si associa all'incrocio
-più vicino entro 2 mm. Una scelta senza incrocio corrispondente si scarta con avviso; un incrocio
-senza scelta usa il default.
+Without a graph, a **crossing** is an intersection between two segments (or of a segment with itself).
+One of the two passes under and its strip is interrupted by `CROSSING_GAP` per side (§5 [D]).
+Default: the segment with the smaller `id` passes over. A click on the crossing swaps them. The choices are
+saved in `crossings` (§6) with the position; at regeneration each one is matched to the nearest
+crossing within 2 mm. A choice without a matching crossing is discarded with a warning; a crossing
+without a choice uses the default.
 
-### Validazione dal vivo
+### Live validation
 
-- Durante il trascinamento, nel main thread e solo sugli spezzoni toccati: catena [F] (cerniere
-  oltre `HINGE_MAX_DEG`) e distanza dagli altri spezzoni (`CHANNEL_W + 2·WALL + MIN_GAP`, con il
-  `WALL` scelto dal cliente e una griglia spaziale). I marcatori di curva, spigolo e fusione (§5) si aggiornano a ogni frame.
-- Al rilascio, con 300 ms di attesa, il worker rigenera tutto ([E]–[J]) e aggiorna anteprima 3D,
-  copertura e BOM.
-- **Invio bloccato** finché ci sono errori: curve sotto R_MIN, fusioni, spezzoni sotto `CUT_PITCH`
-  di luce. Gli avvisi non bloccano. Gli spigoli seguono `CUSP_MODE` come sempre.
+- While dragging, in the main thread and only on the touched segments: chain [F] (hinges
+  beyond `HINGE_MAX_DEG`) and distance from the other segments (`CHANNEL_W + 2·WALL + MIN_GAP`, with the
+  `WALL` chosen by the customer and a spatial grid). The curve, cusp and merge markers (§5) update on every frame.
+- On release, after a 300 ms wait, the worker regenerates everything ([E]–[J]) and updates the 3D preview,
+  coverage and BOM.
+- **Sending is blocked** while there are errors: curves under R_MIN, merges, segments under `CUT_PITCH`
+  of lit length. Warnings do not block. Cusps follow `CUSP_MODE` as always.
 
-### Verso
+### Direction
 
-Il verso DIN → DOUT segue la regola di §5 («Verso degli spezzoni»). L'editor lo mostra con una
-freccia su ogni spezzone.
+The DIN → DOUT direction follows the rule of §5 ("Direction of the segments"). The editor shows it with an
+arrow on every segment.
 
-## 6. Ordine (contratto cliente → admin)
+## 6. Order (customer → admin contract)
 
 ```json
 { "schemaVersion": 2, "generatorVersion": "0.2.0",
@@ -671,7 +671,7 @@ freccia su ogni spezzone.
   "paths": null, "crossings": [] }
 ```
 
-`source` per un'immagine (§4bis):
+`source` for an image (§4bis):
 
 ```json
 { "kind": "image", "format": "svg", "name": "firma.svg", "trace": "centerline",
@@ -683,13 +683,13 @@ freccia su ogni spezzone.
   "bitmap": { "width": 1200, "height": 400, "rle": "<base64>" } }
 ```
 
-- `paths`: `null` finché il cliente non apre l'editor; poi l'elenco di §5bis. Con `paths` la
-  generazione ignora `source` (che resta come riferimento) e parte da [E].
+- `paths`: `null` until the customer opens the editor; then the list of §5bis. With `paths`
+  generation ignores `source` (which stays as a reference) and starts from [E].
 - `crossings`: `[{ "at": [x, y], "under": "p2" }]` (§5bis).
-- Un ordine `schemaVersion: 1` si legge come v2: `text` e `fontId` vanno in `source`
-  (`kind: "text"`), `paths: null`, `crossings: []`. Stessi file di prima.
+- A `schemaVersion: 1` order is read as v2: `text` and `fontId` go into `source`
+  (`kind: "text"`), `paths: null`, `crossings: []`. Same files as before.
 
-### Campi del cliente (`schemaVersion` 3)
+### Customer fields (`schemaVersion` 3)
 
 ```json
 { "schemaVersion": 3, "generatorVersion": "0.2.0", "pricingVersion": "2026-11",
@@ -700,63 +700,63 @@ freccia su ogni spezzone.
                 "plug": "EU", "proof": true } }
 ```
 
-- `customer` raccoglie le scelte del cliente che **non cambiano la geometria**: `effect`
-  (`"colore fisso"` | `"arcobaleno"`), `diffuser`, `mount` (`"wall"`), `plug` (`"EU"` | `"UK"` | `"CH"` | `"US"`, predefinita `"EU"`; sconosciuta → EU con avviso), `proof`
-  (bozza di approvazione). Il diffusore cambia solo se `diffuser.stl` si esporta; il profilo dei bordi
-  e lo spessore della cornice restano in `params` (`EDGE_PROFILE`, `WALL`), come oggi.
-- `sizePreset` è informativo: fa fede `heightMm`. `pricingVersion` fissa la tabella prezzi (§12.5).
-- Migrazione in `src/order/schema.ts`: v1 → v2 come oggi, poi v2 → v3 con `customer` ai default
-  sopra, `sizePreset` e `pricingVersion` `null`. Un ordine v1 o v2 migrato produce **gli stessi STL
-  e la stessa BOM** (test come `orderSchema.test.ts`).
-- L'ordine **non contiene dati personali**: i contatti viaggiano solo nella richiesta (§12.7).
+- `customer` collects the customer's choices that **do not change the geometry**: `effect`
+  (`"colore fisso"` | `"arcobaleno"`), `diffuser`, `mount` (`"wall"`), `plug` (`"EU"` | `"UK"` | `"CH"` | `"US"`, default `"EU"`; unknown → EU with a warning), `proof`
+  (approval draft). The diffuser only changes whether `diffuser.stl` is exported; the edge profile
+  and the frame thickness stay in `params` (`EDGE_PROFILE`, `WALL`), as today.
+- `sizePreset` is informative: `heightMm` is what counts. `pricingVersion` pins the price table (§12.5).
+- Migration in `src/order/schema.ts`: v1 → v2 as today, then v2 → v3 with `customer` at the defaults
+  above, `sizePreset` and `pricingVersion` `null`. A migrated v1 or v2 order produces **the same STLs
+  and the same BOM** (tests such as `orderSchema.test.ts`).
+- The order **contains no personal data**: contact details travel only in the request (§12.7).
 
-### Fondale (`schemaVersion` 4)
+### Backdrop (`schemaVersion` 4)
 
 ```json
-{ "schemaVersion": 4, "...": "come v3",
+{ "schemaVersion": 4, "...": "as v3",
   "plate": { "shape": "rect", "material": "clear", "marginMm": 20, "cornerRMm": 8 } }
 ```
 
-- `plate` è `null` senza fondale. Il fondale genera un file di produzione (`plate.svg`), quindi
-  non sta in `customer`.
+- `plate` is `null` without a backdrop. The backdrop generates a production file (`plate.svg`), so
+  it does not live in `customer`.
 - `shape`: `"rect"` | `"pill"` | `"contour"`; `material`: `"clear"` | `"black"` | `"wood"` (§13).
-  Spessore e kerf non sono nell'ordine: dipendono dal materiale e stanno in `src/config.ts`.
-- Migrazione v3 → v4: `plate: null`. Un ordine v1, v2 o v3 migrato produce gli stessi STL e la
-  BOM di prima più `"plate": null`.
+  Thickness and kerf are not in the order: they depend on the material and live in `src/config.ts`.
+- Migration v3 → v4: `plate: null`. A migrated v1, v2 or v3 order produces the same STLs and the
+  previous BOM plus `"plate": null`.
 
-Stesso JSON e stessa `generatorVersion` producono gli stessi file (determinismo, nessuna casualità).
+The same JSON and the same `generatorVersion` produce the same files (determinism, no randomness).
 
 ## 7. Stack
 
-- Vite + TypeScript (strict), nessun framework UI pesante (vanilla TS o Preact)
+- Vite + TypeScript (strict), no heavy UI framework (vanilla TS or Preact)
 - `opentype.js`, `manifold-3d` (WASM), `three` (+ `UnrealBloomPass`), `comlink`, `d3-delaunay` (fallback)
-- `paper` (Paper.js, build `paper-core`, senza PaperScript) per l'editor (§5bis), caricato con `import()` dinamico
-- Offset e unioni del fondale (§13) con `manifold-3d` `CrossSection`, come [H]: nessuna libreria in più
-- Export DXF scritto a mano (LWPOLYLINE, AC1015, come i layer in §5) o `dxf-writer`
-- Test: `vitest` sui moduli geometrici puri
-- Controllo di fine fase: `npm run check`. In sequenza esegue `tsc --noEmit`, `vitest run`,
-  `vite build`, poi avvia `vite preview` e i test Playwright in `tests/smoke/` (solo Chromium,
-  headless). Copre `index.html`, `admin.html`, `debug.html`, `bend-test.html` e `spec.html`
-  (errore in console o richiesta di rete fallita, incluso il `.wasm`), il pulsante «Test manifold»
-  (`vertici: 8, triangoli: 12`), la rasterizzazione di «Ciao Torino» con entrambi i font (scheletro
-  e grafo visibili) e gli STL dei pezzi A e B, che non devono essere vuoti. Alla fine di ogni fase
-  va eseguito, e gli errori vanno corretti finché passa, prima di considerare il lavoro finito.
-  Una tantum, dopo l'installazione delle dipendenze: `npx playwright install chromium`.
+- `paper` (Paper.js, `paper-core` build, without PaperScript) for the editor (§5bis), loaded with a dynamic `import()`
+- Offsets and unions of the backdrop (§13) with `manifold-3d` `CrossSection`, like [H]: no extra library
+- Hand-written DXF export (LWPOLYLINE, AC1015, like the layers in §5) or `dxf-writer`
+- Tests: `vitest` on the pure geometry modules
+- End-of-phase check: `npm run check`. In sequence it runs `tsc --noEmit`, `vitest run`,
+  `vite build`, then starts `vite preview` and the Playwright tests in `tests/smoke/` (Chromium only,
+  headless). It covers `index.html`, `admin.html`, `debug.html`, `bend-test.html` and `spec.html`
+  (console error or failed network request, the `.wasm` included), the "Test manifold" button
+  (`vertici: 8, triangoli: 12`), the rasterization of "Ciao Torino" with both fonts (skeleton
+  and graph visible) and the STLs of parts A and B, which must not be empty. It must be run at the end
+  of every phase, and errors fixed until it passes, before the work is considered done.
+  Once, after installing the dependencies: `npx playwright install chromium`.
 - Deploy:
-  - **Il build pubblico contiene solo `index.html` e `parts.html`** (pagina cliente e pagina Parts): `npm run build:public`
+  - **The public build contains only `index.html` and `parts.html`** (customer page and Parts page): `npm run build:public`
     (`vite build --mode public`).
-  - Il sito pubblico è https://vongomben.github.io/sign-configurator/ . È il build di
-    `npm run build:public` (pagina cliente e Parts). Il `base` in `vite.config.ts` resta
+  - The public site is https://vongomben.github.io/sign-configurator/ . It is the build of
+    `npm run build:public` (customer page and Parts). The `base` in `vite.config.ts` stays
     `/sign-configurator/`.
-  - `.github/workflows/deploy.yml`, a ogni push su `main`, esegue quel build e lo pubblica con
-    `actions/upload-pages-artifact` e `actions/deploy-pages`. Perché parta, in Settings → Pages la
-    sorgente deve essere **GitHub Actions**. Finché la sorgente è il branch `main`, quel branch
-    ospita direttamente il contenuto di `dist` (la pagina già compilata) e `index.dev.html` conserva
-    il sorgente della pagina.
-  - `admin.html`, `debug.html`, `bend-test.html` e `spec.html` si usano **solo in locale** con
-    `npm run dev`; `npm run build` le compila tutte, per verifica.
+  - `.github/workflows/deploy.yml`, on every push to `main`, runs that build and publishes it with
+    `actions/upload-pages-artifact` and `actions/deploy-pages`. For it to start, in Settings → Pages the
+    source must be **GitHub Actions**. As long as the source is the `main` branch, that branch
+    directly hosts the content of `dist` (the already compiled page) and `index.dev.html` keeps
+    the source of the page.
+  - `admin.html`, `debug.html`, `bend-test.html` and `spec.html` are used **only locally** with
+    `npm run dev`; `npm run build` compiles them all, as a check.
 
-## 8. Struttura cartelle
+## 8. Folder structure
 
 ```
 src/
@@ -764,568 +764,567 @@ src/
   fonts/registry.ts, loadFont.ts
   geometry/rasterize.ts, distance.ts, tubes.ts, skeleton.ts, graph.ts, tubePairing.ts, segment.ts, smooth.ts,
            chain.ts, validate.ts, strip.ts, holes.ts, housing.ts, diffuser.ts, edgeProfile.ts, lights.ts,
-           plate.ts                (§13: contorno, fori, mesh del fondale)
+           plate.ts                (§13: outline, holes, mesh of the backdrop)
   export/stl.ts, dxf.ts, svg.ts, bom.ts, plate.ts (§13: plate.svg, plate.dxf)
   worker/generator.worker.ts, api.ts
   viewer/scene.ts, neonMaterial.ts, plateMaterials.ts (§13)
   sources/svgImport.ts (main thread), svgPaths.ts, rasterImport.ts (main thread), bitmapCodec.ts, contours.ts
-  editor/editor.ts (Paper.js, UI), paths.ts (formato, scala, appiattimento: puro), crossings.ts, liveCheck.ts
-  order/schema.ts (tipi v4, migrazione v1 → v2 → v3 → v4)
-  pricing.ts                      (§12.5, puro)
+  editor/editor.ts (Paper.js, UI), paths.ts (format, scale, flattening: pure), crossings.ts, liveCheck.ts
+  order/schema.ts (v4 types, migration v1 → v2 → v3 → v4)
+  pricing.ts                      (§12.5, pure)
   order/share.ts                  (§12.6)
   ui/copy.it.ts, sizes.ts
   ui/customer.ts, customer.css, admin.ts, debug.ts
-  tools/bendTest.ts (pagina), bendTestGeometry.ts (pezzi di prova A archi / B angoli, testabile in Node)
-index.html   (cliente, §12)
-admin.html   (admin: incolla o carica JSON, scarica ZIP)
-debug.html   (bitmap di [A], o le linee del font se è a tratto singolo; poi grafo, segmenti, cerniere)
+  tools/bendTest.ts (page), bendTestGeometry.ts (test parts A arcs / B corners, testable in Node)
+index.html   (customer, §12)
+admin.html   (admin: paste or upload JSON, download ZIP)
+debug.html   (bitmap of [A], or the font lines if it is single-stroke; then graph, segments, hinges)
 bend-test.html
-tests/smoke/          Playwright (Chromium headless), lanciato da `npm run check`
+tests/smoke/          Playwright (headless Chromium), launched by `npm run check`
 playwright.config.ts
 ```
 
-## 9. Fuori scope v1
+## 9. Out of scope for v1
 
-Suddivisione per il piatto di stampa, pagamenti, account utente.
-La pagina cliente invia una richiesta, non un ordine pagato (§12.7).
+Splitting for the print bed, payments, user accounts.
+The customer page sends a request, not a paid order (§12.7).
 
-## 10. Domande aperte
+## 10. Open questions
 
-Spessore reale della striscia, coincidenza intagli/piazzole di taglio, tensione 5 o 24 V, cosa entra nei fori Ø3 (perni, viti M3, inserti a caldo). Non bloccano lo sviluppo: restano i default
-di `config.ts`, da aggiornare dopo le misure sul campione stampato.
+Real thickness of the strip, whether notches and cut pads coincide, 5 or 24 V, what goes into the Ø3 holes (pins, M3 screws, heat-set inserts). They do not block development: the defaults
+of `config.ts` stay, to be updated after the measurements on the printed sample.
 
-Immagini caricate dal cliente: serve una dichiarazione che ne ha i diritti (casella prima dell'invio)?
+Images uploaded by the customer: is a statement that they hold the rights needed (a checkbox before sending)?
 
-Fondale (§13): i passaggi dei fili usano `PLATE_WIRE_HOLES` (default `true`): fori passanti sotto le
-asole e sul cavo, visibili sul trasparente. `false` lascia la lastra chiusa in quei punti (fili
-nell'intercapedine fra housing e lastra). Resta da confermare sul campione. Fissaggio housing →
-lastra: viti M3 dal retro nei fori ciechi, inserti a caldo o distanziali? Spessori reali dei materiali
-acquistati e kerf misurato sul laser per ciascuno.
+Backdrop (§13): the wire passages use `PLATE_WIRE_HOLES` (default `true`): through holes under the
+slots and at the cable, visible on the transparent one. `false` leaves the plate closed at those points (wires
+in the gap between housing and plate). Still to be confirmed on the sample. Fixing housing →
+plate: M3 screws from the back into the blind holes, heat-set inserts or standoffs? Real thicknesses of the purchased
+materials and kerf measured on the laser for each.
 
-Per la pagina cliente (§12), da decidere prima della pubblicazione: costanti di prezzo
-(`src/pricing.ts`, comprese quelle del fondale), tempi di produzione e consegna, garanzia, costi e
-zone di spedizione, chi emette la fattura, indirizzo email delle richieste, testo dell'informativa
-privacy. Per l'invio senza client di posta la direzione è l'integrazione WooCommerce (§11). La pagina
-cliente è `index.html`: si prova in locale e si pubblica con `npm run deploy` solo dopo
-l'approvazione di Davide.
+For the customer page (§12), to be decided before publication: price constants
+(`src/pricing.ts`, including those of the backdrop), production and delivery times, warranty, shipping costs and
+zones, who issues the invoice, email address for requests, text of the privacy
+notice. For sending without a mail client the direction is the WooCommerce integration (§11). The customer
+page is `index.html`: it is tried locally and published with `npm run deploy` only after
+Davide's approval.
 
-## 11. Roadmap post-v1
+## 11. Post-v1 roadmap
 
-- **Trasformazioni per lettera** nell'editor (§5bis): sposta, ruota, scala, spaziatura, con la
-  lettera come gruppo di spezzoni.
-- **Integrazione WordPress / WooCommerce** (sostituisce il `mailto:` di §12.7):
-  - [ ] Endpoint REST custom (mini-plugin WP) `neon/v1/richiesta`: crea un ordine WooCommerce
-        «In attesa di pagamento» con la configurazione come metadati di riga + link `#o=` (§12.6)
-  - [ ] Nessuna chiave API WooCommerce nel codice del configuratore (repo pubblico)
-  - [ ] CORS limitato al dominio del configuratore (o configuratore incorporato nel sito via shortcode)
-  - [ ] Anti-spam con Cloudflare Turnstile: widget nel configuratore, token verificato lato PHP
-        con secret key in `wp-config.php`; `turnstile.reset()` dopo ogni invio
-  - [ ] Honeypot + rate limit per IP come difese aggiuntive
-  - [ ] Checkbox / rimando privacy policy (raccolta nome/email, Turnstile come servizio terzo)
+- **Per-letter transforms** in the editor (§5bis): move, rotate, scale, spacing, with the
+  letter as a group of segments.
+- **WordPress / WooCommerce integration** (replaces the `mailto:` of §12.7):
+  - [ ] Custom REST endpoint (WP mini-plugin) `neon/v1/richiesta`: creates a WooCommerce order
+        "Pending payment" with the configuration as line metadata + `#o=` link (§12.6)
+  - [ ] No WooCommerce API key in the configurator code (public repo)
+  - [ ] CORS limited to the configurator's domain (or the configurator embedded in the site via shortcode)
+  - [ ] Anti-spam with Cloudflare Turnstile: widget in the configurator, token verified on the PHP side
+        with the secret key in `wp-config.php`; `turnstile.reset()` after every submission
+  - [ ] Honeypot + per-IP rate limit as additional defences
+  - [ ] Checkbox / link to the privacy policy (collection of name/email, Turnstile as a third-party service)
 
-## 12. Pagina cliente: proposta di valore, flusso, prezzo
+## 12. Customer page: value proposition, flow, price
 
-Riferimento di mercato: i configuratori di insegne LED neon flex già in vendita (es. customneon.com).
-Se ne prende **la struttura** (l'insegna subito visibile, strumenti in un dock e un foglio alla volta,
-§12.2, prezzo immediato, barra di fiducia, preventivo su misura sempre raggiungibile, design
-condivisibile). **Non** se ne riprendono testi, immagini, nomi dei font, marchi o slogan.
+Market reference: the neon flex LED sign configurators already on sale (e.g. customneon.com).
+**The structure** is taken from them (the sign visible at once, tools in a dock and one sheet at a time,
+§12.2, immediate price, trust bar, custom quote always reachable, shareable
+design). Their texts, images, font names, trademarks or slogans are **not** reused.
 
-La pagina cliente è `index.html`. Si prova in locale con `npm run dev` e si pubblica con
-`npm run deploy` solo dopo l'approvazione di Davide.
+The customer page is `index.html`. It is tried locally with `npm run dev` and published with
+`npm run deploy` only after Davide's approval.
 
-### 12.1 Proposta di valore
+### 12.1 Value proposition
 
-1. **Quello che vedi è quello che stampiamo.** L'anteprima è la geometria dell'STL (§5) con la luce
-   calcolata sui LED reali (`lightPoints`); i vincoli fisici si vedono prima dell'ordine. Vale anche
-   per il fondale: materiale, spessore e fori nell'anteprima sono quelli tagliati (§13).
-2. **Il tuo disegno, non solo un font.** Testo, firma o logo (§4bis), ritoccabili nell'editor (§5bis).
-3. **Fatta qui, riparabile.** Stampata e assemblata in Italia; cornice, diffusore e strisce sono
-   pezzi separabili e sostituibili.
-4. **Ogni LED è indirizzabile.** Gli effetti sono di serie, non un sovrapprezzo (§2).
+1. **What you see is what we print.** The preview is the geometry of the STL (§5) with the light
+   computed on the real LEDs (`lightPoints`); the physical constraints are visible before ordering. This also holds
+   for the backdrop: material, thickness and holes in the preview are the ones that get cut (§13).
+2. **Your drawing, not just a font.** Text, signature or logo (§4bis), retouchable in the editor (§5bis).
+3. **Made here, repairable.** Printed and assembled in Italy; frame, diffuser and strips are
+   separable, replaceable parts.
+4. **Every LED is addressable.** Effects are standard, not a surcharge (§2).
 
-Titolo di lavoro: *«Scrivi o disegna. Guarda la tua insegna come verrà stampata davvero.»*
-**Lingua**: la pagina cliente non dipende dall'italiano. Prima icone, numeri e unità (mm, cm, V, A,
-LED/m); il testo che resta è un inglese breve, tutto in `src/ui/strings.ts` (`S`), con `lang="en"`.
-Gli avvisi del generatore restano in italiano per admin e debug: `customerMessage` li traduce in
-poche frasi per il cliente (curve strette, tratti corti, sagome vicine, immagine poco definita,
-tratto non uniforme, puntino, limiti del controller) e scarta tutti gli altri; un errore di
-generazione diventa «Could not build this sign.» (il dettaglio va in console). Admin, debug, bend
-test e questa SPEC restano in italiano. `copy.it.ts` resta come archivio dei testi delle pagine
-future (§12.7–§12.9). **Barra di fiducia**: 3 voci da `copy.it.ts`; una voce con
-valore `null` (dato non ancora deciso, §10) non si mostra.
+Working title: *"Write or draw. See your sign as it will really be printed."*
+**Language**: the customer page does not depend on Italian. First icons, numbers and units (mm, cm, V, A,
+LED/m); the text that remains is short English, all in `src/ui/strings.ts` (`S`), with `lang="en"`.
+Generator warnings are in English too, but technical, for admin and debug: `customerMessage` reduces them to
+a few sentences for the customer (tight curves, short strokes, close outlines, low-definition image,
+uneven stroke, dot, controller limits) and discards all the others; a generation
+error becomes "Could not build this sign." (the detail goes to the console). The labels of admin, debug and bend
+test stay in Italian. `copy.it.ts` stays as an archive of the texts of future
+pages (§12.7–§12.9). **Trust bar**: 3 entries from `copy.it.ts`; an entry with a
+`null` value (not yet decided, §10) is not shown.
 
-### 12.2 Mobile prima di tutto: l'insegna, poi gli strumenti
+### 12.2 Mobile first: the sign, then the tools
 
-Niente procedura a passi. La prima cosa che si vede è l'insegna «Ciao» accesa, a tutto schermo.
-Una sola schermata (`100dvh`): la pagina non scorre mai. Gli stili stanno in `src/ui/customer.css`
-(importato da `customer.ts`), con il font di sistema e senza stili inline. `#stage` e il suo canvas
-sono alti il 100 % con `!important`: `scene.ts` lascia il `70vh` inline perché lo usa anche l'admin.
-Lo sfondo dell'anteprima cliente è grigio medio (`#5c5c62`, `--stage` in `customer.css` e
-`STAGE_BACKGROUND` in `customer.ts`): sul nero cornice e fondali sparivano, il neon resta acceso
-lo stesso. L'admin resta sul muro chiaro di §5.
+No step-by-step procedure. The first thing seen is the "Ciao" sign lit, full screen.
+A single screen (`100dvh`): the page never scrolls. The styles live in `src/ui/customer.css`
+(imported by `customer.ts`), with the system font and no inline styles. `#stage` and its canvas
+are 100 % high with `!important`: `scene.ts` leaves the inline `70vh` because admin uses it too.
+The background of the customer preview is mid grey (`#5c5c62`, `--stage` in `customer.css` and
+`STAGE_BACKGROUND` in `customer.ts`): on black the frame and backdrops disappeared, the neon stays lit
+all the same. Admin stays on the light wall of §5.
 
-Sotto i 900 px il foglio è una riga della griglia, a sinistra della barra, e l'anteprima si restringe sopra di esso: non la
-copre. All'apertura nessun foglio è aperto.
+Under 900 px the sheet is a row of the grid, to the left of the bar, and the preview shrinks above it: it does not
+cover it. On opening no sheet is open.
 
 ```
 ┌───────────────────────────┬──────┐
-│ Accesa|Spenta    Richiedi │ Testo│
-│ Con|Senza diffusore       │ Font │
-│ Cornice mm                │Misura│
-│      «Ciao» accesa        │Colore│
+│ On|Off            Request │ Text │
+│ With|Without diffuser     │ Font │
+│ Frame mm                  │ Size │
+│        "Ciao" lit         │Colour│
 │                           │  …   │
 │ 114 LED         5 V · 9 A │      │
 ├───────────────────────────┤      │
-│ foglio, max 48dvh   Fatto │      │  ← chiuso all'avvio
+│ sheet, max 48dvh     Done │      │  ← closed at start
 └───────────────────────────┴──────┘
 ```
 
-- **Anteprima** (`#stage`) a tutto schermo. Sovrapposti in alto: a sinistra la pillola Accesa/Spenta
-  (`radio name="mode"`). Subito sotto, la pillola Con diffusore / Senza diffusore (`radio
-  name="diffuser"`): se è off la scena va in «senza diffusore», altrimenti resta accesa o spenta.
-  Fra quel blocco e «Richiedi» (`#open-request`, nel colore scelto, con un leggero alone) c'è
-  `input name="wallMm"` (`WALL`, 1,6–5 mm). Sotto i 900 px, con l'anteprima ristretta dalla barra,
-  la cornice scende in una terza riga sotto il diffusore, a sinistra. In basso a sinistra, pillola scura, `#preview-status` (resta `data-generation`). In basso a
-  destra, affiancate (`.stage-power`): la **spina** e l'alimentatore. La spina è una pillola scura
-  (`label.plug-pill`) con il disegno della faccia della spina, la parola «Spina» e un menu
-  (`select name="plug"`): EU (Europa, tipo C/F), UK (Regno Unito e Irlanda, tipo G), CH (Svizzera,
-  tipo J), US (Stati Uniti e Canada, tipo A/B), in `src/ui/plugs.ts`. Il disegno e il title seguono la
-  scelta; va in `customer.plug` e nel riepilogo di Richiedi («Spina: … · alimentatore 100–240 V»).
-  Gli alimentatori sono universali, 100–240 V in ingresso: cambia solo la forma della spina, non la
-  tensione di rete. Accanto, se la distinta conosce l'alimentatore, pillola scura `a#preview-supply`
-  con il modello consigliato, la sua tensione e la sua corrente nominale (`LRS-50-5 · 5 V · 10 A`; senza
-  modello solo `5 V · 8 A`), rossa oltre i limiti del controller: bilancia il conteggio dei LED. È un
-  link alla pagina **Parts** (`parts.html#<famiglia>`, nuova scheda); il title dice quanti ampere servono.
-  Richiedi mostra «LRS-50-5 · 5 V 10 A (needs 8 A)». Senza LED resta nascosta.
-- **Pagina Parts** (`parts.html`, `src/ui/parts.ts`), pubblica e in inglese: le tabelle del catalogo
-  alimentatori divise per tipo (Plug-in adapter, Enclosed, Waterproof), con corrente e codice d'ordine a
-  5/12/24 V, misure e prezzo; poi i controller (`CONTROLLERS`) e i profili striscia. La prima colonna è un disegno
-  SVG del modello (`src/parts/supplyArt.ts`), in obliquo e alla stessa scala per tutti (0,6 px/mm,
-  dalle misure del catalogo): scatola con feritoie e morsettiera (LRS), mattone nero con presa C14 e
-  cavo (GST60A), corpo stagno con due cavi (LPV). Disegni e non foto: Mean Well pubblica foto solo per
-  serie e quelle dei rivenditori non sono nostre. Anche i controller hanno il loro disegno
-  (`src/parts/controllerArt.ts`, 1,2 px/mm, stessa scala fra loro): scheda nuda con morsettiere verdi
-  (Dig-Uno, Seeed XIAO) o scheda in custodia (GLEDOPTO bianchi). Senza misure del
-  costruttore la sagoma è tratteggiata, di misura indicativa (60 × 35 × 20 mm), con «size not published».
-  La sezione Boxes elenca le scatole con disegno in scala (`src/parts/boxArt.ts`, 0,4 px/mm), misure
-  interne ed esterne e prezzo. Ogni sezione (alimentatori, controller, scatole, strisce) ha un pulsante **+ Add one** che apre il modulo issue
-  GitHub `.github/ISSUE_TEMPLATE/new-part.yml` («New part», etichette `new-part` e `needs-review`), con
-  il titolo «[Part] <categoria>: ». Le proposte entrano nel catalogo solo dopo la revisione del
-  maintainer, a mano in `src/parts/supplies.ts` o `CONTROLLERS`. La riga dell'ancora è evidenziata.
-  Sul telefono ogni riga diventa una scheda.
-- **Dock** (`nav.dock`), sempre visibile: una barra verticale sul bordo destro, alta quanto lo
-  schermo (64 px; 76 px su desktop), con sette strumenti grandi (≥ 48 px, icona + etichetta) uno
-  sotto l'altro, centrati. Ciascuno con `data-tool`: `text` «Testo», `font` «Font», `size` «Misura», `color` «Colore», `image`
-  «Immagine», `plate` «Fondale», `tech` «Tecnica», `more` «Altro».
-- **Tutto in chiaro.** Gli strumenti non si alternano: stanno tutti nello stesso foglio «Configura»
-  (`data-sheet="config"`), uno sotto l'altro, ciascuno in una sezione richiudibile
-  (`details.section[data-section=…]`, aperte all'avvio, intestazione con freccia). La barra è
-  l'indice: toccare uno strumento apre il foglio, apre la sua sezione e la porta in cima;
-  scorrendo, la barra evidenzia la sezione in cima. Su mobile il foglio sale dal basso (`.sheet`,
-  max 48dvh, angoli arrotondati, «Fatto» `#sheet-close`) e scorre al suo interno; toccare di nuovo
-  lo strumento evidenziato o «Fatto» lo chiude. Richiedi è un foglio a parte (`data-sheet="request"`)
-  che nasconde le sezioni. Esc chiude il foglio, tranne durante il ritocco e tranne quando il focus
-  è su un campo.
-- Il canvas `#path-editor` sta sopra l'anteprima (`position: absolute`, 100 % con `!important`) ed è
-  visibile solo con il foglio Configura aperto e la sezione Altro aperta. Chiudere la sezione non
-  chiama `editor.close()`.
+- **Preview** (`#stage`) full screen. Overlaid on top: on the left the On/Off pill
+  (`radio name="mode"`). Right below, the With diffuser / Without diffuser pill (`radio
+  name="diffuser"`): if it is off the scene goes to "senza diffusore" (no diffuser), otherwise it stays on or off.
+  Between that block and "Request" (`#open-request`, in the chosen colour, with a slight halo) there is
+  `input name="wallMm"` (`WALL`, 1.6–5 mm). Under 900 px, with the preview narrowed by the bar,
+  the frame goes down to a third row under the diffuser, on the left. Bottom left, a dark pill, `#preview-status` (`data-generation` stays). Bottom
+  right, side by side (`.stage-power`): the **plug** and the power supply. The plug is a dark pill
+  (`label.plug-pill`) with the drawing of the face of the plug, the word "Plug" and a menu
+  (`select name="plug"`): EU (Europe, type C/F), UK (United Kingdom and Ireland, type G), CH (Switzerland,
+  type J), US (United States and Canada, type A/B), in `src/ui/plugs.ts`. The drawing and the title follow the
+  choice; it goes into `customer.plug` and into the Request summary ("Plug: … · power supply 100–240 V").
+  The power supplies are universal, 100–240 V input: only the shape of the plug changes, not the
+  mains voltage. Next to it, if the bill of materials knows the power supply, a dark pill `a#preview-supply`
+  with the recommended model, its voltage and its nominal current (`LRS-50-5 · 5 V · 10 A`; without a
+  model only `5 V · 8 A`), red beyond the controller limits: it balances the LED count. It is a
+  link to the **Parts** page (`parts.html#<family>`, new tab); the title says how many amperes are needed.
+  Request shows "LRS-50-5 · 5 V 10 A (needs 8 A)". Without LEDs it stays hidden.
+- **Parts page** (`parts.html`, `src/ui/parts.ts`), public and in English: the tables of the power supply
+  catalogue split by type (Plug-in adapter, Enclosed, Waterproof), with current and order code at
+  5/12/24 V, measurements and price; then the controllers (`CONTROLLERS`) and the strip profiles. The first column is an SVG
+  drawing of the model (`src/parts/supplyArt.ts`), oblique and at the same scale for all (0.6 px/mm,
+  from the catalogue measurements): box with vents and terminal block (LRS), black brick with C14 socket and
+  cable (GST60A), sealed body with two cables (LPV). Drawings, not photos: Mean Well publishes photos only per
+  series and those of the resellers are not ours. The controllers have their drawing too
+  (`src/parts/controllerArt.ts`, 1.2 px/mm, same scale among them): bare board with green terminal blocks
+  (Dig-Uno, Seeed XIAO) or board in a case (the white GLEDOPTOs). Without the maker's
+  measurements the outline is dashed, of indicative size (60 × 35 × 20 mm), with "size not published".
+  The Boxes section lists the boxes with a scale drawing (`src/parts/boxArt.ts`, 0.4 px/mm), inner
+  and outer measurements and price. Every section (power supplies, controllers, boxes, strips) has a **+ Add one** button that opens the GitHub
+  issue form `.github/ISSUE_TEMPLATE/new-part.yml` ("New part", labels `new-part` and `needs-review`), with
+  the title "[Part] <category>: ". Proposals enter the catalogue only after review by the
+  maintainer, by hand in `src/parts/supplies.ts` or `CONTROLLERS`. The row of the anchor is highlighted.
+  On a phone every row becomes a card.
+- **Dock** (`nav.dock`), always visible: a vertical bar on the right edge, as tall as the
+  screen (64 px; 76 px on desktop), with seven large tools (≥ 48 px, icon + label) one
+  below the other, centred. Each with `data-tool`: `text` "Text", `font` "Font", `size` "Size", `color` "Color", `image`
+  "Image", `plate` "Backdrop", `tech` "Tech", `more` "More".
+- **Everything in the open.** The tools do not alternate: they all sit in the same "Configure" sheet
+  (`data-sheet="config"`), one below the other, each in a collapsible section
+  (`details.section[data-section=…]`, open at start, header with an arrow). The bar is
+  the index: touching a tool opens the sheet, opens its section and brings it to the top;
+  while scrolling, the bar highlights the section on top. On mobile the sheet rises from the bottom (`.sheet`,
+  max 48dvh, rounded corners, "Done" `#sheet-close`) and scrolls inside itself; touching the highlighted
+  tool again, or "Done", closes it. Request is a separate sheet (`data-sheet="request"`)
+  that hides the sections. Esc closes the sheet, except while retouching and except when the focus
+  is on a field.
+- The `#path-editor` canvas sits over the preview (`position: absolute`, 100 % with `!important`) and is
+  visible only with the Configure sheet open and the More section open. Closing the section does not
+  call `editor.close()`.
 
-**Desktop** (≥ 900 px): anteprima a sinistra, poi il foglio, una colonna fissa di 400 px, poi il dock
-sul bordo destro. Il foglio Configura è sempre aperto, con tutte le sezioni; «Fatto» lì non si mostra.
-Esc, sul desktop, lascia solo il foglio Richiedi e torna all'ultima sezione.
+**Desktop** (≥ 900 px): preview on the left, then the sheet, a fixed 400 px column, then the dock
+on the right edge. The Configure sheet is always open, with all the sections; "Done" is not shown there.
+Esc, on desktop, only leaves the Request sheet and goes back to the last section.
 
-Ogni sezione contiene un `.pane[data-pane=…]`; Richiedi è il `.pane[data-pane="request"]`:
+Every section contains a `.pane[data-pane=…]`; Request is the `.pane[data-pane="request"]`:
 
-- **text.** `input name="text"`, valore iniziale «Ciao», grande. Mettere il fuoco sul campo riporta la sorgente al
-  testo.
-- **font.** Schede compatte in una griglia a due colonne, tutte in vista senza scorrimento orizzontale: ognuna mostra il testo del cliente nel
-  font. I TTF si caricano con `FontFace` da `import.meta.env.BASE_URL` + `font.file`. `select
-  name="fontId"` resta nascosto ed è la fonte di verità. Con un'immagine come sorgente lo strumento è
-  attenuato. **v1.1**: miniature 2D per i font a tratto singolo.
-- **size.** Chip S/M/L/XL da `src/ui/sizes.ts` (`.size-chip[data-size=mm]`, `S 80`, `M 120`, `L 180`,
-  `XL 250`) più `input name="heightMm"` con − e + da 10 mm (limiti 40–800). L'altezza è la sommità
-  della «H» per il testo e l'altezza del riquadro per un'immagine (§4bis). Cambiare la misura scala i
-  tracciati già ritoccati (§5bis). **v1.1**: prezzo su ogni taglia; taglie disattivate sotto il minimo.
-- **color.** Nove pallini, `input type="color" name="color"` e `radio name="effect"` fisso/arcobaleno.
-  Il colore scelto aggiorna `--neon` e `--on-neon` (chiaro o scuro in base alla luminanza), usati da
-  «Richiedi», dallo strumento attivo e dai pulsanti primari. **v1.1**: un colore per spezzone.
-- **plate** («Fondale», §13). Materiale: Nessuno / Plexi trasparente / Plexi nero trasparente /
-  Legno, con lo spessore (`radio name="plateMaterial"`: `none`, `clear`, `black`, `wood`). Con un
-  materiale: forma Rettangolare / Pillola / Sagomato attorno ai LED (`radio name="plateShape"`:
-  `rect`, `pill`, `contour`), margine attorno all'insegna 10–60 mm (`input name="plateMarginMm"`) e,
-  per il rettangolo, raggio degli angoli 0–50 mm (`input name="plateCornerRMm"`). Con «Nessuno» gli
-  altri campi sono attenuati e disattivati. Dopo la generazione `#plate-size` mostra le misure della
-  lastra e il numero di fori. Il fondale compare nel riepilogo di Richiedi e nell'ordine (`plate`,
-  §6). Ha la sua voce nella barra degli strumenti, come gli altri: con la barra verticale c'è posto.
-- **image.** Grande area «Carica un'immagine» con `input name="image"`. Il file rende l'immagine la
-  sorgente (`radio` nascosti `name="sourceKind"`). Poi compaiono traccia, soglia, inverti e «Torna al
-  testo» (`#back-to-text`), come in §4bis.
-- **tech** («Parametri tecnici»). Gli stessi parametri del bend test, raggruppati come lì, con
-  un'etichetta in italiano e il nome del parametro: striscia (`STRIP_W`, `STRIP_T`, `HINGE_PITCH`,
-  `HINGE_MAX_DEG`), canale (`CHANNEL_W`, `CHANNEL_DEPTH`, `FLOOR`), fili (`WIRE_SLOT_W`,
-  `WIRE_SLOT_L`, `SLOT_LIP_CHAMFER`), bordi (`EDGE_PROFILE`, `CHAMFER_SIZE`, `CHAMFER_ANGLE`,
+- **text.** `input name="text"`, initial value "Ciao", large. Focusing the field brings the source back to
+  text.
+- **font.** Compact cards in a two-column grid, all in view without horizontal scrolling: each shows the customer's text in the
+  font. The TTFs are loaded with `FontFace` from `import.meta.env.BASE_URL` + `font.file`. `select
+  name="fontId"` stays hidden and is the source of truth. With an image as the source the tool is
+  dimmed. **v1.1**: 2D thumbnails for the single-stroke fonts.
+- **size.** S/M/L/XL chips from `src/ui/sizes.ts` (`.size-chip[data-size=mm]`, `S 80`, `M 120`, `L 180`,
+  `XL 250`) plus `input name="heightMm"` with − and + in 10 mm steps (limits 40–800). The height is the top
+  of the "H" for text and the height of the box for an image (§4bis). Changing the size scales the
+  paths already retouched (§5bis). **v1.1**: price on every size; sizes disabled under the minimum.
+- **color.** Nine swatches, `input type="color" name="color"` and `radio name="effect"` solid/rainbow.
+  The chosen colour updates `--neon` and `--on-neon` (light or dark depending on luminance), used by
+  "Request", by the active tool and by the primary buttons. **v1.1**: one colour per segment.
+- **plate** ("Backdrop", §13). Material: None / Clear acrylic / Black transparent acrylic /
+  Wood, with the thickness (`radio name="plateMaterial"`: `none`, `clear`, `black`, `wood`). With a
+  material: shape Rectangular / Pill / Contoured around the LEDs (`radio name="plateShape"`:
+  `rect`, `pill`, `contour`), margin around the sign 10–60 mm (`input name="plateMarginMm"`) and,
+  for the rectangle, corner radius 0–50 mm (`input name="plateCornerRMm"`). With "None" the
+  other fields are dimmed and disabled. After generation `#plate-size` shows the measurements of the
+  plate and the number of holes. The backdrop appears in the Request summary and in the order (`plate`,
+  §6). It has its own entry in the toolbar, like the others: with the vertical bar there is room.
+- **image.** A large "Upload an image" area with `input name="image"`. The file makes the image the
+  source (hidden `radio`s `name="sourceKind"`). Then trace, threshold, invert and "Back to
+  text" (`#back-to-text`) appear, as in §4bis.
+- **tech** ("Technical parameters"). The same parameters as the bend test, grouped as there, with
+  a label and the name of the parameter: strip (`STRIP_W`, `STRIP_T`, `HINGE_PITCH`,
+  `HINGE_MAX_DEG`), channel (`CHANNEL_W`, `CHANNEL_DEPTH`, `FLOOR`), wires (`WIRE_SLOT_W`,
+  `WIRE_SLOT_L`, `SLOT_LIP_CHAMFER`), edges (`EDGE_PROFILE`, `CHAMFER_SIZE`, `CHAMFER_ANGLE`,
   `LAYER_STEP`).
-  Nella striscia ci sono anche la **tensione** (`select name="tech-STRIP_V"`: 5, 12, 24 V, predefinita
-  5; nell'ordine solo se diversa) e la **densità dei LED** (`select name="tech-LED_PER_M"`): solo 30, 60,
-  74, 96 e 144 LED/m (`LED_DENSITIES` in `techParams.ts`), predefinita 144 (`DEFAULT_LED_DENSITY`).
-  Il profilo della striscia in `config.ts` (160, la COB) non è nella scala e vale solo per admin e
-  debug: la pagina cliente scrive sempre `LED_PER_M` nell'ordine. Cambia il numero e il passo dei
-  LED nell'anteprima, nella BOM e nell'alimentatore; non cambia `CUT_PITCH`. Il puntino e i segni
-  isolati restano a un LED. Campi `input name="tech-<PARAMETRO>"`, tabella e limiti in `src/ui/techParams.ts`.
-  `WALL` resta sulla barra dell'anteprima; `BANK_TRANSITION_L` non serve alla generazione e manca.
-  Nell'ordine vanno solo i valori diversi dal default; un campo vuoto, non numerico o fuori limite
-  resta al default ed è marcato `aria-invalid`. `WIRE_SLOT_W` segue `CHANNEL_W` finché non lo si
-  cambia a mano. «Valori predefiniti» (`#tech-reset`) ripristina tutto. I valori cambiati compaiono
-  nel riepilogo di Richiedi e passano all'editor dei tracciati.
-- **more.** `#edit-paths`, `#restore-paths` e `#path-toolbar`. «Modifica tracciati» apre l'editor
-  §5bis sopra l'anteprima. Cambiare testo, font o immagine scarta le modifiche dopo conferma. Diffusore
-  e cornice stanno sulla barra dell'anteprima, non in questo foglio.
-- **request** (da «Richiedi»). Riepilogo `<dl id="summary">`: il testo del cliente è testo, non HTML;
-  include il fondale (nessuno, oppure materiale, forma e margine).
-  `#blocked-reason` è visibile quando l'invio è bloccato. `#submit-order` «Invia richiesta»,
-  `#download-stl`. **v1.1**: prezzo, alimentatore, fissaggio, bozza di approvazione e modulo (12.7).
+  The strip group also has the **voltage** (`select name="tech-STRIP_V"`: 5, 12, 24 V, default
+  5; in the order only if different) and the **LED density** (`select name="tech-LED_PER_M"`): only 30, 60,
+  74, 96 and 144 LED/m (`LED_DENSITIES` in `techParams.ts`), default 144 (`DEFAULT_LED_DENSITY`).
+  The strip profile in `config.ts` (160, the COB) is not on the scale and applies only to admin and
+  debug: the customer page always writes `LED_PER_M` into the order. It changes the number and pitch of the
+  LEDs in the preview, in the BOM and in the power supply; it does not change `CUT_PITCH`. The dot and the
+  isolated marks stay at one LED. Fields `input name="tech-<PARAMETER>"`, table and limits in `src/ui/techParams.ts`.
+  `WALL` stays on the preview bar; `BANK_TRANSITION_L` is not needed for generation and is absent.
+  Only values different from the default go into the order; an empty, non-numeric or out-of-range field
+  stays at the default and is marked `aria-invalid`. `WIRE_SLOT_W` follows `CHANNEL_W` until it is
+  changed by hand. "Default values" (`#tech-reset`) restores everything. Changed values appear
+  in the Request summary and are passed to the path editor.
+- **more.** `#edit-paths`, `#restore-paths` and `#path-toolbar`. "Edit paths" opens the editor of
+  §5bis over the preview. Changing text, font or image discards the edits after confirmation. Diffuser
+  and frame are on the preview bar, not in this sheet.
+- **request** (from "Request"). Summary `<dl id="summary">`: the customer's text is text, not HTML;
+  it includes the backdrop (none, or material, shape and margin).
+  `#blocked-reason` is visible when sending is blocked. `#submit-order` "Send request",
+  `#download-stl`. **v1.1**: price, power supply, mounting, approval draft and form (12.7).
 
-Ogni cambio aggiorna il 3D quando è pronto (§5). Le scelte restano cambiando strumento. **v1.1**, oltre
-a quanto segnato sopra: prezzo indicativo, sfondi e quote dell'anteprima (12.3), bordo dritto/smussato,
-preventivo (12.8) e il pannello «Info» (12.9). Gli altri parametri di §3 (oltre a quelli dello
-strumento Tecnica) e di §13 restano solo in admin.
+Every change updates the 3D when it is ready (§5). Choices persist when changing tool. **v1.1**, besides
+what is marked above: indicative price, backgrounds and dimensions of the preview (12.3), square/chamfered edge,
+quote (12.8) and the "Info" panel (12.9). The other parameters of §3 (besides those of the
+Tech tool) and of §13 stay in admin only.
 
-### 12.3 Anteprima ambientata
+### 12.3 Preview in a setting
 
-- Sfondi selezionabili (muro chiaro, muro scuro, mattoni, legno, neutro di §5): texture nostre in
-  `public/backgrounds/`, ≤ 300 kB, con versione mobile. Nella pagina di prova vanno bene pattern
-  generati.
-- Quote in cm attivabili, che con un fondale includono la lastra; riferimento di scala opzionale
-  (sagoma neutra di una presa o di una porta).
-- Interruttore accesa/spenta (§5).
+- Selectable backgrounds (light wall, dark wall, bricks, wood, the neutral one of §5): our own textures in
+  `public/backgrounds/`, ≤ 300 kB, with a mobile version. Generated patterns are fine in the
+  test page.
+- Dimensions in cm that can be switched on, which with a backdrop include the plate; optional scale
+  reference (neutral outline of a socket or of a door).
+- On/off switch (§5).
 
-### 12.4 Vincoli comprensibili
+### 12.4 Understandable constraints
 
-Gli avvisi di §5, §4bis e §5bis sono per l'admin. Il cliente vede solo questi, con i testi di
+The warnings of §5, §4bis and §5bis are for the admin. The customer sees only these, with the texts of
 `copy.it.ts`:
 
-| Avviso | Cosa vede il cliente | Blocca la richiesta |
+| Warning | What the customer sees | Blocks the request |
 |---|---|---|
-| altezza minima (curve, fusioni) | «A questa misura le curve sono troppo strette: da X cm in su» + «porta a X cm» | sì |
-| errori dell'editor (§5bis: curve sotto R_MIN, fusioni, spezzoni corti) | marcatore sul tracciato + «correggi o annulla» | sì |
-| fondale oltre il piano del laser (§13) | «Il fondale è più grande del massimo che tagliamo: riduci misura o margine» | sì |
-| carattere senza glifo | «Questo font non ha il carattere "ñ"» | no |
-| immagine a bassa risoluzione | «Immagine poco definita per questa misura: fino a X cm, o caricane una più grande» | no |
-| tratto non uniforme | «Prova la modalità Contorno» + pulsante | no |
-| copertura sotto `COVERAGE_MIN` | «Alcuni tratti restano poco illuminati a questa misura» + altezza consigliata | no |
-| puntino senza striscia | «Il puntino non si accende sotto X cm» | no |
-| spigoli (`CUSP_MODE` `"split"`) | niente | no |
+| minimum height (curves, merges) | "At this size the curves are too tight: from X cm up" + "set to X cm" | yes |
+| editor errors (§5bis: curves under R_MIN, merges, short segments) | marker on the path + "fix or undo" | yes |
+| backdrop beyond the laser bed (§13) | "The backdrop is larger than the maximum we cut: reduce size or margin" | yes |
+| character without a glyph | "This font does not have the character "ñ"" | no |
+| low-resolution image | "Image not sharp enough for this size: up to X cm, or upload a larger one" | no |
+| uneven stroke | "Try the Outline mode" + button | no |
+| coverage under `COVERAGE_MIN` | "Some strokes stay poorly lit at this size" + recommended height | no |
+| dot without strip | "The dot does not light under X cm" | no |
+| cusps (`CUSP_MODE` `"split"`) | nothing | no |
 
-Un vincolo bloccante disattiva «Invia richiesta» e mostra il motivo in `#blocked-reason`; non nasconde il pulsante.
+A blocking constraint disables "Send request" and shows the reason in `#blocked-reason`; it does not hide the button.
 
-### 12.5 Prezzo
+### 12.5 Price
 
-**Com'è oggi (17 novembre 2026).** Il pannello Order mostra il prezzo **voce per voce**, sotto il
-riepilogo, quando il negozio è configurato (§15). `src/order/quote.ts` (`quoteSign`) prende le misure
-dalla distinta e i prezzi dai cataloghi, poi chiama `priceOrder` di `src/pricing.ts`:
+**As it is today (17 November 2026).** The Order panel shows the price **line by line**, under the
+summary, when the shop is configured (§15). `src/order/quote.ts` (`quoteSign`) takes the measurements
+from the bill of materials and the prices from the catalogues, then calls `priceOrder` of `src/pricing.ts`:
 
-| Voce | Da dove viene |
+| Line | Where it comes from |
 |---|---|
-| Controller | `priceEur` del controller scelto (§2) |
-| LED strip · n m | somma dei `cutLengthMm` più il 20 % di sfrido, per `eurPerM` della striscia |
-| 3D printing | 7 € fino a 70 cm di larghezza, 14 € oltre |
-| Assembly · n min | 1 € al minuto: i minuti di tagli e ponticelli del riepilogo |
-| Power supply, Box | media della fascia di prezzo del modello scelto, dalla pagina parts |
-| Backdrop | laser 15 € più il materiale; assente senza fondale |
-| Margin 15 % | sul totale delle voci sopra |
-| Rounding, Minimum order | arrotondamento per eccesso ai 5 €, minimo 25 € |
+| Controller | `priceEur` of the chosen controller (§2) |
+| LED strip · n m | sum of the `cutLengthMm` plus 20 % waste, times the `eurPerM` of the strip |
+| 3D printing | €7 up to 70 cm of width, €14 beyond |
+| Assembly · n min | €1 per minute: the minutes of cuts and jumpers in the summary |
+| Power supply, Box | average of the price range of the chosen model, from the parts page |
+| Backdrop | laser €15 plus the material; absent without a backdrop |
+| Margin 15 % | on the total of the lines above |
+| Rounding, Minimum order | rounding up to €5, minimum €25 |
 
-Le voci a zero non compaiono. Chiudono l'elenco il totale IVA esclusa e, a parte, la spedizione
-stimata (20 €). La somma delle voci è il totale. Le stesse righe partono con «Send request», con il
-prefisso «Price · », e arrivano al negozio insieme al riepilogo.
+Lines at zero do not appear. The list closes with the total excluding VAT and, separately, the estimated
+shipping (€20). The sum of the lines is the total. The same rows leave with "Send request", with the
+prefix "Price · ", and reach the shop together with the summary.
 
-Una striscia senza `eurPerM` (non ancora rilevato) ha la voce «to be quoted» e il totale si chiama
-«Total without the strip»: non si mostra un totale che sembra completo e non lo è. Hanno un prezzo
-la WS2812B 144 LED/m da 10 mm, quella standard (20 €/m), la WS2812B 60 LED/m da 10 mm (5,20 €/m)
-e la COB da 5 mm (5,14 €/m).
+A strip without `eurPerM` (not yet surveyed) has the line "to be quoted" and the total is called
+"Total without the strip": a total that looks complete and is not is never shown. The strips with a price
+are the 10 mm WS2812B 144 LED/m, the standard one (€20/m), the 10 mm WS2812B 60 LED/m (€5.20/m)
+and the 5 mm COB (€5.14/m).
 
-Quanto segue è il disegno originale, in parte superato: le formule su grammi e scaglioni non sono
-quelle in uso.
+What follows is the original design, partly superseded: the formulas on grams and tiers are not
+the ones in use.
 
-Si calcola **dal 2D**, senza aspettare il solido, in `src/pricing.ts` (modulo puro, testato). Vale
-uguale con o senza `paths`.
+It is computed **from the 2D**, without waiting for the solid, in `src/pricing.ts` (pure module, tested). It is
+the same with or without `paths`.
 
 ```
-volumeMm3   = area(outline) · (FLOOR + CHANNEL_DEPTH) − area(canale) · CHANNEL_DEPTH
-grammi      = volumeMm3 / 1000 · PLA_DENSITY · INFILL_FACTOR      (+ diffusore se scelto)
-striscia    = Σ cutLengthMm / 1000                                 (m)
-fondale     = area(plateOutline) / 1e6 · EUR_PER_M2[material]
-            + perimetro(tagli del fondale) / 1000 · EUR_PER_M_LASER  (0 senza fondale)
-prezzo      = BASE
-            + striscia · EUR_PER_M_STRIP
-            + grammi   · EUR_PER_G_PRINT
+volumeMm3   = area(outline) · (FLOOR + CHANNEL_DEPTH) − area(channel) · CHANNEL_DEPTH
+grams       = volumeMm3 / 1000 · PLA_DENSITY · INFILL_FACTOR      (+ diffuser if chosen)
+strip       = Σ cutLengthMm / 1000                                 (m)
+backdrop    = area(plateOutline) / 1e6 · EUR_PER_M2[material]
+            + perimeter(backdrop cuts) / 1000 · EUR_PER_M_LASER    (0 without a backdrop)
+price       = BASE
+            + strip · EUR_PER_M_STRIP
+            + grams · EUR_PER_G_PRINT
             + assembly.segments     · EUR_PER_SEGMENT
             + assembly.solderJoints · EUR_PER_JOINT
-            + alimentatore(supplyA)                                 (tabella a scaglioni)
-            + fondale
-            + opzioni
-prezzoCliente = max(PRICE_MIN, arrotonda_su(prezzo · MARGIN, 5 €))
+            + powerSupply(supplyA)                                  (tiered table)
+            + backdrop
+            + options
+customerPrice = max(PRICE_MIN, round_up(price · MARGIN, €5))
 ```
 
-`priceOrder` riceve la scelta del diffusore e le misure del 2D (aree, somma dei `cutLengthMm`,
-`assembly`, `supplyA`, spessori, area e perimetro dei tagli del fondale): non aspetta le mesh. Il
-volume del diffusore, se `customer.diffuser` è vero, è `area(outline) · DIFFUSER_T` (pezzo pieno,
-senza `INFILL_FACTOR`). `supplyA` 0 non aggiunge l'alimentatore; altrimenti vale il primo scaglione
-con `maxA` ≥ `supplyA`. Effetto e bozza restano a 0: gli effetti sono di serie (§12.1).
-`arrotonda_su` è l'eccesso al multiplo di 5 €. Un volume negativo si tratta come 0.
+`priceOrder` receives the diffuser choice and the 2D measurements (areas, sum of the `cutLengthMm`,
+`assembly`, `supplyA`, thicknesses, area and perimeter of the backdrop cuts): it does not wait for the meshes. The
+volume of the diffuser, if `customer.diffuser` is true, is `area(outline) · DIFFUSER_T` (solid part,
+without `INFILL_FACTOR`). `supplyA` 0 does not add the power supply; otherwise the first tier
+with `maxA` ≥ `supplyA` applies. Effect and draft stay at 0: effects are standard (§12.1).
+`round_up` is the next multiple of €5. A negative volume is treated as 0.
 
-- Costanti con `PRICING_VERSION` (es. `"2026-11"`), valori **segnaposto** finché non fissati (§10).
-- Prezzo **indicativo**, IVA inclusa, spedizione a parte, confermato con la bozza.
-- Ogni taglia dello strumento Misura mostrerà il proprio prezzo (v1.1): il worker calcola il 2D delle
-  altre altezze in sequenza, dopo quella selezionata. La pagina cliente non mostra ancora il prezzo.
-- In admin: scomposizione voce per voce.
-- Stesso ordine + stessa `PRICING_VERSION` → stesso prezzo (test).
+- Constants with `PRICING_VERSION` (e.g. `"2026-11"`), **placeholder** values until fixed (§10).
+- **Indicative** price, VAT included, shipping separate, confirmed with the draft.
+- Every size of the Size tool will show its own price (v1.1): the worker computes the 2D of the
+  other heights in sequence, after the selected one. The customer page does not show the price yet.
+- In admin: line-by-line breakdown.
+- Same order + same `PRICING_VERSION` → same price (test).
 
-### 12.6 Condivisione
+### 12.6 Sharing
 
-- «Salva o condividi» produce `index.html#o=<base64url(JSON dell'ordine)>`; aprendolo, la pagina
-  ricostruisce l'insegna. L'hash non arriva al server. Con `navigator.share` si usa il foglio nativo.
-- Un ordine con immagine o `paths` può essere grande: se il link supera **8 kB**, non si offre il
-  link ma **«Scarica il design (.json)»** e «Carica un design».
-- Il link e il file contengono solo l'ordine (§6), mai contatti.
-- All'apertura: migrazione (§6), campi sconosciuti ignorati (anche i contatti), valori fuori limite
-  riportati al limite con avviso, mai un'eccezione. Limiti: altezza 40–800 mm, `WALL` 1,6–5 mm (§1),
-  soglia bitmap 0–255 (§4bis), colore `#rrggbb` altrimenti il default dell'esempio (`#ff2fd6`),
-  `plate.marginMm` e `plate.cornerRMm` nei limiti di §13. `effect`, `mount`, `plug`, `trace` o
-  `sizePreset` sconosciuti tornano al default; `plate.shape` o `plate.material` sconosciuti danno
-  `plate: null`. `generatorVersion` diversa da quella corrente → avviso, senza blocco. Gli 8 kB sono
-  la lunghezza UTF-8 di `#o=` più il base64url, senza padding.
+- "Save or share" produces `index.html#o=<base64url(order JSON)>`; when opened, the page
+  rebuilds the sign. The hash does not reach the server. With `navigator.share` the native sheet is used.
+- An order with an image or `paths` can be large: if the link exceeds **8 kB**, the link is not
+  offered, but **"Download the design (.json)"** and "Upload a design" are.
+- The link and the file contain only the order (§6), never contact details.
+- On opening: migration (§6), unknown fields ignored (contact details too), out-of-range values
+  clamped to the limit with a warning, never an exception. Limits: height 40–800 mm, `WALL` 1.6–5 mm (§1),
+  bitmap threshold 0–255 (§4bis), colour `#rrggbb` otherwise the default of the example (`#ff2fd6`),
+  `plate.marginMm` and `plate.cornerRMm` within the limits of §13. Unknown `effect`, `mount`, `plug`, `trace` or
+  `sizePreset` fall back to the default; unknown `plate.shape` or `plate.material` give
+  `plate: null`. `generatorVersion` different from the current one → warning, without blocking. The 8 kB are
+  the UTF-8 length of `#o=` plus the base64url, without padding.
 
-### 12.7 Richiesta
+### 12.7 Request
 
-**Com'è oggi (17 novembre 2026).** «Send request» manda a `POST /api/design` quattro cose, nessuna
-personale: l'ordine, il riepilogo (righe di testo), la **stima** e una **foto**. Risponde un codice, e
-il cliente passa al carrello del negozio (§15), dove inserisce i suoi dati.
+**As it is today (17 November 2026).** "Send request" sends four things to `POST /api/design`, none
+personal: the order, the summary (text rows), the **estimate** and a **photo**. A code is returned, and
+the customer moves to the shop cart (§15), where they enter their details.
 
-- **Stima** (`quote`): le voci del pannello Order (§12.5), ognuna con `id`, etichetta, dettaglio
-  (modello del controller, striscia e metri, alimentatore, scatola, tagli e minuti) e importo; poi
-  totale IVA esclusa, spedizione stimata, `pricingVersion` e `complete` (falso se una voce è senza
-  prezzo). **La calcola il browser del cliente**: è una stima, il negozio la mostra come tale e non
-  la usa per far pagare. Chi rivede l'ordine riapre il design e il configuratore ricalcola.
-- **Foto** (`image`): `scene.snapshot()`, un JPEG 1000 × 750 in vista standard: di fronte, accesa,
-  con il diffusore, senza i tagli per il piatto di stampa. Non dipende da come il cliente ha girato
-  o spento l'anteprima.
-- **Controlli sul server** (`src/api/designStore.ts`): la stima si ricopia campo per campo (al più 20
-  voci, importi fra 0 e 100 000 €, testi corti); la foto deve essere un data URL JPEG, base64
-  valido, entro 400 kB, e cominciare come un JPEG. Se una delle due è presente ma non valida la
-  richiesta è rifiutata (`bad_quote`, `bad_image`) e nel KV non resta niente. Tutte e due sono
-  facoltative.
-- **Dove stanno**: la stima dentro `design:<codice>`, la foto a parte in `image:<codice>`, con la
-  stessa scadenza di 180 giorni.
-- **Come le legge il negozio**: `GET /api/design/<codice>` aggiunge `quote` e `imageUrl`;
-  `GET /api/design/<codice>/image` dà i byte, sempre `image/jpeg` con `nosniff`. Il plugin
-  WordPress ne tiene una copia nell'ordine, perché qui la foto scade.
+- **Estimate** (`quote`): the lines of the Order panel (§12.5), each with `id`, label, detail
+  (controller model, strip and metres, power supply, box, cuts and minutes) and amount; then
+  total excluding VAT, estimated shipping, `pricingVersion` and `complete` (false if a line has no
+  price). **It is computed by the customer's browser**: it is an estimate, the shop shows it as such and does not
+  use it to charge. Whoever reviews the order reopens the design and the configurator recomputes.
+- **Photo** (`image`): `scene.snapshot()`, a 1000 × 750 JPEG in the standard view: from the front, lit,
+  with the diffuser, without the cuts for the print bed. It does not depend on how the customer rotated
+  or switched off the preview.
+- **Server checks** (`src/api/designStore.ts`): the estimate is copied field by field (at most 20
+  lines, amounts between €0 and €100,000, short texts); the photo must be a JPEG data URL, valid
+  base64, within 400 kB, and start like a JPEG. If either is present but not valid the
+  request is rejected (`bad_quote`, `bad_image`) and nothing is left in the KV. Both are
+  optional.
+- **Where they live**: the estimate inside `design:<code>`, the photo separately in `image:<code>`, with the
+  same 180-day expiry.
+- **How the shop reads them**: `GET /api/design/<code>` adds `quote` and `imageUrl`;
+  `GET /api/design/<code>/image` gives the bytes, always `image/jpeg` with `nosniff`. The WordPress
+  plugin keeps a copy in the order, because here the photo expires.
 
-Quanto segue è il disegno originale (modulo e `mailto:`), superato dal negozio.
+What follows is the original design (form and `mailto:`), superseded by the shop.
 
-Nessun pagamento (§9): il foglio Richiedi invia una **richiesta**.
+No payment (§9): the Request sheet sends a **request**.
 
-- Campi: nome, email, telefono (facoltativo), CAP e città, data entro cui serve (facoltativa), note,
-  consenso privacy (obbligatorio); con un'immagine, la casella sui diritti d'uso (§10).
-- Invio v1: `mailto:` con oggetto «Richiesta insegna — <testo o nome file>», riepilogo, prezzo
-  indicativo, `PRICING_VERSION` e il link 12.6 (o l'invito ad allegare il `.json`).
-- Pagina di conferma con «cosa succede adesso»; tempi da `copy.it.ts`.
-- L'invio senza client di posta passa all'integrazione WooCommerce (§11).
+- Fields: name, email, phone (optional), postcode and city, date by which it is needed (optional), notes,
+  privacy consent (mandatory); with an image, the checkbox on usage rights (§10).
+- Sending in v1: `mailto:` with subject "Richiesta insegna — <text or file name>", summary, indicative
+  price, `PRICING_VERSION` and the 12.6 link (or the invitation to attach the `.json`).
+- Confirmation page with "what happens now"; times from `copy.it.ts`.
+- Sending without a mail client moves to the WooCommerce integration (§11).
 
-### 12.8 Preventivo su misura
+### 12.8 Custom quote
 
-Per ciò che la pipeline non chiude (più righe, alfabeti non latini, misure fuori taglia, immagini che
-restano bloccate dopo l'editor): stesso modulo con descrizione, misura approssimativa e budget a
-scaglioni; il file si allega alla mail.
+For what the pipeline does not close (multiple lines, scripts not covered, sizes out of range, images that
+stay blocked after the editor): the same form with description, approximate size and budget in
+tiers; the file is attached to the mail.
 
-### 12.9 Contenuti informativi
+### 12.9 Informative content
 
-Non stanno sotto il configuratore (12.2: una schermata): si aprono dal pulsante «Info» in un pannello
-sovrapposto, chiudibile con Esc o con «Torna all'insegna», senza perdere lo stato. In quest'ordine:
+It does not sit under the configurator (12.2: one screen): it opens from the "Info" button in an overlaid
+panel, closable with Esc or with "Back to the sign", without losing the state. In this order:
 
-1. **Come funziona**: crea, ricevi la bozza, ricevi l'insegna.
-2. **Cosa c'è nella scatola**: esploso cornice / striscia / diffusore / fondale / alimentatore /
-   fissaggi, generato dalla scena three.js.
-3. **Prima e dopo**: slider anteprima / foto reale, solo con foto nostre (`public/gallery/`).
-4. **FAQ**: sicurezza (5 V, niente vetro, niente calore), consumi, montaggio, pulizia, effetti,
-   garanzia, tempi e spedizione, immagini e diritti, modifiche dopo l'ordine.
+1. **How it works**: create, receive the draft, receive the sign.
+2. **What is in the box**: exploded view frame / strip / diffuser / backdrop / power supply /
+   fixings, generated from the three.js scene.
+3. **Before and after**: slider preview / real photo, only with our own photos (`public/gallery/`).
+4. **FAQ**: safety (5 V, no glass, no heat), consumption, mounting, cleaning, effects,
+   warranty, times and shipping, images and rights, changes after the order.
 
-### 12.9bis Scaricare l'STL
+### 12.9bis Downloading the STL
 
-La pagina cliente (`index.html`) scarica gli STL come in §5 (Anteprima), con `CUSTOMER_STL_DOWNLOAD`.
-Con un fondale (§13) scarica anche `<nome>-<altezza>mm-fondale.stl` (la lastra, nella stessa
-posizione dell'housing) e `<nome>-<altezza>mm-fondale.svg` (il file di taglio laser). BOM, DXF e SVG
-dell'housing restano in admin.
+The customer page (`index.html`) downloads the STLs as in §5 (Preview), with `CUSTOMER_STL_DOWNLOAD`.
+With a backdrop (§13) it also downloads `<name>-<height>mm-backdrop.stl` (the plate, in the same
+position as the housing) and `<name>-<height>mm-backdrop.svg` (the laser cutting file). BOM, DXF and SVG
+of the housing stay in admin.
 
-### 12.10 Test
+### 12.10 Tests
 
-- Unit: prezzo deterministico e monotono in altezza; ordine → hash → ordine identico; v1, v2 e v3
-  migrati a v4 con gli stessi STL e la BOM di prima più `"plate": null`; hash malformato → avviso,
-  nessuna eccezione; ordine oltre 8 kB → niente link, scaricamento `.json`.
-- Smoke (Playwright): la pagina si apre su «Ciao» a 390×844 e a 1280×800 e non scorre
-  (`scrollWidth` / `scrollHeight` ≤ finestra) né in orizzontale né in verticale; su desktop tutte
-  le sezioni sono aperte e visibili; ogni strumento della barra apre la sua sezione e la porta in
-  vista, anche dopo che è stata chiusa; Richiedi mostra un solo `.pane`; la taglia L porta
-  `heightMm` a 180 e il riepilogo mostra «18 cm»; su mobile «Fatto» chiude il foglio; con un fondale
-  il download dà quattro file. **v1.1**: prezzo (anche del fondale), taglia sotto il minimo
-  disattivata con motivo, link che ricostruisce testo, font, altezza e fondale, «Info» che si apre e
-  si chiude con Esc. Paper.js non si scarica finché l'editor non si apre.
+- Unit: price deterministic and monotonic in height; order → hash → identical order; v1, v2 and v3
+  migrated to v4 with the same STLs and the previous BOM plus `"plate": null`; malformed hash → warning,
+  no exception; order over 8 kB → no link, `.json` download.
+- Smoke (Playwright): the page opens on "Ciao" at 390×844 and at 1280×800 and does not scroll
+  (`scrollWidth` / `scrollHeight` ≤ window) either horizontally or vertically; on desktop all
+  the sections are open and visible; every tool of the bar opens its section and brings it into
+  view, even after it has been closed; Request shows a single `.pane`; size L sets
+  `heightMm` to 180 and the summary shows "18 cm"; on mobile "Done" closes the sheet; with a backdrop
+  the download gives four files. **v1.1**: price (of the backdrop too), size under the minimum
+  disabled with a reason, link that rebuilds text, font, height and backdrop, "Info" that opens and
+  closes with Esc. Paper.js is not downloaded until the editor is opened.
 
-## 13. Fondale (lastra laser)
+## 13. Backdrop (laser-cut plate)
 
-Il fondale è opzionale e visibile nell'anteprima con materiale, spessore e fori reali.
-Anteprima ed export derivano dagli stessi poligoni (mm), in `src/geometry/plate.ts` (`buildPlate`):
-nessuna geometria solo-visiva. `generate` restituisce `plate` (contorno, fori, misure, scelta) e
-`plateMesh`; senza fondale sono `null`.
+The backdrop is optional and visible in the preview with real material, thickness and holes.
+Preview and export derive from the same polygons (mm), in `src/geometry/plate.ts` (`buildPlate`):
+no visual-only geometry. `generate` returns `plate` (outline, holes, measurements, choice) and
+`plateMesh`; without a backdrop they are `null`.
 
-### Parametri (`src/config.ts`)
+### Parameters (`src/config.ts`)
 
-| Parametro | Default | Significato |
+| Parameter | Default | Meaning |
 |---|---|---|
-| `PLATE_MARGIN` | 20 | margine fra outline dell'insegna e bordo della lastra (cliente: 10–60 mm) |
-| `PLATE_CORNER_R` | 8 | raggio degli angoli per `rect` (0–50 mm) |
-| `PLATE_MAX_W` / `_H` | `null` | piano utile del laser. `null` non blocca; con un numero, oltre è vincolo bloccante (§12.4) |
-| `PLATE_FIX_HOLE_D` | 3.4 | fori di fissaggio allineati agli ancoraggi (dipende dal fissaggio, §10) |
-| `PLATE_MOUNT_HOLE_D` | 5.0 | fori di montaggio a parete |
-| `PLATE_MOUNT_INSET` | 10 | distanza dei fori di montaggio dal bordo |
-| `PLATE_MOUNT_CLEARANCE` | 3 | aria minima fra un foro di montaggio e la sagoma dell'insegna |
-| `PLATE_WIRE_HOLES` | true | fori passanti per asole e cavo («Passaggi dei fili») |
-| `PLATE_WIRE_HOLE_D` | 6 | diametro dei passaggi dei fili sotto asole e tasche d'angolo |
-| `PLATE_T` | 3 / 3 / 4 | spessore per materiale (`clear` / `black` / `wood`) |
-| `PLATE_KERF` | `null` | kerf per materiale; `null` (DA TARARE) vale 0 |
+| `PLATE_MARGIN` | 20 | margin between the outline of the sign and the edge of the plate (customer: 10–60 mm) |
+| `PLATE_CORNER_R` | 8 | corner radius for `rect` (0–50 mm) |
+| `PLATE_MAX_W` / `_H` | `null` | usable bed of the laser. `null` does not block; with a number, beyond it is a blocking constraint (§12.4) |
+| `PLATE_FIX_HOLE_D` | 3.4 | fixing holes aligned with the anchors (depends on the fixing, §10) |
+| `PLATE_MOUNT_HOLE_D` | 5.0 | wall mounting holes |
+| `PLATE_MOUNT_INSET` | 10 | distance of the mounting holes from the edge |
+| `PLATE_MOUNT_CLEARANCE` | 3 | minimum air between a mounting hole and the outline of the sign |
+| `PLATE_WIRE_HOLES` | true | through holes for slots and cable ("Wire passages") |
+| `PLATE_WIRE_HOLE_D` | 6 | diameter of the wire passages under slots and corner pockets |
+| `PLATE_T` | 3 / 3 / 4 | thickness per material (`clear` / `black` / `wood`) |
+| `PLATE_KERF` | `null` | kerf per material; `null` (TO BE CALIBRATED) counts as 0 |
 
-### Forme (`manifold-3d` CrossSection, giunzioni arrotondate)
+### Shapes (`manifold-3d` CrossSection, rounded joins)
 
-- `rect` «Rettangolare»: il rettangolo che contiene la sagoma dell'housing più il margine, angoli
-  raggiati di `cornerRMm` (dall'ordine; di default `PLATE_CORNER_R`).
-- `pill` «Pillola»: come `rect` con raggio = metà del lato corto.
-- `contour` «Sagomato attorno ai LED»: offset della sagoma del margine; i buchi interni (l'occhiello
-  della «o») si riempiono. Se le lettere restano in più pezzi, una chiusura morfologica (offset in
-  più e poi in meno, raggi 10–160 mm) le unisce; se non basta, si usa l'inviluppo convesso con un
-  avviso.
+- `rect` "Rectangular": the rectangle that contains the outline of the housing plus the margin, corners
+  rounded by `cornerRMm` (from the order; by default `PLATE_CORNER_R`).
+- `pill` "Pill": like `rect` with radius = half the short side.
+- `contour` "Contoured around the LEDs": offset of the outline by the margin; inner holes (the counter
+  of the "o") are filled. If the letters stay in several pieces, a morphological closing (offset
+  out and then in, radii 10–160 mm) joins them; if that is not enough, the convex hull is used with a
+  warning.
 
-### Materiali (scelti dal cliente)
+### Materials (chosen by the customer)
 
-| id | Etichetta | `PLATE_T` | Anteprima |
+| id | Label | `PLATE_T` | Preview |
 |---|---|---|---|
-| `clear` | Plexi trasparente | 3 | acrilico chiaro e lucido, molto trasparente: si vedono fori e fili dietro |
-| `black` | Plexi nero trasparente | 3 | grigio fumé lucido semitrasparente, che sul grigio dell'anteprima si legge come nero |
-| `wood` | Legno | 4 | marrone opaco |
+| `clear` | Clear acrylic | 3 | light, glossy acrylic, very transparent: holes and wires show behind |
+| `black` | Black transparent acrylic | 3 | glossy semi-transparent smoke grey, which reads as black on the grey of the preview |
+| `wood` | Wood | 4 | matt brown |
 
-Spessori segnaposto: vanno sostituiti con quelli dei materiali acquistati (§10). I materiali stanno
-in `src/viewer/scene.ts` (`MeshStandardMaterial`). La lastra sta fra Z = −spessore e Z = 0, cioè
-subito dietro il retro dell'housing: l'STL della lastra e quello dell'housing si allineano senza
-spostamenti. L'inquadratura dell'anteprima comprende la lastra. La lastra sta davanti al muro e ne
-coprirebbe il bagliore del neon: lo riceve lei, dalla stessa texture del muro (`emissiveMap`, con le
-coordinate del piano XY), più intenso sul legno opaco e smorzato sul plexi lucido. Con un fondale la
-luce della stanza nelle viste accese è tre volte quella senza fondale, altrimenti la lastra
-sparirebbe nel nero.
+Placeholder thicknesses: they must be replaced with those of the purchased materials (§10). The materials live
+in `src/viewer/scene.ts` (`MeshStandardMaterial`). The plate sits between Z = −thickness and Z = 0, that is
+right behind the back of the housing: the STL of the plate and that of the housing line up without
+shifts. The framing of the preview includes the plate. The plate sits in front of the wall and would
+cover the glow of the neon on it: the plate receives it instead, from the same texture as the wall (`emissiveMap`, with the
+coordinates of the XY plane), stronger on matt wood and damped on glossy acrylic. With a backdrop the
+room light in the lit views is three times that without a backdrop, otherwise the plate
+would disappear into black.
 
-### Fori
+### Holes
 
-Tutti passanti:
+All through holes:
 
-- fissaggio sotto ogni ancoraggio dell'housing, Ø `PLATE_FIX_HOLE_D`;
-- cavo principale, Ø `CABLE_HOLE_D`;
-- passaggi dei fili (sotto);
-- solo per `rect` e `pill`: quattro fori di montaggio a parete negli angoli, Ø `PLATE_MOUNT_HOLE_D`
-  a `PLATE_MOUNT_INSET` dal bordo. Un foro che finirebbe a meno di `PLATE_MOUNT_CLEARANCE` dalla
-  sagoma dell'insegna si toglie, con un avviso che suggerisce di aumentare il margine.
+- fixing under every anchor of the housing, Ø `PLATE_FIX_HOLE_D`;
+- main cable, Ø `CABLE_HOLE_D`;
+- wire passages (below);
+- only for `rect` and `pill`: four wall mounting holes in the corners, Ø `PLATE_MOUNT_HOLE_D`
+  at `PLATE_MOUNT_INSET` from the edge. A hole that would end up less than `PLATE_MOUNT_CLEARANCE` from the
+  outline of the sign is removed, with a warning that suggests increasing the margin.
 
-Compensazione `PLATE_KERF`: il contorno si allarga di kerf/2 e i fori si restringono di kerf/2, così
-le misure finali sono quelle nominali.
+`PLATE_KERF` compensation: the outline grows by kerf/2 and the holes shrink by kerf/2, so
+the final measurements are the nominal ones.
 
-### Passaggi dei fili
+### Wire passages
 
-I fili che escono dall'insegna attraversano il fondale se `PLATE_WIRE_HOLES` è vero (default `true`).
-**Dal 18 novembre 2026 il fondale riporta gli stessi fori dell'housing**, nello stesso punto e dello
-stesso diametro: quelli grandi dei capi (`WIRE_HOLE_D`), quelli piccoli lungo il percorso
-(`PATH_HOLE_D`; si spengono da soli con `PLATE_PATH_HOLES` falso) e quelli dei puntini
-(`DOT_WIRE_HOLE_D`). Dove il cavo passa dal foro grande del primo capo il fondale ha un foro solo,
-largo quanto il più grande dei due. Nessun foro si sovrappone a un altro. Vale per ogni fondale
-pieno, cioè oggi per tutti. Con le asole di prima (`WIRE_HOLE_D` 0) resta
-un foro Ø `PLATE_WIRE_HOLE_D` sotto ogni asola e tasca d'angolo. `false` lascia il fondale chiuso in quei punti (resta il foro del
-cavo). Non cambia cornice né diffusore. Resta una domanda aperta (§10) finché non si misura sul
-campione.
+The wires that leave the sign go through the backdrop if `PLATE_WIRE_HOLES` is true (default `true`).
+**Since 18 November 2026 the backdrop carries the same holes as the housing**, at the same point and with the
+same diameter: the large ones at the ends (`WIRE_HOLE_D`), the small ones along the path
+(`PATH_HOLE_D`; they switch off on their own with `PLATE_PATH_HOLES` false) and those of the dots
+(`DOT_WIRE_HOLE_D`). Where the cable goes through the large hole of the first end the backdrop has a single hole,
+as wide as the larger of the two. No hole overlaps another. This holds for every solid
+backdrop, that is for all of them today. With the old slots (`WIRE_HOLE_D` 0) there is still
+a Ø `PLATE_WIRE_HOLE_D` hole under every slot and corner pocket. `false` leaves the backdrop closed at those points (the cable
+hole stays). It changes neither frame nor diffuser. It stays an open question (§10) until it is measured on the
+sample.
 
 ### Export
 
-`fondale.svg` (`src/export/plate.ts`), in mm (`width`/`height` in mm, `viewBox` in mm), **visto dal
-retro come `back.dxf`**, così i due file si sovrappongono. Blu (`#0000ff`) = fori, da tagliare per
-primi; rosso (`#ff0000`) = contorno, per ultimo. Materiale, spessore e misure stanno in `<title>` e
-`<desc>`. `fondale.stl` è la lastra in 3D, per l'assemblaggio. **Da fare**: `plate.dxf` e il testo
-«RETRO» su un layer di incisione (verde); l'incisione va messa dove c'è sempre lastra.
-Nella BOM `plate` = `{ shape, material, widthMm, heightMm, areaMm2, cutLengthMm, thicknessMm,
-fixHoles, mountHoles, wireHoles }`, `null` senza fondale.
+`backdrop.svg` (`src/export/plate.ts`), in mm (`width`/`height` in mm, `viewBox` in mm), **seen from the
+back like `back.dxf`**, so the two files overlay. Blue (`#0000ff`) = holes, to be cut
+first; red (`#ff0000`) = outline, last. Material, thickness and measurements are in `<title>` and
+`<desc>`. `backdrop.stl` is the plate in 3D, for assembly. **To do**: `plate.dxf` and the text
+"BACK" on an engraving layer (green); the engraving must go where there is always plate.
+In the BOM `plate` = `{ shape, material, widthMm, heightMm, areaMm2, cutLengthMm, thicknessMm,
+fixHoles, mountHoles, wireHoles }`, `null` without a backdrop.
 
-### Test
+### Tests
 
-`test/plate.test.ts`: misure del rettangolo e spessore; un buco nella lastra per ogni foro; pillola
-con raggio pari a metà del lato corto; sagomato in un pezzo solo e più piccolo del rettangolo; fori
-di montaggio tolti con margine stretto; niente passaggi dei fili con `PLATE_WIRE_HOLES` falso; SVG in
-mm specchiato; BOM del fondale; il generatore produce il fondale solo se l'ordine lo chiede; il
-fondale passa per il link condiviso. Smoke: con il fondale il download dà quattro file.
+`test/plate.test.ts`: measurements of the rectangle and thickness; a hole in the plate for every hole; pill
+with radius equal to half the short side; contoured in a single piece and smaller than the rectangle; mounting
+holes removed with a narrow margin; no wire passages with `PLATE_WIRE_HOLES` false; mirrored SVG in
+mm; backdrop BOM; the generator produces the backdrop only if the order asks for it; the
+backdrop survives the shared link. Smoke: with the backdrop the download gives four files.
 
-## 14. Contatore di download e richieste
+## 14. Download and request counter
 
-Quante volte è stato premuto «Download STL» e quante è partita una richiesta. Serve a chi gestisce il
-sito e, sopra una soglia, si mostra ai clienti nel pannello Order.
+How many times "Download STL" was pressed and how many times a request was sent. It serves whoever runs the
+site and, above a threshold, is shown to customers in the Order panel.
 
-- **Dati**: database D1 collegato a Pages con il nome `STATS`, tabella `events(id, type, ts)`
-  (`migrations/0001_events.sql`). `type` vale `stl` o `request`, `ts` è l'ora ISO. Nessun IP, nessun
-  cookie, nessun dato personale: il conteggio è anonimo.
-- **Binding opzionale**, come `DESIGNS`: senza `STATS` non si conta niente e tutto il resto funziona.
-- **`POST /api/event`**, corpo `{ "type": "stl" }`: lo manda la pagina a ogni click su «Download STL»
-  (`navigator.sendBeacon`, un evento per click anche con lo zip a più parti). Accetta solo `stl` e solo
-  se l'host di `Origin` (o, se manca, di `Referer`) è quello della richiesta: nessun dominio nel codice,
-  quindi vale su pages.dev, sulle anteprime e nei fork. Risposte: 204, 403 origine diversa, 400 tipo
-  non valido.
-- **Richieste**: le conta `POST /api/design` quando il design è salvato (201), dopo la risposta. Un
-  errore del contatore non cambia e non rallenta la risposta al cliente. Conta i passaggi al carrello,
-  non gli ordini conclusi: quelli stanno nel negozio.
-- **`GET /api/stats`**: `{ "downloads": n, "requests": n }`, in cache 5 minuti. Senza database risponde
-  200 con i due valori `null` (non 404, che lascerebbe un errore nella console del browser).
-- **Pagina cliente**: alla prima apertura del pannello Order chiede i totali e mostra una riga piccola
-  sotto i pulsanti, per esempio «123 downloads · 12 requests so far». Le etichette dei pulsanti non
-  cambiano. Ogni totale compare solo da `STATS_MIN_SHOWN` (`src/config.ts`, 10) in su; se nessuno ci
-  arriva, o se l'endpoint non risponde, la riga non compare e non lascia spazio vuoto.
-- **In locale** (`vite`, `vite preview`) le Functions non girano: `vite.config.ts` risponde a
-  `/api/stats` e `/api/event` come un sito senza database.
-- Le chiamate sono relative alla pagina, mai a un indirizzo assoluto: un fork conta i suoi click nel
-  suo database, non in quello di un altro sito.
+- **Data**: a D1 database bound to Pages with the name `STATS`, table `events(id, type, ts)`
+  (`migrations/0001_events.sql`). `type` is `stl` or `request`, `ts` is the ISO time. No IP, no
+  cookie, no personal data: the count is anonymous.
+- **Optional binding**, like `DESIGNS`: without `STATS` nothing is counted and everything else works.
+- **`POST /api/event`**, body `{ "type": "stl" }`: the page sends it on every click on "Download STL"
+  (`navigator.sendBeacon`, one event per click even with the multi-part zip). It accepts only `stl` and only
+  if the host of `Origin` (or, if missing, of `Referer`) is that of the request: no domain in the code,
+  so it works on pages.dev, on previews and in forks. Responses: 204, 403 different origin, 400 invalid
+  type.
+- **Requests**: `POST /api/design` counts them when the design is saved (201), after the response. An
+  error of the counter neither changes nor slows the response to the customer. It counts moves to the cart,
+  not completed orders: those are in the shop.
+- **`GET /api/stats`**: `{ "downloads": n, "requests": n }`, cached for 5 minutes. Without a database it answers
+  200 with both values `null` (not 404, which would leave an error in the browser console).
+- **Customer page**: on the first opening of the Order panel it asks for the totals and shows a small line
+  under the buttons, for example "123 downloads · 12 requests so far". The labels of the buttons do not
+  change. Each total appears only from `STATS_MIN_SHOWN` (`src/config.ts`, 10) up; if none gets
+  there, or if the endpoint does not answer, the line does not appear and leaves no empty space.
+- **Locally** (`vite`, `vite preview`) the Functions do not run: `vite.config.ts` answers
+  `/api/stats` and `/api/event` like a site without a database.
+- The calls are relative to the page, never to an absolute address: a fork counts its clicks in
+  its own database, not in that of another site.
 
-## 15. Negozio configurabile
+## 15. Configurable shop
 
-Il negozio a cui porta «Send request» non è scritto nel codice. Arriva da due variabili di build:
-`VITE_SHOP_URL` (indirizzo del negozio WooCommerce) e `VITE_SHOP_PRODUCT_ID` (prodotto generico a cui
-il negozio aggancia il design). `src/config.ts` le legge in `SHOP`; `shopCartUrl(codice)` costruisce
-`<negozio>/?add-to-cart=<prodotto>&design=<codice>`.
+The shop that "Send request" leads to is not written in the code. It comes from two build variables:
+`VITE_SHOP_URL` (address of the WooCommerce shop) and `VITE_SHOP_PRODUCT_ID` (generic product to which
+the shop attaches the design). `src/config.ts` reads them into `SHOP`; `shopCartUrl(code)` builds
+`<shop>/?add-to-cart=<product>&design=<code>`.
 
-- **Dove si impostano**: su Cloudflare Pages in Settings → Variables and secrets, per Production e
-  Preview (si leggono al build: dopo una modifica serve un nuovo deploy); in locale in `.env.local`
-  (modello in `.env.example`).
-- **Senza le variabili**, o con valori non validi, `SHOP` è `null`: «Send request» e la nota sui dati
-  di contatto non compaiono, resta «Download STL». Un fork non manda i suoi clienti nel negozio di un
-  altro.
-- **`npm run check`** compila con `--mode check` e legge `.env.check`: un negozio finto
-  (`shop.example.test`), così i test non dipendono da un negozio vero.
+- **Where they are set**: on Cloudflare Pages in Settings → Variables and secrets, for Production and
+  Preview (they are read at build time: after a change a new deploy is needed); locally in `.env.local`
+  (template in `.env.example`).
+- **Without the variables**, or with invalid values, `SHOP` is `null`: "Send request" and the note about contact
+  details do not appear, "Download STL" stays. A fork does not send its customers to someone
+  else's shop.
+- **`npm run check`** builds with `--mode check` and reads `.env.check`: a fake shop
+  (`shop.example.test`), so the tests do not depend on a real shop.
 
-## 16. Invito a sostenere il progetto
+## 16. Invitation to support the project
 
-Chi scarica l'STL e si stampa l'insegna non compra niente: la pagina gli propone di offrire un caffè.
-L'indirizzo della pagina delle offerte (Ko-fi, Buy Me a Coffee o simili) non è scritto nel codice:
-arriva dalla variabile di build `VITE_SUPPORT_URL`, letta in `SUPPORT_URL` da `src/config.ts`, e si
-imposta come le variabili del negozio (§15).
+Whoever downloads the STL and prints the sign buys nothing: the page suggests offering a coffee.
+The address of the donation page (Ko-fi, Buy Me a Coffee or similar) is not written in the code:
+it comes from the build variable `VITE_SUPPORT_URL`, read into `SUPPORT_URL` by `src/config.ts`, and is
+set like the shop variables (§15).
 
-- **Dove compare**: una riga sotto il nome, dopo il link a GitHub («☕ Offer me a coffee»), e una
-  nel pannello Order sotto «Download STL» e la riga dei totali («Printing it yourself? Offer me a
-  coffee: espresso, doppio or corretto.»).
-- **Solo link**: si aprono in una nuova scheda. Nessuno script né widget di terzi nella pagina,
-  quindi nessun cookie in più e nessun dato del visitatore passa da qui.
-- **I tre tagli** (espresso, doppio, corretto) sono nominati nel testo e si scelgono sulla pagina
-  delle offerte: non contiamo su link che preimpostano l'importo.
-- **Senza la variabile**, o con un valore che non è un indirizzo http(s), `SUPPORT_URL` è `null` e
-  le due righe non compaiono. Un fork non raccoglie offerte per qualcun altro.
-- **Repository**: il pulsante Sponsor di GitHub è a parte, in `.github/FUNDING.yml`.
-- **`npm run check`** usa una pagina finta (`support.example.test`) da `.env.check`.
-
+- **Where it appears**: one line under the name, after the GitHub link ("☕ Offer me a coffee"), and one
+  in the Order panel under "Download STL" and the line of totals ("Printing it yourself? Offer me a
+  coffee: espresso, doppio or corretto.").
+- **Links only**: they open in a new tab. No third-party script or widget in the page,
+  so no extra cookie and no visitor data goes through here.
+- **The three sizes** (espresso, doppio, corretto) are named in the text and are chosen on the donation
+  page: we do not rely on links that preset the amount.
+- **Without the variable**, or with a value that is not an http(s) address, `SUPPORT_URL` is `null` and
+  the two lines do not appear. A fork does not collect donations for someone else.
+- **Repository**: the GitHub Sponsor button is separate, in `.github/FUNDING.yml`.
+- **`npm run check`** uses a fake page (`support.example.test`) from `.env.check`.
