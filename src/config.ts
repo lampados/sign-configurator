@@ -447,6 +447,13 @@ export interface Params {
    * tocca il piede delle pareti: il pezzo resta intero. 0: l'asola rettangolare di prima.
    */
   WIRE_HOLE_D: number;
+  /**
+   * Fori piccoli lungo tutto il percorso, sul fondo del canale: diametro, mm. Dove la striscia si
+   * taglia in una curva, i fili passano dal foro più vicino. 0: nessuno.
+   */
+  PATH_HOLE_D: number;
+  /** Passo dei fori lungo il percorso, mm: si distribuiscono a distanze uguali, vicine a questa. */
+  PATH_HOLE_PITCH: number;
   CABLE_HOLE_D: number;
   CROSSING_GAP: number;
   DIFFUSER_T: number;
@@ -508,7 +515,9 @@ export const DEFAULT_PARAMS: Readonly<Params> = Object.freeze({
   WIRE_SLOT_W: DEFAULT_STRIP.CHANNEL_W,
   WIRE_SLOT_L: 6.0,
   SLOT_LIP_CHAMFER: 1.0,
-  WIRE_HOLE_D: 4.0,
+  WIRE_HOLE_D: 8.0,
+  PATH_HOLE_D: 4.0,
+  PATH_HOLE_PITCH: 12.0,
   CABLE_HOLE_D: 6.0,
   CROSSING_GAP: 3.0,
   DIFFUSER_T: 1.2,

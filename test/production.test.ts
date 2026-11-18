@@ -58,7 +58,7 @@ async function diskHits(polys: readonly (readonly [number, number][])[], x: numb
 }
 
 describe('geometria di produzione', () => {
-  it('dritto da 100 mm: genus 2, volume stabile, STL identico, ancoraggi fuori dalle asole', async () => {
+  it('dritto da 100 mm: un foro passante per capo più quelli del percorso, volume stabile, STL identico, ancoraggi fuori dai fori', async () => {
     const wasm = await getManifold();
     const path = straight(100);
     const build = () => buildHousing(wasm, { paths: [path], crossings: [], unlit: [], params: BENDABLE });
@@ -66,8 +66,10 @@ describe('geometria di produzione', () => {
     const b = build();
     try {
       expect(a.solid.status()).toBe('NoError');
-      expect(a.solid.genus()).toBe(2);
-      expect(b.solid.genus()).toBe(2);
+      // Il genus conta i fori passanti: i due dei capi (il cavo passa dal primo) e quelli piccoli.
+      expect(a.holes.pathHoles.length).toBeGreaterThan(0);
+      expect(a.solid.genus()).toBe(2 + a.holes.pathHoles.length);
+      expect(b.solid.genus()).toBe(a.solid.genus());
       expect(a.solid.volume()).toBeCloseTo(b.solid.volume(), 6);
       expect(a.solid.volume()).toBeGreaterThan(1000);
       const bytes = (mesh: ReturnType<typeof a.solid.getMesh>) => new Uint8Array(meshToStl(mesh));

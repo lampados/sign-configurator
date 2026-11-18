@@ -13,6 +13,7 @@ import {
   placeAnchorHoles,
   cableHoleSolid,
   lipChamferSolid,
+  wireHoleCenter,
   wireHoleD,
   wireHoleSection,
   wireSlotCuts,
@@ -23,6 +24,8 @@ import {
 
 const RIBBON_HALF = 0.05;
 const ROUND_SEGMENTS = 32;
+/** Fondo che resta fra un foro del percorso e qualsiasi altro foro, mm. */
+const PATH_HOLE_GAP_MM = 1.5;
 /** Segmenti per giro degli offset di chiusura e apertura: archi da poco più di 1 mm. */
 const SMOOTH_SEGMENTS = 16;
 
@@ -75,6 +78,8 @@ export interface HousingModel {
     wireSlots: HousingSlot[];
     cornerPockets: HousingPocket[];
     dotWires: { segmentId: number; x: number; y: number; d: number }[];
+    /** Fori piccoli lungo il percorso (`PATH_HOLE_D`), sul fondo del canale. */
+    pathHoles: { segmentId: number; x: number; y: number; d: number }[];
   };
   outline: [number, number][][];
   warnings: string[];
@@ -526,6 +531,49 @@ export function buildHousing(wasm: ManifoldToplevel, request: HousingRequest): H
 
     const first = request.paths.find((path) => path.id === firstId && path.points.length > 0);
     if (first) cableAt = first.points[0] ?? null;
+    // Se il primo spezzone comincia con un foro grande almeno quanto quello del cavo, il cavo
+    // passa di lì: un secondo foro accanto farebbe solo un'asola a forma di otto.
+    const firstEnd = freeSlots.find((slot) => slot.segmentId === firstId && slot.role === 'DIN');
+    if (cableAt && firstEnd && wireHoleD(p) >= p.CABLE_HOLE_D) cableAt = wireHoleCenter(firstEnd.end, p.WIRE_SLOT_L);
+
+    // Fori piccoli lungo tutto il percorso. Vengono dopo gli altri e gli lasciano il posto: non
+    // stanno addosso ai fori grandi dei capi, agli ancoraggi, al cavo, agli incroci, né fra loro.
+    const pathHoles: { segmentId: number; x: number; y: number; d: number }[] = [];
+    const pathD = p.PATH_HOLE_D > 0 && p.PATH_HOLE_PITCH > 0 ? Math.min(p.PATH_HOLE_D, p.CHANNEL_W) : 0;
+    if (pathD > 0) {
+      const endD = wireHoleD(p);
+      const keepOut: { x: number; y: number; r: number }[] = [];
+      for (const slot of freeSlots) {
+        const [x, y] = endD > 0 ? wireHoleCenter(slot.end, p.WIRE_SLOT_L) : slot.end.at;
+        keepOut.push({ x, y, r: (endD > 0 ? endD : p.CHANNEL_W) / 2 });
+      }
+      for (const joint of joints) keepOut.push({ x: joint.x, y: joint.y, r: (endD > 0 ? endD : p.CHANNEL_W) / 2 });
+      const anchorD = p.ANCHOR_BOSS ? Math.max(p.ANCHOR_BOSS_D, p.ANCHOR_HOLE_D) : p.ANCHOR_HOLE_D;
+      for (const hole of anchors) keepOut.push({ x: hole.x, y: hole.y, r: anchorD / 2 });
+      for (const hole of dotWires) keepOut.push({ x: hole.x, y: hole.y, r: p.DOT_WIRE_HOLE_D / 2 });
+      if (cableAt && p.CABLE_HOLE_D > 0) keepOut.push({ x: cableAt[0], y: cableAt[1], r: p.CABLE_HOLE_D / 2 });
+      for (const crossing of request.crossings) keepOut.push({ x: crossing[0], y: crossing[1], r: p.CHANNEL_W / 2 });
+      const free = (x: number, y: number): boolean =>
+        keepOut.every((zone) => Math.hypot(x - zone.x, y - zone.y) >= zone.r + pathD / 2 + PATH_HOLE_GAP_MM);
+      for (let i = 0; i < request.paths.length; i++) {
+        const path = request.paths[i]!;
+        const line = silhouette[i];
+        if (!line || line.length < 2 || path.dot) continue;
+        const length = lengthOf(line);
+        // Un percorso aperto comincia e finisce con il foro grande: i piccoli stanno in mezzo.
+        const margin = path.closed ? 0 : p.WIRE_SLOT_L;
+        const usable = length - 2 * margin;
+        const count = path.closed ? Math.round(length / p.PATH_HOLE_PITCH) : Math.floor(usable / p.PATH_HOLE_PITCH);
+        if (count < 1 || usable <= 0) continue;
+        const step = usable / count;
+        for (let k = 0; k < count; k++) {
+          const [x, y] = pointAlong(line, margin + step * (path.closed ? k : k + 0.5));
+          if (!free(x, y)) continue;
+          pathHoles.push({ segmentId: path.id, x, y, d: pathD });
+          keepOut.push({ x, y, r: pathD / 2 });
+        }
+      }
+    }
 
     const outlinePolys = contoursOf(outline);
     const height = totalHeight(p);
@@ -542,7 +590,8 @@ export function buildHousing(wasm: ManifoldToplevel, request: HousingRequest): H
     const slotCuts = wireSlotCuts(wasm, channel, freeSlots.map((slot) => slot.end), wide).map((cut) => keep(cut));
     const cable = cableAt && p.CABLE_HOLE_D > 0 ? keep(cableHoleSolid(wasm, cableAt, p)) : null;
     const dotCuts = dotWires.map((hole) => keep(floorHole(wasm, [hole.x, hole.y], p.DOT_WIRE_HOLE_D, p.FLOOR)));
-    const cuts = [pocket, ...anchorCuts, ...slotCuts, ...pocketCuts, ...dotCuts, ...(cable ? [cable] : [])];
+    const pathCuts = pathHoles.map((hole) => keep(floorHole(wasm, [hole.x, hole.y], hole.d, p.FLOOR)));
+    const cuts = [pocket, ...anchorCuts, ...slotCuts, ...pocketCuts, ...dotCuts, ...pathCuts, ...(cable ? [cable] : [])];
     let solid = body;
     if (cuts.length === 1) solid = Manifold.difference([body, cuts[0]!]);
     else if (cuts.length > 1) {
@@ -574,6 +623,7 @@ export function buildHousing(wasm: ManifoldToplevel, request: HousingRequest): H
         wireSlots: slots,
         cornerPockets,
         dotWires: dotWires.map((hole) => ({ ...hole, d: p.DOT_WIRE_HOLE_D })),
+        pathHoles,
       },
       outline: outlinePolys,
       warnings,

@@ -28,6 +28,7 @@ function twoBlocks(): Pick<HousingModel, 'outline' | 'holes'> {
       wireSlots: [{ segmentId: 1, role: 'DIN', points: [[35, 8], [39, 8], [39, 12], [35, 12]] }],
       cornerPockets: [],
       dotWires: [],
+    pathHoles: [],
     },
   };
 }

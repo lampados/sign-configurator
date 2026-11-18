@@ -99,7 +99,7 @@ describe('housing', () => {
     const wasm = await getManifold();
     const built = buildHousing(wasm, { paths: [line(80, 1)], crossings: [], unlit: [], params: P });
     try {
-      expect(P.WIRE_HOLE_D).toBe(4);
+      expect(P.WIRE_HOLE_D).toBe(8);
       expect(built.solid.status()).toBe('NoError');
       expect(built.holes.wireSlots.map((s) => s.role)).toEqual(['DIN', 'DOUT']);
       const floorZ = P.FLOOR / 2;
@@ -124,9 +124,55 @@ describe('housing', () => {
       expect(Math.max(...ys) - Math.min(...ys)).toBeCloseTo(P.WIRE_HOLE_D, 1);
       expect((Math.max(...xs) + Math.min(...xs)) / 2).toBeCloseTo(cx, 1);
       expect(built.solid.decompose()).toHaveLength(1);
+      // Il cavo passa dal foro grande del primo capo: non ce n'è un secondo accanto.
+      expect(built.holes.cable).toMatchObject({ x: P.WIRE_SLOT_L / 2, y: 0 });
     } finally {
       built.solid.delete();
       built.diffuser.delete();
+    }
+  });
+
+  it('fori piccoli lungo tutto il percorso, a passo regolare, lontani dagli altri fori', async () => {
+    const wasm = await getManifold();
+    const built = buildHousing(wasm, { paths: [line(200, 1)], crossings: [], unlit: [], params: P });
+    try {
+      expect([P.PATH_HOLE_D, P.PATH_HOLE_PITCH]).toEqual([4, 12]);
+      const holes = built.holes.pathHoles;
+      expect(holes.length).toBeGreaterThan(8);
+      for (const hole of holes) {
+        expect(hole.d).toBe(4);
+        expect(hole.y).toBeCloseTo(0, 6);
+      }
+      // Passo regolare: le distanze fra fori vicini sono multipli dello stesso passo (dove un
+      // ancoraggio ha preso il posto di un foro, il salto è doppio).
+      const xs = holes.map((hole) => hole.x).sort((a, b) => a - b);
+      const step = Math.min(...xs.slice(1).map((x, i) => x - xs[i]!));
+      expect(step).toBeGreaterThan(11);
+      expect(step).toBeLessThan(13);
+      for (let i = 1; i < xs.length; i++) expect(((xs[i]! - xs[i - 1]!) / step) % 1).toBeCloseTo(0, 6);
+      // Fra un foro piccolo e qualsiasi altro foro resta almeno 1,5 mm di fondo.
+      const others = [
+        ...built.holes.anchors.map((hole) => ({ x: hole.x, r: P.ANCHOR_HOLE_D / 2 })),
+        { x: P.WIRE_SLOT_L / 2, r: P.WIRE_HOLE_D / 2 },
+        { x: 200 - P.WIRE_SLOT_L / 2, r: P.WIRE_HOLE_D / 2 },
+      ];
+      for (const hole of holes) for (const other of others) expect(Math.abs(hole.x - other.x) - other.r - 2).toBeGreaterThanOrEqual(1.5 - 1e-6);
+      // Sono passanti, e fra due fori il fondo c'è.
+      const floorZ = P.FLOOR / 2;
+      expect(await sliceArea(built.solid, floorZ, [xs[2]!, 0])).toBeLessThan(1e-6);
+      expect(await sliceArea(built.solid, floorZ, [xs[2]! + step / 2, 0])).toBeGreaterThan(0.01);
+      expect(built.solid.status()).toBe('NoError');
+      expect(built.solid.decompose()).toHaveLength(1);
+    } finally {
+      built.solid.delete();
+      built.diffuser.delete();
+    }
+    const none = buildHousing(wasm, { paths: [line(200, 1)], crossings: [], unlit: [], params: { ...P, PATH_HOLE_D: 0 } });
+    try {
+      expect(none.holes.pathHoles).toEqual([]);
+    } finally {
+      none.solid.delete();
+      none.diffuser.delete();
     }
   });
 
@@ -145,9 +191,9 @@ describe('housing', () => {
     }
   });
 
-  it('WIRE_HOLE_D 0: asole passanti come prima, ancoraggio cieco, cavo e diffusore', async () => {
+  it('WIRE_HOLE_D 0 e PATH_HOLE_D 0: asole passanti come prima, ancoraggio cieco, cavo e diffusore', async () => {
     const wasm = await getManifold();
-    const built = buildHousing(wasm, { paths: [line(80, 1)], crossings: [], unlit: [], params: { ...P, WIRE_HOLE_D: 0 } });
+    const built = buildHousing(wasm, { paths: [line(80, 1)], crossings: [], unlit: [], params: { ...P, WIRE_HOLE_D: 0, PATH_HOLE_D: 0 } });
     try {
       expect(built.solid.status()).toBe('NoError');
       expect(built.diffuser.status()).toBe('NoError');

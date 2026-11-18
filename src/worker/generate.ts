@@ -41,6 +41,8 @@ export interface GenerateResult {
   holes: { anchors: HousingHole[]; cable: HousingHole | null };
   slots: HousingSlot[];
   pockets: HousingPocket[];
+  /** Fori piccoli lungo il percorso, sul fondo del canale. */
+  pathHoles: { segmentId: number; x: number; y: number; d: number }[];
   outline: [number, number][][];
   centerlines: Centerline[];
   /** LED lungo la linea centrale, DIN → DOUT. Il passo è LED_PER_M. */
@@ -300,6 +302,7 @@ export async function generateSign(order: AnyOrder, read?: FontBytesReader): Pro
       holes: { anchors: housing.holes.anchors, cable: housing.holes.cable },
       slots: housing.holes.wireSlots,
       pockets: housing.holes.cornerPockets,
+      pathHoles: housing.holes.pathHoles,
       outline: housing.outline,
       centerlines: strip.chains.map((chain) => ({
         id: chain.id,
