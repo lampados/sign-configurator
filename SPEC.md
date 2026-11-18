@@ -105,6 +105,7 @@ ricalcola `MIN_LETTER_H` da cerniera e passo.
 | `WIRE_SLOT_W` | 10.4 | larghezza asola fili, di default = `CHANNEL_W`: tutta l'estremità del canale |
 | `WIRE_SLOT_L` | 6.0 | ultimi mm dello spezzone occupati dall'asola, a filo della terminazione arrotondata |
 | `SLOT_LIP_CHAMFER` | 1.0 | smusso a 45° sul labbro interno dell'asola, lato spezzone |
+| `WIRE_HOLE_D` | 4.0 | foro tondo per i fili a ogni capo di spezzone, al posto dell'asola; al più largo quanto il canale. 0: l'asola |
 | `CORNER_MERGE_DIST` | 4.0 | sotto questa distanza due asole DIN/DOUT diventano una tasca d'angolo |
 | `CABLE_HOLE_D` | 6.0 | ingresso del cavo principale |
 | `CROSSING_GAP` | 3.0 | interruzione della striscia per lato a un incrocio |
@@ -518,7 +519,8 @@ la vista su quel punto.
 ### Fori
 
 - **Ancoraggio**: sulla linea centrale, sotto la striscia, ciechi dal retro. Distribuiti ogni `ANCHOR_SPACING`, almeno `ANCHOR_MIN_PER_SEGMENT` per spezzone, lontani dall'asola, dalla tasca d'angolo, dagli incroci e dagli altri fori (≥ 10 mm). Se una stazione interseca uno di questi ostacoli, il foro si sposta lungo la linea centrale verso il punto valido più vicino: non si elimina. Se nello spezzone ne restano meno del minimo, c'è un avviso con la posizione.
-- **Fili**: asola passante attraverso il fondo, a inizio e fine di ogni spezzone. Occupa gli ultimi `WIRE_SLOT_L` dello spezzone stesso, a filo della terminazione arrotondata: larga quanto il canale (`WIRE_SLOT_W` = `CHANNEL_W` per default) e con la stessa forma del fondo. Non c'è prolungamento oltre la sagoma. La parte illuminata finisce dove inizia l'asola (il labbro) e lì la striscia scende verso il retro. Sullo spigolo interno del labbro, lato spezzone, c'è uno smusso di `SLOT_LIP_CHAMFER` a 45°.
+- **Fili, com'è oggi (18 novembre 2026)**: un **foro tondo** passante di diametro `WIRE_HOLE_D` a inizio e fine di ogni spezzone, centrato a metà degli ultimi `WIRE_SLOT_L` (il tratto senza striscia, fra il labbro e l'estremità). È il disco ritagliato sul canale, mai più largo del canale: il fondo resta tutto attorno e sotto le pareti, quindi il pezzo esce **intero**. Un giunto d'angolo ha un solo foro, nel vertice. Dal foro passano i fili, non la striscia: non c'è più lo smusso sul labbro. `test/onePiece.test.ts` controlla che i solidi dell'housing siano tanti quante le parti volute dell'insegna (il puntino della *i* è una parte a sé). L'asola che segue resta disponibile con `WIRE_HOLE_D` 0: larga quanto il canale, dove i canali si fondono toglieva il fondo sotto un pezzo di parete e lo lasciava staccato da tutto.
+- **Fili, l'asola (`WIRE_HOLE_D` 0)**: asola passante attraverso il fondo, a inizio e fine di ogni spezzone. Occupa gli ultimi `WIRE_SLOT_L` dello spezzone stesso, a filo della terminazione arrotondata: larga quanto il canale (`WIRE_SLOT_W` = `CHANNEL_W` per default) e con la stessa forma del fondo. Non c'è prolungamento oltre la sagoma. La parte illuminata finisce dove inizia l'asola (il labbro) e lì la striscia scende verso il retro. Sullo spigolo interno del labbro, lato spezzone, c'è uno smusso di `SLOT_LIP_CHAMFER` a 45°.
 - **Tasca d'angolo**: quando due asole, l'uscita di uno spezzone e l'ingresso del successivo, si sovrappongono o distano meno di `CORNER_MERGE_DIST`, al loro posto c'è una sola tasca passante, intersezione con il canale (mai oltre), con lo smusso del labbro su entrambi i lati da cui entra la striscia.
 - **Cavo**: all'inizio del primo spezzone.
 

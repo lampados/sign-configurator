@@ -441,6 +441,12 @@ export interface Params {
   WIRE_SLOT_L: number;
   /** Smusso a 45° sul labbro interno dell'asola, lato spezzone, dove la striscia scende */
   SLOT_LIP_CHAMFER: number;
+  /**
+   * Foro tondo per i fili a ogni estremità di spezzone, al posto dell'asola: diametro, mm. Sta
+   * dentro il canale (al più largo quanto il canale), a metà degli ultimi `WIRE_SLOT_L`, e non
+   * tocca il piede delle pareti: il pezzo resta intero. 0: l'asola rettangolare di prima.
+   */
+  WIRE_HOLE_D: number;
   CABLE_HOLE_D: number;
   CROSSING_GAP: number;
   DIFFUSER_T: number;
@@ -502,6 +508,7 @@ export const DEFAULT_PARAMS: Readonly<Params> = Object.freeze({
   WIRE_SLOT_W: DEFAULT_STRIP.CHANNEL_W,
   WIRE_SLOT_L: 6.0,
   SLOT_LIP_CHAMFER: 1.0,
+  WIRE_HOLE_D: 4.0,
   CABLE_HOLE_D: 6.0,
   CROSSING_GAP: 3.0,
   DIFFUSER_T: 1.2,

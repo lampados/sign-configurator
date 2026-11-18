@@ -17,6 +17,7 @@ export type TechNumericKey =
   | 'WIRE_SLOT_W'
   | 'WIRE_SLOT_L'
   | 'SLOT_LIP_CHAMFER'
+  | 'WIRE_HOLE_D'
   | 'CHAMFER_SIZE'
   | 'CHAMFER_ANGLE'
   | 'LAYER_STEP'
@@ -62,6 +63,7 @@ export const TECH_GROUPS: readonly TechGroup[] = [
     id: 'wires',
     title: 'Wires',
     fields: [
+      { key: 'WIRE_HOLE_D', label: 'Wire hole', unit: 'mm', min: 0, max: 25, step: 0.1 },
       { key: 'WIRE_SLOT_W', label: 'Slot width', unit: 'mm', min: 0.5, max: 25, step: 0.1 },
       { key: 'WIRE_SLOT_L', label: 'Slot length', unit: 'mm', min: 0.5, max: 30, step: 0.1 },
       { key: 'SLOT_LIP_CHAMFER', label: 'Lip chamfer', unit: 'mm', min: 0, max: 10, step: 0.1 },

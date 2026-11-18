@@ -13,6 +13,8 @@ import {
   placeAnchorHoles,
   cableHoleSolid,
   lipChamferSolid,
+  wireHoleD,
+  wireHoleSection,
   wireSlotCuts,
   wireSlotSection,
   type AnchorHole,
@@ -355,6 +357,9 @@ function openingOccupies(wasm: ManifoldToplevel, openings: readonly Vec2[][]): {
 
 function pocketSection(wasm: ManifoldToplevel, channel: CrossSection, joint: CornerJoint, p: Params): CrossSection {
   const { CrossSection } = wasm;
+  // Con i fori tondi il giunto d'angolo ne ha uno solo, nel vertice: i due capi si saldano lì.
+  const holeD = wireHoleD(p);
+  if (holeD > 0) return wireHoleSection(wasm, channel, [joint.x, joint.y], holeD);
   const wide = { ...p, WIRE_SLOT_W: p.CHANNEL_W };
   const sections = joint.ends.map((end) =>
     wireSlotSection(wasm, channel, { at: end.at, outward: end.outward }, wide),

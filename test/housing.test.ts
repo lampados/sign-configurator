@@ -95,9 +95,59 @@ describe('fori spostati', () => {
 });
 
 describe('housing', () => {
-  it('dritto: manifold, asole passanti, ancoraggio cieco, cavo e diffusore', async () => {
+  it('dritto: un foro tondo per i fili a ogni capo, dentro il canale, e il fondo resta attorno', async () => {
     const wasm = await getManifold();
     const built = buildHousing(wasm, { paths: [line(80, 1)], crossings: [], unlit: [], params: P });
+    try {
+      expect(P.WIRE_HOLE_D).toBe(4);
+      expect(built.solid.status()).toBe('NoError');
+      expect(built.holes.wireSlots.map((s) => s.role)).toEqual(['DIN', 'DOUT']);
+      const floorZ = P.FLOOR / 2;
+      const voidAt = async (c: Vec2) => (await sliceArea(built.solid, floorZ, c)) < 1e-6;
+      const solidAt = async (c: Vec2) => (await sliceArea(built.solid, floorZ, c)) > 0.01;
+      // Capo DOUT, in x = 80: il foro sta a metà degli ultimi WIRE_SLOT_L, cioè in x = 77.
+      const cx = 80 - P.WIRE_SLOT_L / 2;
+      const r = P.WIRE_HOLE_D / 2;
+      expect(await voidAt([cx, 0])).toBe(true);
+      expect(await voidAt([cx + r - 0.3, 0])).toBe(true);
+      expect(await voidAt([cx, r - 0.3])).toBe(true);
+      // Attorno al foro il fondo c'è: verso la striscia, verso la testa del canale, ai lati.
+      expect(await solidAt([cx - r - 0.4, 0])).toBe(true);
+      expect(await solidAt([cx + r + 0.4, 0])).toBe(true);
+      expect(await solidAt([cx, r + 0.4])).toBe(true);
+      expect(await solidAt([cx, -(r + 0.4)])).toBe(true);
+      // Il contorno del foro per DXF e fondale è un cerchio di quel diametro, centrato lì.
+      const dout = built.holes.wireSlots.find((slot) => slot.role === 'DOUT')!;
+      const xs = dout.points.map((q) => q[0]);
+      const ys = dout.points.map((q) => q[1]);
+      expect(Math.max(...xs) - Math.min(...xs)).toBeCloseTo(P.WIRE_HOLE_D, 1);
+      expect(Math.max(...ys) - Math.min(...ys)).toBeCloseTo(P.WIRE_HOLE_D, 1);
+      expect((Math.max(...xs) + Math.min(...xs)) / 2).toBeCloseTo(cx, 1);
+      expect(built.solid.decompose()).toHaveLength(1);
+    } finally {
+      built.solid.delete();
+      built.diffuser.delete();
+    }
+  });
+
+  it('il foro non è mai più largo del canale', async () => {
+    const wasm = await getManifold();
+    const narrow = { ...P, CHANNEL_W: 3, WIRE_SLOT_W: 3, WIRE_HOLE_D: 8 };
+    const built = buildHousing(wasm, { paths: [line(80, 1)], crossings: [], unlit: [], params: narrow });
+    try {
+      const dout = built.holes.wireSlots.find((slot) => slot.role === 'DOUT')!;
+      const ys = dout.points.map((q) => q[1]);
+      expect(Math.max(...ys) - Math.min(...ys)).toBeLessThanOrEqual(3 + 1e-6);
+      expect(built.solid.decompose()).toHaveLength(1);
+    } finally {
+      built.solid.delete();
+      built.diffuser.delete();
+    }
+  });
+
+  it('WIRE_HOLE_D 0: asole passanti come prima, ancoraggio cieco, cavo e diffusore', async () => {
+    const wasm = await getManifold();
+    const built = buildHousing(wasm, { paths: [line(80, 1)], crossings: [], unlit: [], params: { ...P, WIRE_HOLE_D: 0 } });
     try {
       expect(built.solid.status()).toBe('NoError');
       expect(built.diffuser.status()).toBe('NoError');

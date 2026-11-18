@@ -1,7 +1,8 @@
 // Fori di ancoraggio, fili e cavo (SPEC §5 "Fori").
-// L'asola occupa gli ultimi WIRE_SLOT_L dello spezzone e la terminazione arrotondata:
-// il labbro è WIRE_SLOT_L indietro dall'estremità. Stessa forma del fondo, passante.
-// Il labbro, lato spezzone, ha uno smusso a 45°.
+// I fili escono da un foro tondo (WIRE_HOLE_D) a ogni estremità di spezzone, a metà degli ultimi
+// WIRE_SLOT_L: sta dentro il canale, quindi il fondo resta sotto le pareti e il pezzo è intero.
+// Con WIRE_HOLE_D 0 torna l'asola di prima: occupa gli ultimi WIRE_SLOT_L dello spezzone e la
+// terminazione arrotondata, stessa forma del fondo, passante, con uno smusso a 45° sul labbro.
 import type { CrossSection, Manifold, ManifoldToplevel, Mat4, Vec2 } from 'manifold-3d';
 import type { Params } from '../config';
 import { HOLE_CLEARANCE_MM, anchorStations } from '../export/bom';
@@ -9,7 +10,28 @@ import { HOLE_CLEARANCE_MM, anchorStations } from '../export/bom';
 export type WireSlotParams = Pick<
   Params,
   'CHANNEL_W' | 'WIRE_SLOT_W' | 'WIRE_SLOT_L' | 'FLOOR' | 'SLOT_LIP_CHAMFER'
->;
+> & { WIRE_HOLE_D?: number };
+
+const WIRE_HOLE_SEGMENTS = 32;
+
+/** Diametro del foro tondo per i fili: 0 se si usa l'asola. Mai più largo del canale. */
+export function wireHoleD(p: { WIRE_HOLE_D?: number; CHANNEL_W: number }): number {
+  const d = p.WIRE_HOLE_D ?? 0;
+  return d > 0 ? Math.min(d, p.CHANNEL_W) : 0;
+}
+
+/** Centro del foro per i fili: a metà del tratto senza striscia, fra il labbro e l'estremità. */
+export function wireHoleCenter(end: SlotEnd, slotL: number): Vec2 {
+  return add(end.at, scale(end.outward, -Math.max(slotL, 0) / 2));
+}
+
+/** Disco di diametro `d` in `at`, ritagliato sul canale. */
+export function wireHoleSection(wasm: ManifoldToplevel, channel: CrossSection, at: Vec2, d: number): CrossSection {
+  const disk = wasm.CrossSection.circle(d / 2, WIRE_HOLE_SEGMENTS).translate(at);
+  const hole = channel.intersect(disk);
+  disk.delete();
+  return hole;
+}
 
 /** Estremità di uno spezzone. `outward` è unitario e punta verso la parete di testa. */
 export interface SlotEnd {
@@ -50,9 +72,11 @@ export function wireSlotSection(
   wasm: ManifoldToplevel,
   channel: CrossSection,
   end: SlotEnd,
-  p: Pick<WireSlotParams, 'CHANNEL_W' | 'WIRE_SLOT_W' | 'WIRE_SLOT_L'>,
+  p: Pick<WireSlotParams, 'CHANNEL_W' | 'WIRE_SLOT_W' | 'WIRE_SLOT_L' | 'WIRE_HOLE_D'>,
 ): CrossSection {
   const { CrossSection } = wasm;
+  const holeD = wireHoleD(p);
+  if (holeD > 0) return wireHoleSection(wasm, channel, wireHoleCenter(end, p.WIRE_SLOT_L), holeD);
   const lip = slotLip(end, p.WIRE_SLOT_L);
   const reach = p.WIRE_SLOT_L + p.CHANNEL_W;
   const gate = new CrossSection([endWindow(lip, end.outward, reach, p.CHANNEL_W)], 'NonZero');
@@ -75,6 +99,8 @@ export function wireSlotSection(
  * superiore del fondo: il foro passante in pianta resta il contorno dell'asola.
  */
 export function lipChamferSolid(wasm: ManifoldToplevel, end: SlotEnd, p: WireSlotParams): Manifold | null {
+  // Con il foro tondo la striscia non scende dal fondo: non c'è un labbro da smussare.
+  if (wireHoleD(p) > 0) return null;
   const size = Math.min(Math.max(p.SLOT_LIP_CHAMFER, 0), p.FLOOR);
   if (size < 1e-6) return null;
   const { CrossSection } = wasm;
