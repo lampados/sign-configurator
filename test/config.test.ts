@@ -16,25 +16,25 @@ import {
 } from '../src/config';
 
 describe('config', () => {
-  it('R_MIN ≈ 14,6 mm con cerniere da 10 mm a 40°, come la COB', () => {
+  it('R_MIN ≈ 14.6 mm with 10 mm hinges at 40°, like the COB', () => {
     const cob = STRIP_PROFILES.find((s) => s.id === 'cob-5mm')!;
     expect(cob.HINGE_MAX_DEG).toBe(40);
     expect(rMin(cob)).toBeCloseTo(14.62, 2);
   });
 
-  it('la striscia predefinita non piega di lato: in curva si taglia, senza limite di piega suo', () => {
+  it('the default strip does not bend sideways: on a bend it is cut, with no bend limit of its own', () => {
     expect(DEFAULT_STRIP.sideBend).toBe(false);
     // 90° è il limite di due pezzi dritti accostati, non della striscia.
     expect(DEFAULT_PARAMS.HINGE_MAX_DEG).toBe(90);
     expect(rMin(DEFAULT_PARAMS)).toBeCloseTo(DEFAULT_PARAMS.HINGE_PITCH / Math.SQRT2, 6);
   });
 
-  it('altezza totale = FLOOR + CHANNEL_DEPTH', () => {
+  it('total height = FLOOR + CHANNEL_DEPTH', () => {
     expect(totalHeight(DEFAULT_PARAMS)).toBe(DEFAULT_PARAMS.FLOOR + DEFAULT_PARAMS.CHANNEL_DEPTH);
     expect(totalHeight(DEFAULT_PARAMS)).toBe(12);
   });
 
-  it("l'asola è larga quanto il canale e sta negli ultimi millimetri", () => {
+  it("the wire slot is as wide as the channel and sits in the last millimetres", () => {
     expect(DEFAULT_PARAMS.WIRE_SLOT_W).toBe(DEFAULT_PARAMS.CHANNEL_W);
     expect(DEFAULT_PARAMS.WIRE_SLOT_L).toBe(6);
     expect(DEFAULT_PARAMS.WALL_MIN).toBe(1.2);
@@ -42,7 +42,7 @@ describe('config', () => {
     expect(DEFAULT_PARAMS.SLOT_LIP_CHAMFER).toBe(1);
   });
 
-  it('la striscia standard è la WS2812B 144 LED/m, e MIN_LETTER_H è il doppio di R_MIN', () => {
+  it('the standard strip is the WS2812B 144 LED/m, and MIN_LETTER_H is twice R_MIN', () => {
     expect(DEFAULT_STRIP.id).toBe('ws2812b-144');
     expect(DEFAULT_PARAMS.STRIP_W).toBe(10);
     expect(DEFAULT_PARAMS.STRIP_T).toBe(2);
@@ -67,7 +67,7 @@ describe('config', () => {
     expect(DEFAULT_PARAMS.CUT_PITCH).toBe(DEFAULT_PARAMS.HINGE_PITCH);
   });
 
-  it('gli override non toccano i default', () => {
+  it('overrides do not touch the defaults', () => {
     const p = resolveParams({ WALL: 3 });
     expect(p.WALL).toBe(3);
     expect(p.FLOOR).toBe(DEFAULT_PARAMS.FLOOR);
@@ -75,18 +75,18 @@ describe('config', () => {
   });
 });
 
-describe('striscia e canale', () => {
-  it('ogni profilo ha il canale largo quanto la striscia più la tolleranza', () => {
+describe('strip and channel', () => {
+  it('every profile has a channel as wide as the strip plus the tolerance', () => {
     for (const profile of STRIP_PROFILES) {
       expect(profile.CHANNEL_W, profile.id).toBeCloseTo(profile.STRIP_W + CHANNEL_CLEARANCE, 9);
     }
   });
 
-  it('la profondità predefinita è lo spessore della striscia più l\'aria sopra i LED', () => {
+  it('the default depth is the strip thickness plus the air above the LEDs', () => {
     expect(DEFAULT_PARAMS.CHANNEL_DEPTH).toBeCloseTo(DEFAULT_PARAMS.STRIP_T + LED_AIR, 9);
   });
 
-  it('un canale che non contiene la striscia avvisa', () => {
+  it('a channel that does not hold the strip warns', () => {
     expect(stripFitWarnings(DEFAULT_PARAMS)).toEqual([]);
     const narrow = stripFitWarnings({ ...DEFAULT_PARAMS, CHANNEL_W: 6 });
     expect(narrow).toHaveLength(1);
@@ -99,8 +99,8 @@ describe('striscia e canale', () => {
   });
 });
 
-describe('strisce strette', () => {
-  it('il canale segue la larghezza, il passo resta quello della densità', async () => {
+describe('narrow strips', () => {
+  it('the channel follows the width, the pitch stays that of the density', async () => {
     const { STRIP_PROFILES, CHANNEL_CLEARANCE } = await import('../src/config');
     const byId = (id: string) => STRIP_PROFILES.find((strip) => strip.id === id)!;
     for (const [id, width, pitch] of [
@@ -123,15 +123,15 @@ describe('strisce strette', () => {
   });
 });
 
-describe('piega senza taglio', () => {
-  it('30° per le WS2812B senza guaina a ogni densità, 10° per IP65', async () => {
+describe('bending without a cut', () => {
+  it('30° for unsleeved WS2812B at every density, 10° for IP65', async () => {
     const { STRIP_PROFILES } = await import('../src/config');
     const deg = (id: string) => STRIP_PROFILES.find((strip) => strip.id === id)!.cutBendDeg;
     for (const id of ['ws2812b-60', 'ws2812b-30', 'ws2812b-60-8mm', 'ws2812b-60-5mm', 'ws2812b-60-4mm', 'ws2812b-144', 'ws2812b-144-5mm']) expect(deg(id), id).toBe(30);
     for (const id of ['ws2812b-60-ip65']) expect(deg(id), id).toBe(10);
   });
 
-  it('il negozio arriva dalle variabili di build; senza, niente carrello', () => {
+  it('the shop comes from build variables; without them, no cart', () => {
     expect(shopOf('https://shop.example.test/', '1637')).toEqual({ url: 'https://shop.example.test', productId: 1637 });
     expect(shopOf(' https://example.test/negozio/ ', ' 12 ')).toEqual({ url: 'https://example.test/negozio', productId: 12 });
     for (const [url, id] of [
@@ -152,7 +152,7 @@ describe('piega senza taglio', () => {
     expect(shopCartUrl('K7F3-92QD', null)).toBeNull();
   });
 
-  it('la pagina delle offerte arriva da una variabile di build; senza, nessun invito', () => {
+  it('the donation page comes from a build variable; without it, no invitation', () => {
     expect(supportOf('https://ko-fi.com/vongomben')).toBe('https://ko-fi.com/vongomben');
     expect(supportOf(' https://ko-fi.com/vongomben ')).toBe('https://ko-fi.com/vongomben');
     for (const url of [undefined, '', 'ko-fi.com/vongomben', 'javascript:alert(1)', 'mailto:a@example.test']) {

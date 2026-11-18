@@ -31,8 +31,8 @@ function paint(data: Uint8Array, width: number, x0: number, y0: number, x1: numb
   }
 }
 
-describe('bitmap e contorni', () => {
-  it('il codec RLE torna alla bitmap di partenza, con seed fisso', () => {
+describe('bitmaps and outlines', () => {
+  it('the RLE codec returns the starting bitmap, with a fixed seed', () => {
     const rnd = mulberry32(1);
     const sizes: [number, number][] = [
       [1, 1],
@@ -56,7 +56,7 @@ describe('bitmap e contorni', () => {
     expect(decodeRle(encodeRle(board, 32, 8), 32, 8)).toEqual(board);
   });
 
-  it('Otsu separa un\'immagine bimodale sintetica', () => {
+  it('Otsu separates a synthetic bimodal image', () => {
     const luma = new Uint8Array(4000);
     for (let i = 0; i < 2000; i++) luma[i] = 20 + (i % 15);
     for (let i = 0; i < 2000; i++) luma[2000 + i] = 210 + (i % 20);
@@ -78,7 +78,7 @@ describe('bitmap e contorni', () => {
     expect(separated.subarray(20).every((value) => value === 0)).toBe(true);
   });
 
-  it('i contorni di un anello sono due percorsi chiusi', () => {
+  it('the outlines of a ring are two closed paths', () => {
     const width = 24;
     const height = 24;
     const data = new Uint8Array(width * height);
@@ -108,7 +108,7 @@ describe('bitmap e contorni', () => {
     expect(traceContours(blob, 15, 15, { minHoleAreaPx: 2 })).toHaveLength(1);
   });
 
-  it('il contorno di un anello SVG sono due percorsi chiusi', () => {
+  it('the outline of an SVG ring is two closed paths', () => {
     const shape: RawShape = {
       d: 'M0 0 L100 0 L100 100 L0 100 Z M20 20 L80 20 L80 80 L20 80 Z',
       transform: IDENTITY,
@@ -120,7 +120,7 @@ describe('bitmap e contorni', () => {
     expect(laid.graph.edges.filter((edge) => edge.a === edge.b)).toHaveLength(2);
   });
 
-  it('un cuneo avvisa che il tratto non è uniforme', () => {
+  it('a wedge warns that the stroke is not uniform', () => {
     const width = 60;
     const height = 48;
     const data = new Uint8Array(width * height);
@@ -143,7 +143,7 @@ describe('bitmap e contorni', () => {
     expect(laid.raster.warnings.some((warning) => warning === 'tratto non uniforme: prova Contorno')).toBe(true);
   });
 
-  it('lo stesso JSON produce gli stessi STL e la stessa BOM', async () => {
+  it('the same JSON produces the same STLs and the same BOM', async () => {
     const width = 16;
     const height = 80;
     const data = new Uint8Array(width * height);

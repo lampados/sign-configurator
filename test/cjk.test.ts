@@ -35,12 +35,12 @@ async function strokeSpread(fontId: string, text: string, heightMm: number) {
   };
 }
 
-describe('font cinesi e giapponesi (SPEC §4ter)', () => {
+describe('Chinese and Japanese fonts (SPEC §4ter)', () => {
   for (const [fontId, text] of [
     ['noto-sans-sc', '你好'],
     ['mplus-rounded', 'こんにちは'],
   ] as const) {
-    it(`${fontId}: misura l'altezza su 永, si scarica a richiesta`, async () => {
+    it(`${fontId}: measures the height on 永, is downloaded on demand`, async () => {
       const entry = getFont(fontId)!;
       expect(heightGlyphOf(entry)).toBe('永');
       expect(entry.lazy).toBe(true);
@@ -48,21 +48,21 @@ describe('font cinesi e giapponesi (SPEC §4ter)', () => {
       expect(entry.sample).toBeTruthy();
     });
 
-    it(`${fontId}: tratto costante entro il 25 %, com'è la pipeline a pretendere`, async () => {
+    it(`${fontId}: stroke width constant within 25 %, as the pipeline requires`, async () => {
       for (const sample of ['永', text]) {
         const { spread } = await strokeSpread(fontId, sample, 200);
         expect(spread, `${fontId} «${sample}»`).toBeLessThan(0.25);
       }
     }, 120_000);
 
-    it(`${fontId}: la topologia non cambia fra 200 e 400 mm`, async () => {
+    it(`${fontId}: the topology does not change between 200 and 400 mm`, async () => {
       const small = await strokeSpread(fontId, '永', 200);
       const large = await strokeSpread(fontId, '永', 400);
       expect(small.topology).toBe(large.topology);
     }, 120_000);
   }
 
-  it('un carattere fuori dal sottoinsieme avvisa invece di sparire in silenzio', async () => {
+  it('a character outside the subset warns instead of vanishing silently', async () => {
     const entry = getFont('noto-sans-sc')!;
     const font = await loadFont('noto-sans-sc', readPublic);
     // U+9FA5 è l'ultimo CJK del blocco base, fuori dal GB 2312.
@@ -70,7 +70,7 @@ describe('font cinesi e giapponesi (SPEC §4ter)', () => {
     expect(raster.warnings.join(' ')).toMatch(/U\+9FA5/i);
   }, 60_000);
 
-  it('永 a 300 mm passa tutta la pipeline: un canale per tratto, nessun errore', async () => {
+  it('永 at 300 mm goes through the whole pipeline: one channel per stroke, no errors', async () => {
     const order: SignOrderV4 = {
       schemaVersion: 4,
       generatorVersion: 'test',

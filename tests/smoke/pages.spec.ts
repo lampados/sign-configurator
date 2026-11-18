@@ -4,7 +4,7 @@ import { expectClean, trackPage } from './guard';
 const PAGES = ['index.html', 'debug.html', 'bend-test.html', 'spec.html'] as const;
 
 for (const file of PAGES) {
-  test(`${file} si apre senza errori di console o di rete`, async ({ page }) => {
+  test(`${file} opens without console or network errors`, async ({ page }) => {
     const track = trackPage(page);
     await page.goto(file, { waitUntil: 'load' });
 

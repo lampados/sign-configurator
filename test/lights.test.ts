@@ -18,7 +18,7 @@ const hueGap = (a: number, b: number): number => {
   return Math.min(d, 360 - d);
 };
 
-describe('colore fisso sul diffusore', () => {
+describe('solid colour on the diffuser', () => {
   const sigma = 6;
   const lights = [-2, -1, 0, 1, 2].map((step) => ({ x: step * 6.25, y: 0 }));
 
@@ -42,15 +42,15 @@ describe('colore fisso sul diffusore', () => {
   });
 });
 
-describe('punti luce', () => {
-  it('la sigma è CHANNEL_DEPTH meno lo spessore della striscia', () => {
+describe('light points', () => {
+  it('sigma is CHANNEL_DEPTH minus the strip thickness', () => {
     expect(ledToDiffuserMm(DEFAULT_PARAMS)).toBeCloseTo(DEFAULT_PARAMS.CHANNEL_DEPTH - DEFAULT_PARAMS.STRIP_T);
     const gap = ledToDiffuserMm(DEFAULT_PARAMS);
     expect(gaussianWeight(0, 0, gap)).toBeCloseTo(1);
     expect(gaussianWeight(gap, 0, gap)).toBeCloseTo(Math.exp(-0.5), 5);
   });
 
-  it('su un dritto i LED stanno sulla luce, dal DIN al DOUT, a 160 al metro', () => {
+  it('on a straight the LEDs sit on the lit part, from DIN to DOUT, at 160 per metre', () => {
     const points: Point[] = [];
     for (let x = 0; x <= 100; x += 1) points.push([x, 0]);
     const lights = lightPointsFromChains([{ id: 3, points, closed: false }], DEFAULT_PARAMS);
@@ -71,7 +71,7 @@ describe('punti luce', () => {
     );
   });
 
-  it('un anello non piazza due LED sullo stesso punto di chiusura', () => {
+  it('a loop does not place two LEDs on the same closing point', () => {
     const points: Point[] = [];
     for (let i = 0; i <= 36; i++) {
       const a = (i / 36) * Math.PI * 2;
@@ -84,7 +84,7 @@ describe('punti luce', () => {
     expect(Math.hypot(first[0] - last[0], first[1] - last[1])).toBeGreaterThan(1);
   });
 
-  it('un puntino ha un solo LED, al centro', () => {
+  it('a dot has a single LED, in the centre', () => {
     const points: Point[] = [
       [0, 0],
       [DEFAULT_PARAMS.CUT_PITCH, 0],
@@ -97,7 +97,7 @@ describe('punti luce', () => {
     expect(muted).toHaveLength(0);
   });
 
-  it('Ciao a 100 mm con Sacramento ha un LED sul puntino, anche nella BOM', async () => {
+  it('Ciao at 100 mm in Sacramento has an LED on the dot, in the BOM too', async () => {
     const heightMm = 100;
     const raster = await rasterize({ text: 'Ciao', fontId: 'sacramento', heightMm }, readPublic);
     const graph = buildGraph(raster);

@@ -10,7 +10,7 @@ async function priceOf(page: Page): Promise<Map<string, string>> {
 
 const eur = (text: string | undefined): number => Number((text ?? '').replace('€', ''));
 
-test('Order: ogni voce ha il suo costo e la somma è il totale', async ({ page }) => {
+test('Order: every line has its cost and the sum is the total', async ({ page }) => {
   test.setTimeout(240_000);
   const track = trackPage(page);
   await page.setViewportSize({ width: 1280, height: 800 });
@@ -56,7 +56,7 @@ test('Order: ogni voce ha il suo costo e la somma è il totale', async ({ page }
   expectClean(track.problems);
 });
 
-test('Order: una striscia senza prezzo al metro lo dice, e il totale non la comprende', async ({ page }) => {
+test('Order: a strip without a price per metre says so, and the total leaves it out', async ({ page }) => {
   const track = trackPage(page);
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('index.html', { waitUntil: 'load' });

@@ -31,8 +31,8 @@ function order(params: SignOrderV4['params'], plate: SignOrderV4['plate'] = null
 
 const amount = (quote: ReturnType<typeof quoteSign>, id: string): number => quote.breakdown.find((line) => line.id === id)!.amount;
 
-describe('prezzo voce per voce dell\'insegna (SPEC §12.5)', () => {
-  it('le voci vengono dalla distinta e dai cataloghi, e sommate danno il totale', async () => {
+describe('line-by-line price of the sign (SPEC §12.5)', () => {
+  it('the lines come from the bill of materials and the catalogues, and add up to the total', async () => {
     const result = await generateSign(order({ STRIP_ID: 'ws2812b-60' }), readPublic);
     const quote = quoteSign({ bom: result.bom, widthMm: 400, stripId: 'ws2812b-60' });
     expect(quote.stripPriced).toBe(true);
@@ -54,7 +54,7 @@ describe('prezzo voce per voce dell\'insegna (SPEC §12.5)', () => {
     expect(quote.shipping).toBe(20);
   }, 180_000);
 
-  it('controller e fondale cambiano le loro voci', async () => {
+  it('controller and backdrop change their lines', async () => {
     const result = await generateSign(order({ STRIP_ID: 'ws2812b-60' }), readPublic);
     const base = quoteSign({ bom: result.bom, widthMm: 400, stripId: 'ws2812b-60' });
     const xiao = quoteSign({ bom: result.bom, widthMm: 400, stripId: 'ws2812b-60', controllerId: 'xiao-led-driver' });
@@ -66,7 +66,7 @@ describe('prezzo voce per voce dell\'insegna (SPEC §12.5)', () => {
     expect(amount(quoteSign({ bom: wood.bom, widthMm: 400, stripId: 'ws2812b-60' }), 'plate')).toBe(18);
   }, 240_000);
 
-  it('una striscia senza prezzo al metro lo dichiara: voce a zero, totale senza la striscia', async () => {
+  it('a strip without a price per metre says so: line at zero, total without the strip', async () => {
     const unpriced = STRIP_PROFILES.find((profile) => profile.eurPerM === null)!;
     expect(stripProfileOf('ws2812b-60').eurPerM).toBe(5.2);
     expect(stripProfileOf('cob-5mm').eurPerM).toBe(5.14);

@@ -14,7 +14,7 @@ async function expectGraph(page: Page): Promise<void> {
   expect(await canvas.getAttribute('data-pairs')).toBeNull();
 }
 
-test('debug: cubo manifold e Ciao Torino con entrambi i font', async ({ page }) => {
+test('debug: manifold cube and Ciao Torino with both fonts', async ({ page }) => {
   const track = trackPage(page);
   await page.goto('debug.html', { waitUntil: 'load' });
 

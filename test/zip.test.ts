@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { crc32, zipStore } from '../src/export/zip';
 
-describe('ZIP senza compressione', () => {
-  it('CRC-32 del vettore di prova', () => {
+describe('ZIP without compression', () => {
+  it('CRC-32 of the test vector', () => {
     expect(crc32(new TextEncoder().encode('123456789'))).toBe(0xcbf43926);
   });
 
-  it('firma, numero di file e contenuto leggibili', () => {
+  it('signature, file count and content are readable', () => {
     const zip = zipStore([
       { name: 'a.txt', data: 'ciao' },
       { name: 'b.bin', data: new Uint8Array([1, 2, 3]) },
@@ -22,7 +22,7 @@ describe('ZIP senza compressione', () => {
     expect(view.getUint32(14, true)).toBe(crc32(new TextEncoder().encode('ciao')));
   });
 
-  it('stesso contenuto, stessi byte', () => {
+  it('same content, same bytes', () => {
     const entries = [{ name: 'x.stl', data: new Uint8Array(100) }];
     expect(zipStore(entries)).toEqual(zipStore(entries));
   });

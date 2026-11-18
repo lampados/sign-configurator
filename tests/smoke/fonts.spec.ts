@@ -3,7 +3,7 @@ import { expectClean, trackPage } from './guard';
 
 const NEW_FONTS = ['beon', 'pecita', 'compagnon-italic', 'primer-print', 'wire-one', 'comfortaa', 'poppins'];
 
-test('font: le miniature usano il proprio font e i nuovi generano un\'insegna', async ({ page }) => {
+test('fonts: the thumbnails use their own font and the new ones generate a sign', async ({ page }) => {
   test.setTimeout(240_000);
   const track = trackPage(page);
   await page.setViewportSize({ width: 1280, height: 800 });
@@ -28,7 +28,7 @@ test('font: le miniature usano il proprio font e i nuovi generano un\'insegna', 
   expectClean(track.problems);
 });
 
-test('cirillico: un font che non ha le lettere lo dice, Comfortaa le disegna', async ({ page }) => {
+test('Cyrillic: a font without the letters says so, Comfortaa draws them', async ({ page }) => {
   test.setTimeout(240_000);
   const track = trackPage(page);
   await page.setViewportSize({ width: 1280, height: 800 });
@@ -55,7 +55,7 @@ test('cirillico: un font che non ha le lettere lo dice, Comfortaa le disegna', a
   expectClean(track.problems);
 });
 
-test('hindi: Poppins compone le lettere con harfbuzz, che arriva solo quando serve', async ({ page }) => {
+test('Hindi: Poppins shapes the letters with harfbuzz, which arrives only when needed', async ({ page }) => {
   test.setTimeout(240_000);
   const track = trackPage(page);
   const wasm: string[] = [];

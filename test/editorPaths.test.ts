@@ -95,8 +95,8 @@ function byAxis(curves: { points: Point[] }[], axis: 'h' | 'v'): Point[] {
   return out;
 }
 
-describe('tracciati congelati', () => {
-  it('il fit resta entro EDIT_FIT_TOL e la rigenerazione segue la curva', async () => {
+describe('frozen paths', () => {
+  it('the fit stays within EDIT_FIT_TOL and regeneration follows the curve', async () => {
     const original = quarter(40);
     const paths = freezePaths([{ points: original }]);
     const flat = flattenPaths(paths).curves[0]!;
@@ -108,7 +108,7 @@ describe('tracciati congelati', () => {
     for (const point of samples) expect(distToPolyline(point, original)).toBeLessThanOrEqual(EDIT_FIT_TOL);
   });
 
-  it('scala ×2 raddoppia le lunghezze', () => {
+  it('scale ×2 doubles the lengths', () => {
     const paths = freezePaths([{ points: quarter(40) }, { points: [[1, 2]], dot: true }]);
     const before = flattenPaths(paths).curves[0]!;
     const scaled = scalePaths(paths, 2);
@@ -123,7 +123,7 @@ describe('tracciati congelati', () => {
     expect(grown.nodes[0]!.p[1]).toBeCloseTo(curve.nodes[0]!.p[1] * 2, 3);
   });
 
-  it('scambiare under sposta il gap', async () => {
+  it('swapping under moves the gap', async () => {
     const paths = cross();
     expect(paths.map((path) => path.id)).toEqual(['p1', 'p2']);
     const def = await generateSign(orderOf(paths));
@@ -135,7 +135,7 @@ describe('tracciati congelati', () => {
     expect(minOrigin(byAxis(swapped.centerlines, 'v'))).toBeLessThan(0.5);
   });
 
-  it('una scelta senza incrocio produce un avviso', async () => {
+  it('a choice without a crossing produces a warning', async () => {
     const paths = cross();
     const result = await generateSign(orderOf(paths, [{ at: [100, 100], under: 'p1' }]));
     expect(result.warnings).toContain('Scelta di incrocio senza incrocio corrispondente, in (100.0, 100.0).');
@@ -143,7 +143,7 @@ describe('tracciati congelati', () => {
     expect(minOrigin(byAxis(result.centerlines, 'h'))).toBeLessThan(0.5);
   });
 
-  it('lo stesso JSON produce gli stessi file', async () => {
+  it('the same JSON produces the same files', async () => {
     const frozen = orderOf(cross(), [{ at: [0, 0], under: 'p1' }]);
     const again = JSON.parse(JSON.stringify(frozen)) as SignOrder;
     const first = await generateSign(frozen);

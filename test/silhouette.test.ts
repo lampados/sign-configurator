@@ -136,8 +136,8 @@ function arc(radius: number, sweepDeg: number): Point[] {
   return pts;
 }
 
-describe('sagoma frontale', () => {
-  it('un dritto coincide con l\'offset della linea centrale', async () => {
+describe('front outline', () => {
+  it('a straight matches the offset of the centreline', async () => {
     const line: Vec2[] = [
       [0, 0],
       [80, 0],
@@ -158,7 +158,7 @@ describe('sagoma frontale', () => {
     }
   });
 
-  it('un arco resta a larghezza costante anche con la freccia', async () => {
+  it('an arc keeps a constant width even with the sagitta', async () => {
     const pts = arc(40, 180);
     const smooth = smoothPolyline(pts, false);
     const chain = resampleChain(smooth, {
@@ -184,7 +184,7 @@ describe('sagoma frontale', () => {
     }
   });
 
-  it('uno spigolo con tasca non esce dalla sagoma', async () => {
+  it('a cusp with a pocket does not leave the outline', async () => {
     // La tasca d'angolo nasce quando lo spigolo supera la piega ammessa: qui 15°, larghezze di P.
     const BENDABLE = resolveParams({ HINGE_MAX_DEG: 15 });
     const pts: Point[] = [];
@@ -209,7 +209,7 @@ describe('sagoma frontale', () => {
     }
   });
 
-  it('«Ciao» nei due font resta sull\'offset della linea levigata', async () => {
+  it('"Ciao" in both fonts stays on the offset of the smoothed line', async () => {
     for (const fontId of ['sacramento', 'neonderthaw'] as const) {
       const raster = await rasterize({ text: 'Ciao', fontId, heightMm: 100 }, readPublic);
       const graph = buildGraph(raster);

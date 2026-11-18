@@ -30,14 +30,14 @@ function geometryBom(bom: GenerateResult['bom']): Omit<GenerateResult['bom'], 'p
   return rest;
 }
 
-describe('ordine v4', () => {
-  it('PLATE_WIRE_HOLES è attivo e il piano laser non blocca finché è null', () => {
+describe('order v4', () => {
+  it('PLATE_WIRE_HOLES is on and the laser plan does not block while it is null', () => {
     expect(PLATE_WIRE_HOLES).toBe(true);
     expect(PLATE_MAX_W).toBeNull();
     expect(PLATE_MAX_H).toBeNull();
   });
 
-  it('v1, v2 e v3 migrati a v4 danno gli stessi STL e la BOM di prima più plate null', async () => {
+  it('v1, v2 and v3 migrated to v4 give the same STLs and the previous BOM plus plate null', async () => {
     const v1: OrderV1 = {
       schemaVersion: 1,
       generatorVersion: '0.1.0',

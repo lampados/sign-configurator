@@ -51,8 +51,8 @@ async function ciao(fontId: 'sacramento' | 'neonderthaw', heightMm = 100) {
   return { raster, graph, strip, coverage };
 }
 
-describe('copertura di Ciao', () => {
-  it('ogni tratto spento ha un motivo e acceso + spento è il riferimento', async () => {
+describe('coverage of Ciao', () => {
+  it('every unlit stretch has a reason and lit + unlit equals the reference', async () => {
     for (const fontId of ['sacramento', 'neonderthaw'] as const) {
       const { graph, strip, coverage } = await ciao(fontId);
       for (const stretch of coverage.stretches) {
@@ -71,7 +71,7 @@ describe('copertura di Ciao', () => {
     }
   }, 30000);
 
-  it('Neonderthaw «Ciao» all\'altezza minima: copertura, canali separati, LED circa doppi', async () => {
+  it('Neonderthaw "Ciao" at the minimum height: coverage, separate channels, about twice the LEDs', async () => {
     let height = 100;
     let built = await ciao('neonderthaw', height);
     for (let step = 0; step < 4; step++) {
@@ -101,7 +101,7 @@ describe('copertura di Ciao', () => {
     expect(ratio).toBeLessThan(2.5);
   }, 60000);
 
-  it('un errore di curva non toglie la striscia', async () => {
+  it('a bend error does not remove the strip', async () => {
     const { strip } = await ciao('sacramento');
     const curved = new Set(
       strip.issues.filter((issue) => issue.level === 'error' && issue.bend === 'curva').map((issue) => issue.segmentId),
@@ -117,7 +117,7 @@ describe('copertura di Ciao', () => {
     }
   });
 
-  it('uno spigolo che lascerebbe un pezzo sotto CUT_PITCH non si divide', () => {
+  it('a cusp that would leave a piece under CUT_PITCH is not split', () => {
     const points: Point[] = [];
     for (let t = 50; t >= 0; t -= 1) points.push([t, 0]);
     for (let t = 1; t <= 15; t += 1) points.push([0, t]);

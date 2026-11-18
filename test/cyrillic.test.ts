@@ -57,8 +57,8 @@ function order(text: string, heightMm: number): SignOrderV4 {
   };
 }
 
-describe('font cirillico (SPEC §4ter)', () => {
-  it('comfortaa: scrittura cirillica, altezza sulla «H», file piccolo che si precarica', () => {
+describe('Cyrillic font (SPEC §4ter)', () => {
+  it('comfortaa: Cyrillic script, height on the "H", small file that is preloaded', () => {
     const entry = getFont(FONT_ID)!;
     expect(entry.script).toBe('cyrillic');
     expect(heightGlyphOf(entry)).toBe('H');
@@ -67,18 +67,18 @@ describe('font cirillico (SPEC §4ter)', () => {
     expect(entry.sample).toBe('Привет');
   });
 
-  it('le maiuscole cirilliche sono alte quanto la «H»: l\'altezza chiesta vale per entrambe', async () => {
+  it('Cyrillic capitals are as tall as the "H": the requested height holds for both', async () => {
     const font = await loadFont(FONT_ID, readPublic);
     expect(measureFontMetrics(font, 'П').capHeight).toBe(getFont(FONT_ID)!.capHeightMeasured);
   });
 
-  it('ha tutto l\'alfabeto russo e le lettere delle altre lingue slave', async () => {
+  it('has the whole Russian alphabet and the letters of the other Slavic languages', async () => {
     const font = await loadFont(FONT_ID, readPublic);
     const absent = [...RUSSIAN, ...OTHER_SLAVIC].filter((ch) => !font.hasChar(ch));
     expect(absent.join('')).toBe('');
   });
 
-  it('tratto costante entro il 25 %, in cirillico e in latino', async () => {
+  it('stroke width constant within 25 %, in Cyrillic and in Latin', async () => {
     for (const sample of ['Привет', 'Жёлтый щит', 'Добрий день', 'Ciao']) {
       const { spread, missing } = await strokeSpread(sample, 200);
       expect(missing, `«${sample}»`).toEqual([]);
@@ -86,13 +86,13 @@ describe('font cirillico (SPEC §4ter)', () => {
     }
   }, 120_000);
 
-  it('la topologia non cambia fra 200 e 400 mm', async () => {
+  it('the topology does not change between 200 and 400 mm', async () => {
     const small = await strokeSpread('Привет', 200);
     const large = await strokeSpread('Привет', 400);
     expect(small.topology).toBe(large.topology);
   }, 120_000);
 
-  it('«Привет» a 25 cm passa tutta la pipeline e dà un pezzo stampabile', async () => {
+  it('"Привет" at 25 cm goes through the whole pipeline and gives a printable part', async () => {
     const result = await generateSign(order('Привет', 250), readPublic);
     expect(result.housingMesh.triVerts.length).toBeGreaterThan(0);
     expect(result.lightPoints.length).toBeGreaterThan(10);
@@ -100,13 +100,13 @@ describe('font cirillico (SPEC §4ter)', () => {
     expect(result.warnings.join(' ')).not.toMatch(/non manifold|non presente/);
   }, 180_000);
 
-  it('latino e cirillico nella stessa insegna, con lo stesso font', async () => {
+  it('Latin and Cyrillic in the same sign, with the same font', async () => {
     const result = await generateSign(order('Ciao Привет', 250), readPublic);
     expect(result.housingMesh.triVerts.length).toBeGreaterThan(0);
     expect(result.warnings.join(' ')).not.toMatch(/non presente/);
   }, 180_000);
 
-  it('un font senza cirillico lo dice: errore riconoscibile se manca tutto, avviso se manca una parte', async () => {
+  it('a font without Cyrillic says so: recognizable error if everything is missing, warning if part is', async () => {
     const sacramento = (text: string): SignOrderV4 => ({ ...order(text, 250), source: { kind: 'text', text, fontId: 'sacramento' } });
     await expect(generateSign(sacramento('Привет'), readPublic)).rejects.toThrow(NO_LETTERS);
     const mixed = await generateSign(sacramento('Ciao Привет'), readPublic);

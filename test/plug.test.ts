@@ -20,8 +20,8 @@ const order = (plug: string) =>
     plate: null,
   });
 
-describe('spina dell\'alimentatore', () => {
-  it('quattro spine, ciascuna con sigla, paesi e icona; predefinita la europea', () => {
+describe('power supply plug', () => {
+  it('four plugs, each with code, countries and icon; the European one is the default', () => {
     expect(PLUGS.map((p) => p.value)).toEqual(['EU', 'UK', 'CH', 'US']);
     for (const plug of PLUGS) {
       expect(plug.label.length).toBeGreaterThan(3);
@@ -32,7 +32,7 @@ describe('spina dell\'alimentatore', () => {
     expect(plugOf('XX').value).toBe('EU');
   });
 
-  it('la spina passa per il link condiviso; una sconosciuta torna EU con un avviso', () => {
+  it('the plug survives the shared link; an unknown one falls back to EU with a warning', () => {
     for (const plug of ['EU', 'UK', 'CH', 'US']) {
       expect(decodeShare(encodeShare(order(plug)).hash ?? '').order?.customer.plug).toBe(plug);
     }

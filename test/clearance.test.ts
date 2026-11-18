@@ -23,8 +23,8 @@ const parallel = (gap: number) => [
   { points: [[0, gap], [80, gap]] as Point[] },
 ];
 
-describe('tratti vicini', () => {
-  it('un tratto che incrocia se stesso non è un difetto attorno all\'incrocio', () => {
+describe('close strokes', () => {
+  it('a stroke that crosses itself is not a defect around the crossing', () => {
     const bare = centerlineClearance([{ points: LOOP }], P, []);
     // Senza sapere dell'incrocio i due rami sembrano fusi: è il falso allarme di «MedMusa».
     expect(bare).not.toBeNull();
@@ -38,14 +38,14 @@ describe('tratti vicini', () => {
     }
   });
 
-  it('due strisce affiancate ci stanno: nessun ponticello', () => {
+  it('two strips side by side fit: no jumper', () => {
     const clash = centerlineClearance(parallel(12), P, []);
     expect(clash).not.toBeNull();
     expect(clash!.distance).toBeCloseTo(12, 6);
     expect(clash!.overlaps).toBe(0);
   });
 
-  it('più vicine della larghezza della striscia: un ponticello per zona', () => {
+  it('closer than the strip width: one jumper per zone', () => {
     const one = centerlineClearance(parallel(6), P, []);
     expect(one!.overlaps).toBe(1);
     // Due zone lontane fra loro sono due ponticelli.
@@ -62,7 +62,7 @@ describe('tratti vicini', () => {
     expect(two!.overlaps).toBe(2);
   });
 
-  it('lontane più del limite: niente da segnalare', () => {
+  it('farther apart than the limit: nothing to report', () => {
     expect(centerlineClearance(parallel(LIMIT + 1), P, [])).toBeNull();
   });
 });

@@ -27,8 +27,8 @@ function order(params: SignOrderV4['params'], fontId = 'sacramento', text = 'Cia
   };
 }
 
-describe('tagli in curva e tempo di montaggio', () => {
-  it('la WS2812B 60 LED/m su un corsivo si taglia: ogni taglio vale 10 minuti', async () => {
+describe('cuts on bends and assembly time', () => {
+  it('the WS2812B 60 LED/m on a cursive is cut: each cut counts 10 minutes', async () => {
     const result = await generateSign(order({ STRIP_ID: 'ws2812b-60' }), readPublic);
     const { bendCuts, assemblyMin } = result.bom.assembly;
     // Soglia di 30° per giunto: restano i tagli nei riccioli stretti, non uno per LED.
@@ -42,13 +42,13 @@ describe('tagli in curva e tempo di montaggio', () => {
     expect(result.warnings.join('\n')).not.toMatch(/non piega di lato/);
   }, 120_000);
 
-  it('la COB segue le curve: nessun taglio', async () => {
+  it('the COB follows the curves: no cuts', async () => {
     const result = await generateSign(order({ STRIP_ID: 'cob-5mm' }), readPublic);
     expect(result.bom.assembly.bendCuts).toBe(0);
     expect(result.bom.assembly.assemblyMin).toBe(0);
   }, 120_000);
 
-  it('più LED al metro, pezzi più corti, più tagli', async () => {
+  it('more LEDs per metre, shorter pieces, more cuts', async () => {
     const coarse = await generateSign(order({ STRIP_ID: 'ws2812b-30' }), readPublic);
     const fine = await generateSign(order({ STRIP_ID: 'ws2812b-144' }), readPublic);
     expect(fine.bom.assembly.bendCuts).toBeGreaterThan(coarse.bom.assembly.bendCuts);

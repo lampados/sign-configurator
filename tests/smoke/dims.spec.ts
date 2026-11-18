@@ -5,7 +5,7 @@ for (const viewport of [
   { width: 390, height: 844 },
   { width: 1280, height: 800 },
 ] as const) {
-  test(`ingombro a ${viewport.width}×${viewport.height}: frecce sull'anteprima, riepilogo e strumento Size`, async ({ page }) => {
+  test(`footprint at ${viewport.width}×${viewport.height}: arrows on the preview, summary and Size tool`, async ({ page }) => {
     const track = trackPage(page);
     await page.setViewportSize(viewport);
     await page.goto('index.html', { waitUntil: 'load' });

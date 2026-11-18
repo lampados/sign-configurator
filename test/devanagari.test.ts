@@ -60,8 +60,8 @@ function order(text: string, heightMm: number): SignOrderV4 {
   };
 }
 
-describe('hindi, font devanagari (SPEC §4ter)', () => {
-  it('poppins: devanagari, composto da harfbuzz, altezza su क, file piccolo che si precarica', () => {
+describe('Hindi, Devanagari font (SPEC §4ter)', () => {
+  it('poppins: Devanagari, shaped by harfbuzz, height on क, small file that is preloaded', () => {
     const entry = getFont(FONT_ID)!;
     expect(entry.script).toBe('devanagari');
     expect(entry.shaper).toBe('harfbuzz');
@@ -71,19 +71,19 @@ describe('hindi, font devanagari (SPEC §4ter)', () => {
     expect(entry.sample).toBe('नमस्ते');
   });
 
-  it('le misure del registro sono quelle del file; le lettere con la linea piena pendono dalla stessa quota', async () => {
+  it('the registry measurements match the file; letters with a full headline hang from the same height', async () => {
     const entry = getFont(FONT_ID)!;
     const font = await loadFont(FONT_ID, readPublic);
     expect(measureFontMetrics(font, 'क')).toEqual({ capHeight: entry.capHeightMeasured, xHeight: entry.xHeightMeasured });
     for (const ch of 'नमसतहदपरयलवगजबचडण') expect(measureFontMetrics(font, ch).capHeight, ch).toBe(entry.capHeightMeasured);
   });
 
-  it('gli altri font non caricano harfbuzz', async () => {
+  it('the other fonts do not load harfbuzz', async () => {
     expect(await loadShaper('sacramento', readPublic)).toBeNull();
     expect(await loadShaper('comfortaa', readPublic)).toBeNull();
   });
 
-  it('le consonanti si fondono: una sillaba è un gruppo solo', async () => {
+  it('consonants fuse: a syllable is a single group', async () => {
     expect(await groups('नमस्ते')).toEqual(['न', 'म', 'स्ते']);
     expect(await groups('प्रेम')).toEqual(['प्रे', 'म']);
     expect(await groups('शक्ति')).toEqual(['श', 'क्ति']);
@@ -91,7 +91,7 @@ describe('hindi, font devanagari (SPEC §4ter)', () => {
     expect((await draw('नमस्ते')).glyphs).toHaveLength(4);
   });
 
-  it('la vocale ि si disegna prima della consonante, che nel testo la precede', async () => {
+  it('the vowel sign ि is drawn before the consonant that precedes it in the text', async () => {
     const font = await loadFont(FONT_ID, readPublic);
     const { glyphs } = await draw('कि');
     expect(glyphs).toHaveLength(2);
@@ -101,12 +101,12 @@ describe('hindi, font devanagari (SPEC §4ter)', () => {
     expect(matra.char).toBe('कि');
   });
 
-  it('senza compositore il font si rifiuta, invece di dare lettere staccate', async () => {
+  it('without a shaper the font refuses, instead of giving unjoined letters', async () => {
     const font = await loadFont(FONT_ID, readPublic);
     expect(() => rasterizeText(font, getFont(FONT_ID)!, { text: 'नमस्ते', heightMm: 200 })).toThrow(/harfbuzz/);
   });
 
-  it('hindi e latino nella stessa riga: ogni tratto con le regole della sua scrittura', async () => {
+  it('Hindi and Latin on the same line: each run with the rules of its script', async () => {
     expect(scriptRuns('Ciao नमस्ते 2026').map((run) => [run.start, run.end, run.devanagari])).toEqual([
       [0, 5, false],
       [5, 16, true],
@@ -118,14 +118,14 @@ describe('hindi, font devanagari (SPEC §4ter)', () => {
     expect(mixed.advanceMm).toBeGreaterThan(hindi.advanceMm);
   });
 
-  it('cifre hindi, danda e ZWJ non sono caratteri mancanti; una vocale sola non porta il cerchio tratteggiato', async () => {
+  it('Hindi digits, danda and ZWJ are not missing characters; a lone vowel sign gets no dotted circle', async () => {
     expect((await draw('प्यार १२३।')).missing).toEqual([]);
     expect((await draw('क्‍ष')).missing).toEqual([]);
     expect((await draw('ि')).glyphs).toHaveLength(1);
     expect((await draw('नमस्ते 中')).warnings.join(' ')).toMatch(/U\+4E2D.* non presente in Poppins/);
   });
 
-  it('la linea in alto unisce la parola: un pezzo solo, tratto costante entro il 25 %', async () => {
+  it('the headline joins the word: a single piece, stroke width constant within 25 %', async () => {
     for (const sample of ['नमस्ते', 'हिन्दी', 'प्रेम', 'शक्ति']) {
       const { spread, pieces, missing } = await strokeSpread(sample, 200);
       expect(missing, `«${sample}»`).toEqual([]);
@@ -135,7 +135,7 @@ describe('hindi, font devanagari (SPEC §4ter)', () => {
     }
   }, 180_000);
 
-  it('la topologia non cambia fra 200 e 400 mm, e la bitmap è la stessa a ogni giro', async () => {
+  it('the topology does not change between 200 and 400 mm, and the bitmap is the same on every run', async () => {
     const small = await strokeSpread('नमस्ते', 200);
     const large = await strokeSpread('नमस्ते', 400);
     expect(small.topology).toBe(large.topology);
@@ -143,7 +143,7 @@ describe('hindi, font devanagari (SPEC §4ter)', () => {
     expect(Buffer.from(a.data).equals(Buffer.from(b.data))).toBe(true);
   }, 180_000);
 
-  it('«नमस्ते» a 30 cm passa tutta la pipeline e dà un pezzo stampabile', async () => {
+  it('"नमस्ते" at 30 cm goes through the whole pipeline and gives a printable part', async () => {
     const result = await generateSign(order('नमस्ते', 300), readPublic);
     expect(result.housingMesh.triVerts.length).toBeGreaterThan(0);
     expect(result.lightPoints.length).toBeGreaterThan(100);

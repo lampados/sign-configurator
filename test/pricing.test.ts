@@ -16,8 +16,8 @@ function atHeight(heightMm: number): PriceMeasure {
   };
 }
 
-describe('prezzo', () => {
-  it('è deterministico e cresce con l\'altezza', () => {
+describe('price', () => {
+  it('is deterministic and grows with the height', () => {
     const low = priceOrder(atHeight(100));
     const mid = priceOrder(atHeight(150));
     const high = priceOrder(atHeight(200));
@@ -28,7 +28,7 @@ describe('prezzo', () => {
     expect(sum).toBeCloseTo(high.total, 2);
   });
 
-  it('stampa 7 € sotto 70 cm, 14 € sopra, spedizione fuori dal totale', () => {
+  it('printing €7 under 70 cm, €14 above, shipping outside the total', () => {
     const narrow = priceOrder({ ...atHeight(100), widthMm: 600 });
     const wide = priceOrder({ ...atHeight(100), widthMm: 800 });
     expect(narrow.breakdown.find((l) => l.id === 'print')?.amount).toBe(7);
@@ -36,7 +36,7 @@ describe('prezzo', () => {
     expect(narrow.shipping).toBe(20);
   });
 
-  it('il controller entra con il suo prezzo: la scheda Seeed da 18 € costa meno dello standard da 35 €', () => {
+  it('the controller comes with its own price: the €18 Seeed board costs less than the €35 standard', () => {
     const line = (eur: number) => priceOrder({ ...atHeight(100), controllerEur: eur }).breakdown.find((l) => l.id === 'controller')?.amount;
     expect(line(35)).toBe(35);
     expect(line(18)).toBe(18);

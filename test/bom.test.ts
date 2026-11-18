@@ -9,7 +9,7 @@ import { anchorHoleCount, buildBom } from '../src/export/bom';
 const BENDABLE = resolveParams({ STRIP_ID: 'cob-5mm' });
 
 describe('BOM', () => {
-  it('taglia per difetto al passo e conta i LED', () => {
+  it('rounds down to the cut pitch and counts the LEDs', () => {
     const bom = buildBom(
       [
         {
@@ -52,7 +52,7 @@ describe('BOM', () => {
     });
   });
 
-  it('i fori rispettano il minimo e i 10 mm di margine', () => {
+  it('the holes respect the minimum count and the 10 mm clearance', () => {
     expect(anchorHoleCount(15, BENDABLE)).toBe(0);
     expect(anchorHoleCount(50, BENDABLE)).toBe(2);
     expect(anchorHoleCount(200, BENDABLE)).toBe(3);

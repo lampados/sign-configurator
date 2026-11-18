@@ -65,8 +65,8 @@ const pairOf = (contours: Contour[]): TubePairing => pairTubes(buildGraph(raster
 const midY = (pts: Point[]): number => pts.reduce((s, p) => s + p[1], 0) / pts.length;
 const span = (pts: Point[]): [number, number] => [Math.min(...pts.map((p) => p[0])), Math.max(...pts.map((p) => p[0]))];
 
-describe('pairTubes (tubi sintetici, assi a 6 mm)', () => {
-  it('dritto: una coppia, mediana a metà fra le pareti', () => {
+describe('pairTubes (synthetic tubes, axes 6 mm apart)', () => {
+  it('straight: one pair, median halfway between the walls', () => {
     const p = pairOf([bar(25, 0, 50, 2, 0), bar(25, 6, 50, 2, 0)]);
     expect(p.pairs).toHaveLength(1);
     expect(p.singles).toHaveLength(0);
@@ -78,7 +78,7 @@ describe('pairTubes (tubi sintetici, assi a 6 mm)', () => {
     expect(midY(pair.midline)).toBeCloseTo(3, 0);
   });
 
-  it('curvo: la mediana sta sul raggio medio', () => {
+  it('curved: the median lies on the mean radius', () => {
     const p = pairOf([ribbon(arc(0, 0, 12, 0, Math.PI, 40), 2), ribbon(arc(0, 0, 18, 0, Math.PI, 48), 2)]);
     expect(p.pairs).toHaveLength(1);
     expect(p.pairs[0]!.distanceMm).toBeCloseTo(6, 1);
@@ -89,7 +89,7 @@ describe('pairTubes (tubi sintetici, assi a 6 mm)', () => {
     expect(p.pairs[0]!.lengthMm).toBeLessThan(50);
   });
 
-  it('a U: la polilinea si accoppia con sé stessa, mediana fra le due gambe', () => {
+  it('U-shaped: the polyline pairs with itself, median between the two legs', () => {
     const p = pairOf([ribbon(hairpin(40, 6), 2)]);
     expect(p.pairs).toHaveLength(1);
     expect(p.singles).toHaveLength(0);
@@ -105,7 +105,7 @@ describe('pairTubes (tubi sintetici, assi a 6 mm)', () => {
     expect(pair.lengthMm).toBeLessThan(46);
   });
 
-  it('estremità sfalsate: la mediana copre l\'unione delle due pareti', () => {
+  it('staggered ends: the median covers the union of the two walls', () => {
     const p = pairOf([bar(25, 0, 50, 2, 0), bar(40, 6, 50, 2, 0)]);
     expect(p.pairs).toHaveLength(1);
     expect(p.dubious).toHaveLength(0);
@@ -116,7 +116,7 @@ describe('pairTubes (tubi sintetici, assi a 6 mm)', () => {
     expect(p.pairs[0]!.lengthMm).toBeGreaterThan(58);
   });
 
-  it('due tubi vicini, paralleli solo per 12 mm: ognuno tiene la propria coppia', () => {
+  it('two close tubes, parallel for only 12 mm: each keeps its own pair', () => {
     const p = pairOf([
       bar(35, 0, 70, 2, 0),
       bar(35, 6, 70, 2, 0),
@@ -138,7 +138,7 @@ describe('pairTubes (tubi sintetici, assi a 6 mm)', () => {
     expect(p.warnings.length).toBe(p.dubious.length);
   });
 
-  it('tratto breve: coppia dubbia, non accettata', () => {
+  it('short stretch: doubtful pair, not accepted', () => {
     const p = pairOf([bar(6, 0, 12, 2, 0), bar(6, 6, 12, 2, 0)]);
     expect(p.pairs).toHaveLength(0);
     expect(p.dubious).toHaveLength(1);
@@ -146,7 +146,7 @@ describe('pairTubes (tubi sintetici, assi a 6 mm)', () => {
     expect(p.warnings[0]).toContain('parallele solo per');
   });
 
-  it('distanza fuori tolleranza: coppia dubbia, con la posizione', () => {
+  it('distance out of tolerance: doubtful pair, with the position', () => {
     const p = pairOf([bar(30, 0, 60, 2, 0), bar(30, 11, 60, 2, 0)]);
     expect(p.pairs).toHaveLength(0);
     expect(p.singles).toHaveLength(0);
@@ -157,24 +157,24 @@ describe('pairTubes (tubi sintetici, assi a 6 mm)', () => {
     expect(p.warnings[0]).toContain('fuori tolleranza');
   });
 
-  it('linea sola: resta singola, senza avvisi', () => {
+  it('single line: stays single, without warnings', () => {
     const p = pairOf([bar(20, 0, 40, 2, 0)]);
     expect(p.pairs).toHaveLength(0);
     expect(p.dubious).toHaveLength(0);
     expect(p.singles).toHaveLength(1);
   });
 
-  it('deterministico', () => {
+  it('deterministic', () => {
     const shape = [bar(10, 0, 40, 2, 15), bar(12, 6, 36, 2, 15)];
     expect(JSON.stringify(pairOf(shape))).toBe(JSON.stringify(pairOf(shape)));
   });
 });
 
-describe('pairTubes su Neonderthaw (100 mm)', () => {
+describe('pairTubes on Neonderthaw (100 mm)', () => {
   const neon = (text: string, pxPerMm = 6) =>
     rasterize({ text, fontId: 'neonderthaw', heightMm: 100, pxPerMm }, readPublic);
 
-  it('"C": un solo tubo, la polilinea si accoppia con sé stessa', async () => {
+  it('"C": a single tube, the polyline pairs with itself', async () => {
     const r = await neon('C');
     const g = buildGraph(r);
     const p = pairTubes(g, r.tube!);
@@ -190,7 +190,7 @@ describe('pairTubes su Neonderthaw (100 mm)', () => {
     expect(p.singles).toHaveLength(0);
   });
 
-  it('"i": il puntino (anello chiuso) resta una linea singola, l\'asta è un tubo', async () => {
+  it('"i": the dot (closed loop) stays a single line, the stem is a tube', async () => {
     const r = await neon('i');
     const g = buildGraph(r);
     const p = pairTubes(g, r.tube!);
@@ -203,7 +203,7 @@ describe('pairTubes su Neonderthaw (100 mm)', () => {
     expect(p.pairs[0]!.distanceMm).toBeLessThan(p.distanceMaxMm);
   });
 
-  it('"t": l\'asta si accoppia, la barra corta resta dubbia', async () => {
+  it('"t": the stem pairs, the short bar stays doubtful', async () => {
     const r = await neon('t');
     const g = buildGraph(r);
     const p = pairTubes(g, r.tube!);
@@ -219,7 +219,7 @@ describe('pairTubes su Neonderthaw (100 mm)', () => {
     }
   });
 
-  it('"Ciao Torino": i puntini restano singoli, la C è un tubo, nessuna distanza fuori fascia', async () => {
+  it('"Ciao Torino": the dots stay single, the C is a tube, no distance out of range', async () => {
     const r = await neon('Ciao Torino');
     const g = buildGraph(r);
     const p = pairTubes(g, r.tube!);

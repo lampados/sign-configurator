@@ -102,15 +102,15 @@ async function sliceArea(solid: Manifold, z: number, poly: Vec2[]): Promise<numb
   return area;
 }
 
-describe('bend test: percorsi', () => {
-  it('A: archi R40…R7, 15 fori di marcatura', () => {
+describe('bend test: paths', () => {
+  it('A: arcs R40…R7, 15 marker holes', () => {
     const path = bendTestPath('arcs');
     expect(path.bends.map((b) => b.label)).toEqual([40, 25, 15, 10, 7]);
     expect(markHoleCenters(path)).toHaveLength(15);
     expect(path.length).toBeCloseTo(6 * 30 + Math.PI * (40 + 25 + 15 + 10 + 7), 6);
   });
 
-  it('B: dritti lunghi esattamente 3·HINGE_PITCH, spigoli 30…90°', () => {
+  it('B: straights exactly 3·HINGE_PITCH long, corners 30…90°', () => {
     const path = bendTestPath('corners', P.HINGE_PITCH);
     expect(path.bends.map((b) => b.label)).toEqual([30, 45, 60, 75, 90]);
     for (let i = 1; i < path.points.length; i++) {
@@ -125,8 +125,8 @@ describe('bend test: percorsi', () => {
   });
 });
 
-describe('bend test: canale', () => {
-  it('A: sugli archi il bordo interno è allargato di s = P²/(8R), l\'esterno no', async () => {
+describe('bend test: channel', () => {
+  it('A: on the arcs the inner edge is widened by s = P²/(8R), the outer one is not', async () => {
     const channel = await makeChannel('arcs');
     try {
       for (const bend of bendTestPath('arcs').bends) {
@@ -147,7 +147,7 @@ describe('bend test: canale', () => {
     }
   });
 
-  it('B: la striscia piegata in un solo intaglio ci sta, con perno ovunque sulla larghezza', async () => {
+  it('B: the strip bent at a single notch fits, with a pivot anywhere across the width', async () => {
     for (const channelW of [5.4, 5.8]) {
       const channel = await makeChannel('corners', channelW);
       const clearance = (channelW - P.STRIP_W) / 2;
@@ -178,7 +178,7 @@ describe('bend test: canale', () => {
   });
 
   for (const kind of KINDS) {
-    it(`${kind}: asola larga quanto il canale e a filo della parete di testa`, async () => {
+    it(`${kind}: wire slot as wide as the channel and flush with the end wall`, async () => {
       const path = bendTestPath(kind, P.HINGE_PITCH);
       const slots = wireSlots(path);
       expect(slots.map((s) => s.role)).toEqual(['DIN', 'DOUT']);
@@ -234,15 +234,15 @@ describe('bend test: canale', () => {
     });
   }
 
-  it('B: raggio esterno dello spigolo cresce con l\'angolo', () => {
+  it('B: the outer radius of the corner grows with the angle', () => {
     const r = [30, 45, 60, 75, 90].map((a) => cornerOuterRadius(P.STRIP_W, P.CHANNEL_W, a));
     for (let i = 1; i < r.length; i++) expect(r[i]!).toBeGreaterThan(r[i - 1]!);
     expect(r[4]!).toBeCloseTo(2.5 / Math.cos(Math.PI / 4) + 0.2, 9);
   });
 });
 
-describe('bend test: pezzi D ed E', () => {
-  it('D: fondo inclinato, mesh manifold, 10 marcature + 2 asole', async () => {
+describe('bend test: parts D and E', () => {
+  it('D: sloped floor, manifold mesh, 10 markers + 2 wire slots', async () => {
     const path = bendTestPath('bank');
     expect(path.bends.map((b) => b.label)).toEqual([0, 20, 35, 50]);
     expect(path.bends.every((b) => b.arc?.radius === 10)).toBe(true);
@@ -270,7 +270,7 @@ describe('bend test: pezzi D ed E', () => {
     }
   });
 
-  it('E: due angoli a 90° e uno a 120°, tre tasche, mesh manifold', async () => {
+  it('E: two 90° corners and one at 120°, three pockets, manifold mesh', async () => {
     const path = bendTestPath('joints');
     expect(path.bends.map((b) => b.label)).toEqual([90, 90, 120]);
     expect(markHoleCenters(path)).toHaveLength(6);
@@ -285,8 +285,8 @@ describe('bend test: pezzi D ed E', () => {
   });
 });
 
-describe('bend test: solidi', () => {
-  it('A singolo: manifold, 15 fori + 2 asole passanti, dimensioni attese', async () => {
+describe('bend test: solids', () => {
+  it('A alone: manifold, 15 holes + 2 through slots, expected size', async () => {
     const r = await buildBendTest({ kind: 'arcs', params: COB });
     try {
       expect(r.status).toBe('NoError');
@@ -321,7 +321,7 @@ describe('bend test: solidi', () => {
     }
   });
 
-  it('B singolo: manifold, 15 fori + 2 asole passanti', async () => {
+  it('B alone: manifold, 15 holes + 2 through slots', async () => {
     const r = await buildBendTest({ kind: 'corners', params: COB });
     try {
       expect(r.status).toBe('NoError');
@@ -334,7 +334,7 @@ describe('bend test: solidi', () => {
   });
 
   for (const kind of KINDS) {
-    it(`${kind}: 2 varianti separate (5.4 / 5.8), 1 e 2 tacche, genus = fori`, async () => {
+    it(`${kind}: 2 separate variants (5.4 / 5.8), 1 and 2 notches, genus = holes`, async () => {
       const r = await buildBendTest({ kind, variants: true, params: COB });
       try {
         expect(r.status).toBe('NoError');
@@ -349,7 +349,7 @@ describe('bend test: solidi', () => {
       }
     });
 
-    it(`${kind}: STL riletto come triangoli sciolti torna un solido chiuso con gli stessi fori`, async () => {
+    it(`${kind}: the STL read back as loose triangles is a closed solid with the same holes`, async () => {
       const r = await buildBendTest({ kind, variants: true, params: COB });
       const { Manifold, Mesh } = await getManifold();
       const stl = manifoldToStl(r.manifold);

@@ -20,7 +20,7 @@ async function bytesOf(download: Download): Promise<number> {
   return data.byteLength;
 }
 
-test('index: Scarica STL di Ciao Torino, housing e diffusore', async ({ page }) => {
+test('index: Download STL of Ciao Torino, housing and diffuser', async ({ page }) => {
   const track = trackPage(page);
   await page.goto('index.html', { waitUntil: 'load' });
   const button = page.locator('#download-stl');
@@ -57,7 +57,7 @@ test('index: Scarica STL di Ciao Torino, housing e diffusore', async ({ page }) 
   expectClean(track.problems);
 });
 
-test('index: con il fondale il download aggiunge la lastra in STL e il taglio laser in SVG', async ({ page }) => {
+test('index: with the backdrop the download adds the plate as STL and the laser cut as SVG', async ({ page }) => {
   const track = trackPage(page);
   await page.goto('index.html', { waitUntil: 'load' });
   const button = page.locator('#download-stl');

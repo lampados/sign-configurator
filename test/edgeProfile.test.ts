@@ -42,13 +42,13 @@ function perimeter(cs: CrossSection): number {
 }
 
 describe('planChamfer', () => {
-  it('square: nessuno smusso', () => {
+  it('square: no chamfer', () => {
     const c = plan({ EDGE_PROFILE: 'square' });
     expect(c.height).toBe(0);
     expect(c.warnings).toEqual([]);
   });
 
-  it('outer: CHAMFER_SIZE invariato, run = size / tan(angolo)', () => {
+  it('outer: CHAMFER_SIZE unchanged, run = size / tan(angle)', () => {
     const c = plan({ EDGE_PROFILE: 'outer' });
     expect(c.height).toBe(1.5);
     expect(c.run).toBeCloseTo(1.5, 9);
@@ -56,7 +56,7 @@ describe('planChamfer', () => {
     expect(plan({ EDGE_PROFILE: 'outer', CHAMFER_ANGLE: 60 }).run).toBeCloseTo(1.5 / Math.tan(Math.PI / 3), 9);
   });
 
-  it('inner/both: ridotto perché in cima restino 0.8 mm di parete, con avviso', () => {
+  it('inner/both: reduced so that 0.8 mm of wall is left on top, with a warning', () => {
     const inner = plan({ EDGE_PROFILE: 'inner' });
     expect(BENDABLE.WALL - inner.run).toBeCloseTo(MIN_TOP_WALL, 9);
     expect(inner.height).toBeLessThan(BENDABLE.CHAMFER_SIZE);
@@ -71,13 +71,13 @@ describe('planChamfer', () => {
     expect(ok.warnings).toEqual([]);
   });
 
-  it('CHAMFER_SIZE limitato a CHANNEL_DEPTH', () => {
+  it('CHAMFER_SIZE capped at CHANNEL_DEPTH', () => {
     const c = plan({ EDGE_PROFILE: 'outer', CHAMFER_SIZE: 20 });
     expect(c.height).toBe(BENDABLE.CHANNEL_DEPTH);
     expect(c.warnings).toHaveLength(1);
   });
 
-  it('parametri non validi: si torna a square con avviso', () => {
+  it('invalid parameters: back to square with a warning', () => {
     for (const o of [{ CHAMFER_ANGLE: 90 }, { CHAMFER_ANGLE: 0 }, { LAYER_STEP: 0 }, { WALL: 0.5 }]) {
       const c = plan({ EDGE_PROFILE: 'both', ...o });
       expect(c.profile).toBe('square');
@@ -87,9 +87,9 @@ describe('planChamfer', () => {
   });
 });
 
-describe('profilo dei bordi sui pezzi di prova', () => {
+describe('edge profile on the test parts', () => {
   for (const kind of KINDS) {
-    it(`${kind} square: geometria identica a prima (volume e triangoli)`, async () => {
+    it(`${kind} square: geometry identical to before (volume and triangles)`, async () => {
       const r = await buildBendTest({ kind, params: { ...COB, EDGE_PROFILE: 'square' } });
       try {
         expect(r.manifold.volume()).toBeCloseTo(SQUARE_BASELINE[kind].volume, 3);
@@ -99,7 +99,7 @@ describe('profilo dei bordi sui pezzi di prova', () => {
       }
     });
 
-    it(`${kind}: manifold e genus invariato per tutti i profili, volume tolto come atteso`, async () => {
+    it(`${kind}: manifold and genus unchanged for every profile, volume removed as expected`, async () => {
       const wasm = await getManifold();
       const P = resolveBendTestParams(COB);
       const channel = channelSection(wasm, bendTestPath(kind, P.HINGE_PITCH), P);
@@ -136,7 +136,7 @@ describe('profilo dei bordi sui pezzi di prova', () => {
     });
   }
 
-  it('2 varianti con smusso "both": entrambe manifold con lo stesso genus', async () => {
+  it('2 variants with a "both" chamfer: both manifold with the same genus', async () => {
     const r = await buildBendTest({ kind: 'corners', variants: true, params: { ...COB, EDGE_PROFILE: 'both' } });
     try {
       expect(r.status).toBe('NoError');

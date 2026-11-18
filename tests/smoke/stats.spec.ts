@@ -10,7 +10,7 @@ async function openOrder(page: Page): Promise<void> {
   await expect(page.locator('#submit-order, #download-stl').first()).toBeVisible();
 }
 
-test('contatore non disponibile: nessun errore in console, riga assente', async ({ page }) => {
+test('counter unavailable: no console errors, line absent', async ({ page }) => {
   const track = trackPage(page);
   const asked = page.waitForResponse('**/api/stats');
   await openOrder(page);
@@ -20,7 +20,7 @@ test('contatore non disponibile: nessun errore in console, riga assente', async 
   expectClean(track.problems);
 });
 
-test('contatore: i totali compaiono sotto i pulsanti, che restano uguali', async ({ page }) => {
+test('counter: the totals appear under the buttons, which stay the same', async ({ page }) => {
   const track = trackPage(page);
   await page.route('**/api/stats', (route) =>
     route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ downloads: 123, requests: 12 }) }),
@@ -31,7 +31,7 @@ test('contatore: i totali compaiono sotto i pulsanti, che restano uguali', async
   expectClean(track.problems);
 });
 
-test('contatore: un totale sotto la soglia non si mostra', async ({ page }) => {
+test('counter: a total under the threshold is not shown', async ({ page }) => {
   await page.route('**/api/stats', (route) =>
     route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ downloads: 123, requests: 3 }) }),
   );
@@ -39,7 +39,7 @@ test('contatore: un totale sotto la soglia non si mostra', async ({ page }) => {
   await expect(page.locator('#request-stats')).toHaveText('123 downloads so far');
 });
 
-test('contatore: su telefono stretto la riga non sposta i pulsanti', async ({ page }) => {
+test('counter: on a narrow phone the line does not move the buttons', async ({ page }) => {
   let release: () => void = () => undefined;
   const held = new Promise<void>((resolve) => {
     release = resolve;
@@ -69,7 +69,7 @@ test('contatore: su telefono stretto la riga non sposta i pulsanti', async ({ pa
   expect(after.line.y + after.line.height).toBeLessThanOrEqual(740);
 });
 
-test('Download STL manda un solo evento, senza dati personali', async ({ page }) => {
+test('Download STL sends a single event, without personal data', async ({ page }) => {
   const events: string[] = [];
   await page.route('**/api/event', async (route) => {
     events.push(route.request().postData() ?? '');
@@ -85,7 +85,7 @@ test('Download STL manda un solo evento, senza dati personali', async ({ page })
   expect(JSON.parse(events[0]!)).toEqual({ type: 'stl' });
 });
 
-test('invito a offrire un caffè: sotto il nome e sotto «Download STL», solo link', async ({ page }) => {
+test('coffee invitation: under the name and under "Download STL", links only', async ({ page }) => {
   const track = trackPage(page);
   await openOrder(page);
   const support = 'https://support.example.test/ciao';

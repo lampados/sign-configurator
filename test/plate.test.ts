@@ -56,8 +56,8 @@ const order = (plate: PlateChoice | null): SignOrderV4 => ({
   plate,
 });
 
-describe('fondale', () => {
-  it('rettangolare: ingombro + margine, spessore del materiale, fori e montaggio negli angoli', async () => {
+describe('backdrop', () => {
+  it('rectangular: footprint + margin, material thickness, holes and mounting in the corners', async () => {
     const wasm = await getManifold();
     const plate = buildPlate(wasm, twoBlocks(), choice({}))!;
     try {
@@ -77,7 +77,7 @@ describe('fondale', () => {
     }
   });
 
-  it('i tre materiali hanno ciascuno il proprio spessore', async () => {
+  it('each of the three materials has its own thickness', async () => {
     const wasm = await getManifold();
     for (const material of ['clear', 'black', 'wood'] as const) {
       const plate = buildPlate(wasm, twoBlocks(), choice({ material }))!;
@@ -88,7 +88,7 @@ describe('fondale', () => {
     expect(PLATE_MATERIALS.black.label).toBe('Smoked black acrylic');
   });
 
-  it('pillola: raggio pari a metà del lato corto, area minore del rettangolo, montaggio sulle teste', async () => {
+  it('pill: radius half the short side, area smaller than the rectangle, mounting on the ends', async () => {
     const wasm = await getManifold();
     const pill = buildPlate(wasm, twoBlocks(), choice({ shape: 'pill' }))!;
     const rect = buildPlate(wasm, twoBlocks(), choice({ shape: 'rect', cornerRMm: 0 }))!;
@@ -106,7 +106,7 @@ describe('fondale', () => {
     }
   });
 
-  it('sagomato: un pezzo solo attorno alle due sagome, più piccolo del rettangolo, senza montaggio', async () => {
+  it('contoured: a single piece around the two outlines, smaller than the rectangle, without mounting', async () => {
     const wasm = await getManifold();
     const contour = buildPlate(wasm, twoBlocks(), choice({ shape: 'contour', material: 'black', marginMm: 10 }))!;
     const rect = buildPlate(wasm, twoBlocks(), choice({ shape: 'rect', material: 'black', marginMm: 10 }))!;
@@ -120,7 +120,7 @@ describe('fondale', () => {
     }
   });
 
-  it('un margine stretto toglie i fori di montaggio che cadrebbero sotto l\'insegna', async () => {
+  it('a narrow margin removes the mounting holes that would fall under the sign', async () => {
     const wasm = await getManifold();
     const plate = buildPlate(wasm, twoBlocks(), choice({ marginMm: 10, cornerRMm: 0 }))!;
     try {
@@ -131,14 +131,14 @@ describe('fondale', () => {
     }
   });
 
-  it('il margine resta nei limiti di config', async () => {
+  it('the margin stays within the config limits', async () => {
     const wasm = await getManifold();
     const plate = buildPlate(wasm, twoBlocks(), choice({ marginMm: 500 }))!;
     expect(plate.choice.marginMm).toBe(PLATE_MARGIN_MAX);
     plate.solid.delete();
   });
 
-  it('SVG di taglio in mm, visto dal retro: fori blu, contorno rosso', async () => {
+  it('cutting SVG in mm, seen from the back: blue holes, red outline', async () => {
     const wasm = await getManifold();
     const plate = buildPlate(wasm, twoBlocks(), choice({}))!;
     plate.solid.delete();
@@ -152,7 +152,7 @@ describe('fondale', () => {
     expect(Number(fix[1])).toBeGreaterThan(75);
   });
 
-  it('BOM del fondale: misure, taglio e fori per tipo', async () => {
+  it('backdrop BOM: sizes, cut and holes by type', async () => {
     const wasm = await getManifold();
     const plate = buildPlate(wasm, twoBlocks(), choice({ cornerRMm: 0 }))!;
     plate.solid.delete();
@@ -165,7 +165,7 @@ describe('fondale', () => {
     expect(bom.cutLengthMm).toBeCloseTo(2 * (140 + 60) + holes, 0);
   });
 
-  it('il generatore lo restituisce solo se l\'ordine v4 lo chiede, anche nella BOM', async () => {
+  it('the generator returns it only if the v4 order asks for it, in the BOM too', async () => {
     const none = await generateSign(order(null), readPublic);
     expect(none.plate).toBeNull();
     expect(none.plateMesh).toBeNull();
@@ -178,7 +178,7 @@ describe('fondale', () => {
     expect(withPlate.housingMesh.triVerts.length).toBe(none.housingMesh.triVerts.length);
   });
 
-  it('riporta i fori tondi dell\'housing: stesso punto, stesso diametro, capi e percorso', async () => {
+  it('carries over the round holes of the housing: same point, same diameter, ends and path', async () => {
     const wasm = await getManifold();
     const housing = twoBlocks();
     // Il cavo passa dal foro grande del primo capo; un secondo capo e tre fori lungo il percorso.
@@ -203,7 +203,7 @@ describe('fondale', () => {
     }
   });
 
-  it('sotto un\'insegna vera il fondale ha un foro per ogni foro dell\'housing', async () => {
+  it('under a real sign the backdrop has a hole for every hole of the housing', async () => {
     const result = await generateSign(order(choice({ shape: 'rect', marginMm: 20 })), readPublic);
     expect(result.pathHoles.length).toBeGreaterThan(20);
     const openings = result.slots.length + result.pockets.length + result.pathHoles.length;
@@ -213,7 +213,7 @@ describe('fondale', () => {
     expect(dots % 2).toBe(0);
   }, 180_000);
 
-  it('passa per il link condiviso', () => {
+  it('survives the shared link', () => {
     const plate = choice({ shape: 'pill', material: 'black', marginMm: 25 });
     const link = encodeShare(migrateOrder(order(plate)));
     const read = decodeShare(link.hash ?? '');

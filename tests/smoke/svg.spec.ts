@@ -6,7 +6,7 @@ import { expectClean, trackPage } from './guard';
 
 const fixture = join(dirname(fileURLToPath(import.meta.url)), 'fixtures', 'linea.svg');
 
-test('debug: un SVG caricato produce l\'STL', async ({ page }) => {
+test('debug: an uploaded SVG produces the STL', async ({ page }) => {
   const track = trackPage(page);
   await page.goto('debug.html', { waitUntil: 'load' });
   await expect(page.locator('#raster')).toHaveAttribute('data-ok', 'true');

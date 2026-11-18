@@ -20,8 +20,8 @@ function arc(radius: number, sweepDeg: number): Point[] {
   return pts;
 }
 
-describe('altezza minima', () => {
-  it('un dritto può scendere fino al passo di taglio', () => {
+describe('minimum height', () => {
+  it('a straight can go down to the cut pitch', () => {
     const model = buildStrip(
       {
         nodes: [
@@ -40,7 +40,7 @@ describe('altezza minima', () => {
     expect(model.bom.totalLeds).toBe(Math.round((88 * BENDABLE.LED_PER_M) / 1000));
   });
 
-  it("alza l'altezza finché un arco stretto raggiunge R_MIN", () => {
+  it("raises the height until a tight arc reaches R_MIN", () => {
     const pts = arc(10, 180);
     const end = pts[pts.length - 1]!;
     const model = buildStrip(
@@ -60,7 +60,7 @@ describe('altezza minima', () => {
     expect(model.suggestion.heightMm).toBeLessThan(expected + 30);
   });
 
-  it('due tratti non contigui troppo vicini alzano l\'altezza minima', () => {
+  it('two non-adjacent strokes too close together raise the minimum height', () => {
     const model = buildStrip(
       {
         nodes: [
@@ -86,7 +86,7 @@ describe('altezza minima', () => {
     expect(model.suggestion.heightMm).toBe(needed);
   });
 
-  it('un angolo retto non è una sagoma fusa, nemmeno spezzato in due', () => {
+  it('a right angle is not a merged outline, not even when split in two', () => {
     const one = buildStrip(sourceFromPaths([{ points: [[0, 0], [40, 0], [40, 40]] }]), BENDABLE, 100);
     expect(one.issues.some((issue) => issue.message.startsWith('Sagome che si fondono'))).toBe(false);
     const two = buildStrip(
@@ -107,7 +107,7 @@ describe('altezza minima', () => {
     expect(two.issues.some((issue) => issue.message.startsWith('Sagome che si fondono'))).toBe(false);
   });
 
-  it('una giunzione a T non è una sagoma fusa e non blocca l\'altezza', () => {
+  it('a T junction is not a merged outline and does not constrain the height', () => {
     const model = buildStrip(
       {
         nodes: [
@@ -130,7 +130,7 @@ describe('altezza minima', () => {
     expect(model.suggestion.heightMm).toBeLessThan(100);
   });
 
-  it('una T stretta si fonde oltre il contatto, e la scala la separa', () => {
+  it('a narrow T merges beyond the contact, and scale separates it', () => {
     // Il ramo parte dalla T a 10° dall'asta: lontano dal contatto i due tratti restano vicini.
     const deg = (10 * Math.PI) / 180;
     const tip: Point = [50 + 80 * Math.cos(deg), 80 * Math.sin(deg)];
@@ -157,7 +157,7 @@ describe('altezza minima', () => {
     expect(model.suggestion.heightMm).toBeLessThan(2000);
   });
 
-  it('una U sulla stessa linea è due pareti e alza l\'altezza', () => {
+  it('a U on the same line is two walls and raises the height', () => {
     const model = buildStrip(
       sourceFromPaths([{ points: [[0, 0], [40, 0], [40, 8], [0, 8]] }]),
       BENDABLE,

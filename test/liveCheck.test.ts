@@ -15,20 +15,20 @@ function arc(radius: number): Point[] {
   return points;
 }
 
-describe('validazione dal vivo', () => {
-  it('una retta non blocca l\'invio', () => {
+describe('live validation', () => {
+  it('a straight line does not block sending', () => {
     const report = liveCheck([{ id: 'p1', points: [[0, 0], [80, 0]], closed: false }], [], params);
     expect(report.blocked).toBe(false);
     expect(report.markers).toEqual([]);
   });
 
-  it('un arco sotto R_MIN è una curva e blocca', () => {
+  it('an arc under R_MIN is a curve and blocks', () => {
     const report = liveCheck([{ id: 'p1', points: arc(8), closed: false }], ['p1'], params);
     expect(report.markers.some((marker) => marker.kind === 'curva')).toBe(true);
     expect(report.blocked).toBe(true);
   });
 
-  it('due tratti paralleli troppo vicini sono una fusione', () => {
+  it('two parallel strokes too close together are a merge', () => {
     const report = liveCheck(
       [
         { id: 'p1', points: [[0, 0], [80, 0]], closed: false },
@@ -41,7 +41,7 @@ describe('validazione dal vivo', () => {
     expect(report.blocked).toBe(true);
   });
 
-  it('lo stesso ingresso dà gli stessi marcatori', () => {
+  it('the same input gives the same markers', () => {
     const segments = [{ id: 'p1', points: arc(8), closed: false }];
     expect(liveCheck(segments, [], params)).toEqual(liveCheck(segments, [], params));
   });

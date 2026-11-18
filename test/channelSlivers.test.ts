@@ -69,8 +69,8 @@ async function diffuserSlice(text: string, heightMm: number): Promise<CrossSecti
   return slice;
 }
 
-describe('chiusura del canale: niente buchi né tacche più stretti di 2·WALL_MIN', () => {
-  it('riempie una lente e una tacca stretta, tiene un\'isola di parete vera', async () => {
+describe('closing the channel: no holes or notches narrower than 2·WALL_MIN', () => {
+  it('fills a lens and a narrow notch, keeps an island of real wall', async () => {
     const wasm = await getManifold();
     // Canale 40×40 con un buco 1×1 (lente), uno 8×8 (isola vera) e una tacca larga 1 mm dal bordo.
     const notch: Vec2[] = [[0, 0], [40, 0], [40, 40], [20.5, 40], [20.5, 30], [19.5, 30], [19.5, 40], [0, 40]];
@@ -85,7 +85,7 @@ describe('chiusura del canale: niente buchi né tacche più stretti di 2·WALL_M
     for (const s of [closed, section, outline]) s.delete();
   });
 
-  it('il canale non esce dalla sagoma esterna', async () => {
+  it('the channel does not leave the outer outline', async () => {
     const wasm = await getManifold();
     const section = wasm.CrossSection.square([10, 10]);
     const outline = wasm.CrossSection.square([10, 10]);
@@ -95,7 +95,7 @@ describe('chiusura del canale: niente buchi né tacche più stretti di 2·WALL_M
     for (const s of [closed, section, outline, outside]) s.delete();
   });
 
-  it('«Ciao» a 12 cm: nel diffusore solo l\'occhiello della «o», niente fessure', async () => {
+  it('"Ciao" at 12 cm: in the diffuser only the counter of the "o", no slits', async () => {
     const slice = await diffuserSlice('Ciao', 120);
     const holes = holeAreas(slice.toPolygons());
     expect(holes.length).toBeGreaterThan(0);
@@ -104,7 +104,7 @@ describe('chiusura del canale: niente buchi né tacche più stretti di 2·WALL_M
     slice.delete();
   });
 
-  it('«Dog» a 12 cm: agli incroci niente tacche scure fra i tratti', async () => {
+  it('"Dog" at 12 cm: no dark notches between strokes at the crossings', async () => {
     const slice = await diffuserSlice('Dog', 120);
     expect(await leftover(slice, 1.2)).toBeLessThan(0.05);
     slice.delete();

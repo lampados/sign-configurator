@@ -7,7 +7,7 @@ const PIECES = [
   { id: '#download-corners', label: 'B' },
 ] as const;
 
-test('bend-test: gli STL dei pezzi A e B non sono vuoti', async ({ page }) => {
+test('bend-test: the STLs of parts A and B are not empty', async ({ page }) => {
   const track = trackPage(page);
   await page.goto('bend-test.html', { waitUntil: 'load' });
   await expect(page.locator('#download-arcs')).toBeEnabled();

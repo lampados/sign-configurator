@@ -9,15 +9,15 @@ import { GENERATOR_VERSION } from '../src/config';
 const lrs35 = { label: 'LRS-35-5', sizeMm: [99, 82, 30] as [number, number, number] };
 const mini = { label: 'GL-C-309WL', sizeMm: CONTROLLER_FALLBACK_MM };
 
-describe('scatole', () => {
-  it('ingombri: due file possibili, con pareti, distanza e aria sopra', () => {
+describe('boxes', () => {
+  it('footprints: two possible rows, with walls, spacing and air above', () => {
     expect(boxNeeds([lrs35, mini])).toEqual([
       [99 + 60 + 2 * 5 + 10, 82 + 10, 40],
       [99 + 10, 82 + 35 + 2 * 5 + 10, 40],
     ]);
   });
 
-  it('la più piccola che basta, girandola se serve', () => {
+  it('the smallest one that is enough, rotated if needed', () => {
     // 109 × 137 × 40: entra nella 150 × 110 girata, non nella 120 × 80 × 50.
     expect(pickBox([lrs35, mini]).box?.model).toBe('GW44206');
     // Solo il controller (adattatore con spina fuori): basta una scatola piccola alta almeno 30 mm.
@@ -27,14 +27,14 @@ describe('scatole', () => {
     expect(boxFits(BOXES.find((b) => b.model === 'GW44204')!, [lrs35, mini])).toBe(false);
   });
 
-  it('scelta a mano: anche troppo piccola, ma lo dice; «none» non sceglie nulla', () => {
+  it('manual choice: even too small, but it says so; "none" picks nothing', () => {
     const forced = pickBox([lrs35, mini], 'gw44204');
     expect(forced).toMatchObject({ fits: false, auto: false });
     expect(pickBox([lrs35, mini], BOX_NONE).box).toBeNull();
     expect(pickBox([lrs35, mini], 'boh').auto).toBe(true);
   });
 
-  it('nella distinta: l\'adattatore con spina resta fuori, un LRS entra', () => {
+  it('in the bill of materials: the plug-in adapter stays outside, an LRS goes in', () => {
     // 100 LED a 12 V: GST60A12, fuori dalla scatola; dentro solo il controller.
     const adapter = bomAssembly([], [], 100, 60, 12);
     expect(adapter.supply?.family).toBe('gst60a');
@@ -51,7 +51,7 @@ describe('scatole', () => {
     expect(bomAssembly([], [], 0, 60, 5).box).toBeNull();
   });
 
-  it('va nell\'ordine solo se scelta, e passa per il link', () => {
+  it('it goes into the order only if chosen, and survives the link', () => {
     expect(techParams({ numbers: {}, edgeProfile: 'square', box: 'auto' })).toEqual({});
     const params = techParams({ numbers: {}, edgeProfile: 'square', box: 'gw44207' });
     expect(params).toEqual({ BOX_ID: 'gw44207' });

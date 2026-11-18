@@ -28,7 +28,7 @@ function middlePin(pins: Pin[]): Pin {
   return pin;
 }
 
-test('editor: trascina un nodo, una curva stretta blocca l\'invio, Ctrl+Z lo riabilita', async ({ page }) => {
+test('editor: drag a node, a tight curve blocks sending, Ctrl+Z enables it again', async ({ page }) => {
   test.setTimeout(240_000);
   const track = trackPage(page);
   const scripts: string[] = [];

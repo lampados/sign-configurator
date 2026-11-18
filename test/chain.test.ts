@@ -40,8 +40,8 @@ function fullHinges(points: readonly Point[], hinges: readonly ChainHinge[], pit
   });
 }
 
-describe('catena su archi di raggio noto', () => {
-  it('un dritto ha corde di HINGE_PITCH, angolo nullo e canale CHANNEL_W', () => {
+describe('chain on arcs of known radius', () => {
+  it('a straight has chords of HINGE_PITCH, zero angle and a CHANNEL_W channel', () => {
     const chain = resampleChain(
       [
         [0, 0],
@@ -68,7 +68,7 @@ describe('catena su archi di raggio noto', () => {
     }
   });
 
-  it('un arco di raggio 40 mm ha freccia p²/8R e canale CHANNEL_W + s', () => {
+  it('an arc of radius 40 mm has sagitta p²/8R and a channel of CHANNEL_W + s', () => {
     const radius = 40;
     const chain = resampleChain(circularArc(radius, 120), {
       hingePitch: PITCH,
@@ -94,7 +94,7 @@ describe('catena su archi di raggio noto', () => {
     }
   });
 
-  it("all'arco di raggio R_MIN l'angolo è HINGE_MAX_DEG", () => {
+  it("on an arc of radius R_MIN the angle is HINGE_MAX_DEG", () => {
     const radius = rMin(BENDABLE);
     const chain = resampleChain(circularArc(radius, 180), {
       hingePitch: PITCH,
@@ -111,7 +111,7 @@ describe('catena su archi di raggio noto', () => {
     }
   });
 
-  it('un arco più stretto di R_MIN supera l\'angolo massimo', () => {
+  it('an arc tighter than R_MIN exceeds the maximum angle', () => {
     const radius = 10;
     const chain = resampleChain(circularArc(radius, 180), {
       hingePitch: PITCH,
@@ -132,7 +132,7 @@ describe('catena su archi di raggio noto', () => {
     }
   });
 
-  it('è deterministica', () => {
+  it('is deterministic', () => {
     const arc = circularArc(25, 150, 1);
     const options = {
       hingePitch: PITCH,

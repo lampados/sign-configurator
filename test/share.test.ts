@@ -15,8 +15,8 @@ function sample(): SignOrder {
   };
 }
 
-describe('condivisione', () => {
-  it('hash e ordine tornano identici', () => {
+describe('sharing', () => {
+  it('hash and order come back identical', () => {
     const order = migrateOrder(sample());
     const link = encodeShare(order);
     expect(link.hash).toMatch(/^#o=[A-Za-z0-9_-]+$/);
@@ -26,7 +26,7 @@ describe('condivisione', () => {
     expect(decodeShare(link.json).order).toEqual(order);
   });
 
-  it('un hash malformato dà un avviso e non lancia', () => {
+  it('a malformed hash gives a warning and does not throw', () => {
     for (const input of ['', '#o=', '#o=%%%', '#o=aaaa', 'non-è-un-link']) {
       const read = decodeShare(input);
       expect(read.order).toBeNull();
@@ -34,7 +34,7 @@ describe('condivisione', () => {
     }
   });
 
-  it('oltre 8 kB non c\'è il link, il json sì', () => {
+  it('beyond 8 kB there is no link, but there is the json', () => {
     const order = migrateOrder({
       ...sample(),
       source: { kind: 'text', text: 'x'.repeat(20_000), fontId: 'sacramento' },
@@ -45,7 +45,7 @@ describe('condivisione', () => {
     expect(decodeShare(link.json).order).toEqual(order);
   });
 
-  it('un valore fuori limite si riporta al limite e un campo sconosciuto si ignora', () => {
+  it('an out-of-range value is clamped to the limit and an unknown field is ignored', () => {
     const order = migrateOrder(sample());
     const json = JSON.stringify({ ...order, heightMm: 2000, email: 'a@b.c' });
     const read = decodeShare(json);
@@ -55,7 +55,7 @@ describe('condivisione', () => {
     expect(JSON.stringify(read.order)).not.toContain('email');
   });
 
-  it('margine e raggio fuori limite si riportano al limite; forma o materiale sconosciuti tolgono il fondale', () => {
+  it('out-of-range margin and radius are clamped to the limit; unknown shape or material removes the backdrop', () => {
     const order = migrateOrder(sample());
     const wide = decodeShare(JSON.stringify({
       ...order,

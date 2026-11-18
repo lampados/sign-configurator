@@ -5,8 +5,8 @@ import { decodeShare, encodeShare } from '../src/order/share';
 import { DEFAULT_CUSTOMER, migrateOrder } from '../src/order/schema';
 import { techParams, voltageOptions } from '../src/ui/techParams';
 
-describe('alimentatore e controller', () => {
-  it('a parità di LED la corrente scala con la tensione', () => {
+describe('power supply and controller', () => {
+  it('for the same LEDs the current scales with the voltage', () => {
     const at = (v: number) => bomAssembly([], [], 100, DEFAULT_PARAMS.LED_MAX_MA, v);
     expect(at(5).maxCurrentA).toBeCloseTo(6, 6);
     expect(at(12).maxCurrentA).toBeCloseTo(2.5, 6);
@@ -19,7 +19,7 @@ describe('alimentatore e controller', () => {
     expect(at(9).voltageV).toBe(5);
   });
 
-  it('avvisa oltre i 10 A e oltre gli 800 LED del controller', () => {
+  it('warns beyond the controller\'s 10 A and 800 LEDs', () => {
     const ok = bomAssembly([], [], 100, DEFAULT_PARAMS.LED_MAX_MA, 5);
     expect(ok.controllerWarnings).toEqual([]);
     const amps = bomAssembly([], [], 200, DEFAULT_PARAMS.LED_MAX_MA, 5);
@@ -31,7 +31,7 @@ describe('alimentatore e controller', () => {
     expect(bomAssembly([], [], 200, DEFAULT_PARAMS.LED_MAX_MA, 24).controllerWarnings).toEqual([]);
   });
 
-  it('il menu offre 5, 12 e 24 V e scrive la tensione solo se non è quella predefinita', () => {
+  it('the menu offers 5, 12 and 24 V and writes the voltage only if it is not the default', () => {
     expect(STRIP_VOLTAGES).toEqual([5, 12, 24]);
     expect(voltageOptions().map((o) => o.value)).toEqual([5, 12, 24]);
     expect(techParams({ numbers: {}, edgeProfile: 'square', stripV: '12' })).toEqual({ STRIP_V: 12 });
@@ -39,7 +39,7 @@ describe('alimentatore e controller', () => {
     expect(techParams({ numbers: {}, edgeProfile: 'square', stripV: '9' })).toEqual({});
   });
 
-  it('la tensione passa per il link condiviso; una sconosciuta si ignora con un avviso', () => {
+  it('the voltage survives the shared link; an unknown one is ignored with a warning', () => {
     const order = migrateOrder({
       schemaVersion: 4,
       generatorVersion: GENERATOR_VERSION,

@@ -37,26 +37,26 @@ const NOW = new Date('2026-11-17T10:00:00Z');
 const TEXT = { downloads: (n: number) => `${n} downloads`, requests: (n: number) => `${n} requests`, suffix: 'so far' };
 
 describe('statsStore', () => {
-  it('registra tipo e ora, e nient’altro', async () => {
+  it('records type and time, and nothing else', async () => {
     const db = memoryDb();
     expect(await recordEvent('stl', db, NOW)).toBe(true);
     expect(db.rows).toEqual([{ type: 'stl', ts: '2026-11-17T10:00:00.000Z' }]);
   });
 
-  it('rifiuta un tipo non valido', async () => {
+  it('rejects an invalid type', async () => {
     const db = memoryDb();
     for (const type of ['order', '', 'STL', 7, null, undefined]) expect(await recordEvent(type, db, NOW)).toBe(false);
     expect(db.rows).toEqual([]);
   });
 
-  it('senza database, o se il database fallisce, non lancia', async () => {
+  it('without a database, or if the database fails, it does not throw', async () => {
     expect(await recordEvent('stl', undefined, NOW)).toBe(false);
     expect(await recordEvent('request', brokenDb, NOW)).toBe(false);
     expect(await readStats(undefined)).toBeNull();
     expect(await readStats(brokenDb)).toBeNull();
   });
 
-  it('conta download e richieste', async () => {
+  it('counts downloads and requests', async () => {
     const db = memoryDb();
     expect(await readStats(db)).toEqual({ downloads: 0, requests: 0 });
     for (let i = 0; i < 3; i += 1) await recordEvent('stl', db, NOW);
@@ -64,7 +64,7 @@ describe('statsStore', () => {
     expect(await readStats(db)).toEqual({ downloads: 3, requests: 1 });
   });
 
-  it('accetta solo la pagina servita dallo stesso host', () => {
+  it('accepts only the page served by the same host', () => {
     const url = 'https://sign-configurator.pages.dev/api/event';
     expect(sameOrigin(url, 'https://sign-configurator.pages.dev', null)).toBe(true);
     expect(sameOrigin(url, null, 'https://sign-configurator.pages.dev/index.html')).toBe(true);
@@ -74,7 +74,7 @@ describe('statsStore', () => {
     expect(sameOrigin(url, 'non un url', null)).toBe(false);
   });
 
-  it('la riga mostra ogni totale solo dalla soglia in su', () => {
+  it('the line shows each total only from the threshold up', () => {
     expect(statsLine({ downloads: 123, requests: 12 }, 10, TEXT)).toBe('123 downloads · 12 requests so far');
     expect(statsLine({ downloads: 123, requests: 9 }, 10, TEXT)).toBe('123 downloads so far');
     expect(statsLine({ downloads: 9, requests: 10 }, 10, TEXT)).toBe('10 requests so far');

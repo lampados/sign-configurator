@@ -18,7 +18,7 @@ for (const viewport of [
   { width: 390, height: 844, mobile: true },
   { width: 1280, height: 800, mobile: false },
 ] as const) {
-  test(`strumenti a ${viewport.width}×${viewport.height}: Ciao, un foglio, misura L`, async ({ page }) => {
+  test(`tools at ${viewport.width}×${viewport.height}: Ciao, one sheet, size L`, async ({ page }) => {
     const track = trackPage(page);
     await page.setViewportSize({ width: viewport.width, height: viewport.height });
     await page.goto('index.html', { waitUntil: 'load' });
@@ -83,7 +83,7 @@ for (const viewport of [
   });
 }
 
-test('giro guidato: sei passi, il quarto illumina lo strumento Backdrop', async ({ page }) => {
+test('guided tour: six steps, the fourth highlights the Backdrop tool', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 800 });
   await page.goto('index.html', { waitUntil: 'load' });
   await expect(page.locator('#preview-status')).toContainText('LED');

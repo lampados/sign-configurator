@@ -65,15 +65,15 @@ const CASES: [fontId: string, heightMm: number, stripId: string][] = [
   ['neonderthaw', 80, 'cob-5mm'],
 ];
 
-describe('il pezzo stampato è intero', () => {
+describe('the printed part is in one piece', () => {
   for (const [fontId, heightMm, stripId] of CASES) {
-    it(`${fontId} a ${heightMm} mm con ${stripId}: nessun pezzo staccato`, async () => {
+    it(`${fontId} at ${heightMm} mm with ${stripId}: no detached piece`, async () => {
       const result = await generateSign(order(fontId, heightMm, { STRIP_ID: stripId }), readPublic);
       expect(pieces(result.housingMesh)).toBe(wanted(result.outline));
     }, 180_000);
   }
 
-  it('con le asole di prima (WIRE_HOLE_D 0) il controllo li trova: non passa per caso', async () => {
+  it('with the old slots (WIRE_HOLE_D 0) the check finds them: it does not pass by chance', async () => {
     const result = await generateSign(order('neonderthaw', 120, { STRIP_ID: 'ws2812b-60', WIRE_HOLE_D: 0 }), readPublic);
     expect(pieces(result.housingMesh)).toBeGreaterThan(wanted(result.outline));
   }, 180_000);

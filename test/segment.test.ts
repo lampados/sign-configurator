@@ -33,8 +33,8 @@ function run(nodes: GraphNode[], edges: GraphEdge[]) {
   return segmentGraph({ nodes, edges }, { crossingGap: gap, rMin: rMin(BENDABLE) });
 }
 
-describe('segmentazione', () => {
-  it('a un incrocio la coppia dritta prosegue e l\'altra si interrompe di CROSSING_GAP', () => {
+describe('segmentation', () => {
+  it('at a crossing the straight pair continues and the other is interrupted by CROSSING_GAP', () => {
     const nodes: GraphNode[] = [
       { id: 0, x: 0, y: 0, degree: 4 },
       { id: 1, x: 20, y: 0, degree: 1 },
@@ -68,7 +68,7 @@ describe('segmentazione', () => {
     }
   });
 
-  it('a una giunzione di grado 3 il ramo restante arriva fino al nodo', () => {
+  it('at a degree-3 junction the remaining branch reaches the node', () => {
     const nodes: GraphNode[] = [
       { id: 0, x: 0, y: 0, degree: 3 },
       { id: 1, x: -20, y: 0, degree: 1 },
@@ -91,7 +91,7 @@ describe('segmentazione', () => {
     expect(bar.lengthMm).toBeCloseTo(40, 4);
   });
 
-  it('i componenti sconnessi sono spezzoni distinti', () => {
+  it('disconnected components are separate segments', () => {
     const nodes: GraphNode[] = [
       { id: 0, x: 0, y: 0, degree: 1 },
       { id: 1, x: 30, y: 0, degree: 1 },
@@ -107,7 +107,7 @@ describe('segmentazione', () => {
     expect(segments.map((s) => s.id)).toEqual([1, 2]);
   });
 
-  it('un anello sotto R_MIN è escluso, uno più grande resta', () => {
+  it('a loop under R_MIN is excluded, a larger one stays', () => {
     const small = circle(4);
     const large = circle(40);
     const excluded = run([{ id: 0, x: 4, y: 0, degree: 2 }], [edge(0, 0, 0, small)]);

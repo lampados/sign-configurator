@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { toDxf } from '../src/export/dxf';
 
 describe('DXF', () => {
-  it('specchia in X e chiude il contorno reale di WIRE_SLOTS', () => {
+  it('mirrors in X and closes the real outline of WIRE_SLOTS', () => {
     const dxf = toDxf({
       polylines: [{ layer: 'WIRE_SLOTS', points: [[1.5, -2], [4, -2], [4, 3]] }],
       circles: [{ layer: 'ANCHOR_HOLES', center: [8, 1], radius: 1.6 }],

@@ -5,8 +5,8 @@ import { migrateOrder } from '../src/order/schema';
 import { decodeShare, encodeShare } from '../src/order/share';
 import { controllerOptions, techParams } from '../src/ui/techParams';
 
-describe('controller', () => {
-  it('il GLEDOPTO Ultra Mini resta lo standard; quattro controller, id unici, ognuno con il suo prezzo', () => {
+describe('controllers', () => {
+  it('the GLEDOPTO Ultra Mini stays the standard; four controllers, unique ids, each with its price', () => {
     expect(CONTROLLER.model).toBe('GL-C-309WL');
     expect(DEFAULT_PARAMS.CONTROLLER_ID).toBe(CONTROLLER.id);
     expect(new Set(CONTROLLERS.map((c) => c.id)).size).toBe(CONTROLLERS.length);
@@ -26,7 +26,7 @@ describe('controller', () => {
     expect(controllerOf('boh')).toBe(CONTROLLER);
   });
 
-  it('i limiti degli avvisi seguono il controller scelto', () => {
+  it('the warning limits follow the chosen controller', () => {
     // 200 LED a 60 mA, 5 V: 12 A, 15 A con il margine.
     const small = bomAssembly([], [], 200, 60, 5);
     expect(small.supplyA).toBe(15);
@@ -40,7 +40,7 @@ describe('controller', () => {
     expect(bomAssembly([], [], 1000, 1, 24, 'quinled-dig-uno').controllerWarnings).toEqual([]);
   });
 
-  it('la scheda Seeed XIAO: 3 A a 5 V, 2 A a 12 V, niente 24 V', () => {
+  it('the Seeed XIAO board: 3 A at 5 V, 2 A at 12 V, no 24 V', () => {
     const xiao = controllerOf('xiao-led-driver');
     expect(controllerAmps(xiao, 5)).toBe(3);
     expect(controllerAmps(xiao, 12)).toBe(2);
@@ -57,7 +57,7 @@ describe('controller', () => {
     expect(bomAssembly([], [], 10, 60, 24).controllerWarnings).toEqual([]);
   });
 
-  it('va nell\'ordine solo se diverso dallo standard, e passa per il link', () => {
+  it('it goes into the order only if different from the standard, and survives the link', () => {
     expect(controllerOptions().filter((o) => o.isDefault).map((o) => o.value)).toEqual([CONTROLLER.id]);
     expect(techParams({ numbers: {}, edgeProfile: 'square', controller: CONTROLLER.id })).toEqual({});
     expect(techParams({ numbers: {}, edgeProfile: 'square', controller: 'nope' })).toEqual({});
@@ -81,8 +81,8 @@ describe('controller', () => {
   });
 });
 
-describe('disegni dei controller', () => {
-  it('uno per controller; senza misure del costruttore la sagoma è tratteggiata e lo dice', async () => {
+describe('controller drawings', () => {
+  it('one per controller; without the maker\'s measurements the outline is dashed and says so', async () => {
     const { controllerArt } = await import('../src/parts/controllerArt');
     for (const c of CONTROLLERS) {
       const svg = controllerArt(c);

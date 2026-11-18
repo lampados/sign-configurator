@@ -15,7 +15,7 @@ async function sendable(page: Page): Promise<void> {
   await expect.poll(async () => status.getAttribute('data-generation'), { timeout: 60_000 }).not.toBe(before);
 }
 
-test('Send request: salva il design senza dati personali e porta al carrello del negozio', async ({ page }) => {
+test('Send request: saves the design without personal data and goes to the shop cart', async ({ page }) => {
   const track = trackPage(page);
   let posted: {
     order?: { source?: { text?: string } };
@@ -72,7 +72,7 @@ test('Send request: salva il design senza dati personali e porta al carrello del
   expectClean(track.problems);
 });
 
-test('Send request: se il salvataggio fallisce la pagina resta e lo dice', async ({ page }) => {
+test('Send request: if saving fails the page stays and says so', async ({ page }) => {
   await page.route('**/api/design', (route) =>
     route.fulfill({ status: 503, contentType: 'application/json', body: JSON.stringify({ error: 'storage_not_configured' }) }),
   );
@@ -88,7 +88,7 @@ test('Send request: se il salvataggio fallisce la pagina resta e lo dice', async
   expect(new URL(page.url()).hostname).not.toBe('shop.example.test');
 });
 
-test('?d=<codice> riapre il design salvato', async ({ page }) => {
+test('?d=<code> reopens the saved design', async ({ page }) => {
   const track = trackPage(page);
   const order = {
     schemaVersion: 4,

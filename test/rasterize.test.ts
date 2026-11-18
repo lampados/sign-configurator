@@ -89,8 +89,8 @@ function circle(cx: number, cy: number, radius: number, n: number, ccw: boolean)
   });
 }
 
-describe('rasterizeContours (sintetici)', () => {
-  it('rettangolo allineato: area esatta, margine vuoto di 5 px', () => {
+describe('rasterizeContours (synthetic)', () => {
+  it('aligned rectangle: exact area, empty 5 px margin', () => {
     const r = rasterizeContours([[[0, 0], [30, 0], [30, 20], [0, 20]]]);
     expect(filled(r)).toBe(300 * 200);
     expect(r.width).toBe(300 + 2 * RASTER_MARGIN_PX);
@@ -102,7 +102,7 @@ describe('rasterizeContours (sintetici)', () => {
     }
   });
 
-  it('rettangolo ruotato: area entro 1%', () => {
+  it('rotated rectangle: area within 1%', () => {
     const a = (17 * Math.PI) / 180;
     const rot = ([x, y]: [number, number]): [number, number] => [
       x * Math.cos(a) - y * Math.sin(a),
@@ -112,21 +112,21 @@ describe('rasterizeContours (sintetici)', () => {
     expect(Math.abs(filled(r) / 100 - 600) / 600).toBeLessThan(0.01);
   });
 
-  it('anello (contorno interno opposto): area entro 1% e un buco', () => {
+  it('ring (opposite inner contour): area within 1% and one hole', () => {
     const r = rasterizeContours([circle(0, 0, 10, 720, true), circle(0, 0, 6, 720, false)]);
     const expected = Math.PI * (10 * 10 - 6 * 6);
     expect(Math.abs(filled(r) / 100 - expected) / expected).toBeLessThan(0.01);
     expect(topology(r)).toEqual({ regions: 1, holes: 1 });
   });
 
-  it('nonzero: contorni sovrapposti con lo stesso verso si uniscono', () => {
+  it('nonzero: overlapping contours with the same winding are joined', () => {
     const sq = (x: number, y: number): Contour => [[x, y], [x + 10, y], [x + 10, y + 10], [x, y + 10]];
     const r = rasterizeContours([sq(0, 0), sq(5, 5)]);
     expect(filled(r) / 100).toBe(175);
     expect(topology(r)).toEqual({ regions: 1, holes: 0 });
   });
 
-  it('px→mm: il centro di un pixel pieno cade dentro la forma', () => {
+  it('px→mm: the centre of a filled pixel falls inside the shape', () => {
     const r = rasterizeContours([[[2, -3], [12, -3], [12, 7], [2, 7]]]);
     const i = r.data.indexOf(1);
     const [x, y] = pxToMm(r.pxToMm, (i % r.width) + 0.5, Math.floor(i / r.width) + 0.5);
@@ -137,7 +137,7 @@ describe('rasterizeContours (sintetici)', () => {
     expect(py).toBeCloseTo(Math.floor(i / r.width) + 0.5, 9);
   });
 
-  it('oltre 40 Mpx la risoluzione si riduce, con avviso', () => {
+  it('beyond 40 Mpx the resolution is reduced, with a warning', () => {
     const r = rasterizeContours([[[0, 0], [1000, 0], [1000, 1000], [0, 1000]]]);
     expect(r.width * r.height).toBeLessThanOrEqual(MAX_RASTER_PIXELS);
     expect(r.pxPerMm).toBeLessThan(10);
@@ -145,9 +145,9 @@ describe('rasterizeContours (sintetici)', () => {
   });
 });
 
-describe('registro dei font', () => {
+describe('font registry', () => {
   for (const fontId of FONT_IDS) {
-    it(`${fontId}: capHeightMeasured e xHeightMeasured corrispondono ai glifi del TTF`, async () => {
+    it(`${fontId}: capHeightMeasured and xHeightMeasured match the glyphs of the TTF`, async () => {
       const entry = getFont(fontId)!;
       const m = measureFontMetrics(await loadFont(fontId, readPublic), heightGlyphOf(entry));
       expect(entry.capHeightMeasured).toBe(m.capHeight);
@@ -157,7 +157,7 @@ describe('registro dei font', () => {
     });
   }
 
-  it('neonderthaw: hollowTubes con linea e luce del registro coerenti con la misura sul TTF', async () => {
+  it('neonderthaw: hollowTubes with registry line and gap consistent with the TTF measurement', async () => {
     const entry = getFont('neonderthaw')!;
     expect(entry.hollowTubes).toBe(true);
     const r = await rasterize(
@@ -173,7 +173,7 @@ describe('registro dei font', () => {
     expect(r.tube!.lineWidthMm).toBeCloseTo((entry.tube!.lineWidth * 30) / entry.capHeightMeasured, 9);
   }, 30_000);
 
-  it('sacramento: tratto pieno, nessuna misura di tubo', async () => {
+  it('sacramento: solid stroke, no tube measurement', async () => {
     expect(getFont('sacramento')!.hollowTubes).toBe(false);
     const r = await rasterize({ text: 'Ciao', fontId: 'sacramento', heightMm: 20 }, readPublic);
     expect(r.hollowTubes).toBe(false);
@@ -182,9 +182,9 @@ describe('registro dei font', () => {
   });
 });
 
-describe('rasterize (testo)', () => {
+describe('rasterize (text)', () => {
   for (const fontId of LATIN_IDS) {
-    it(`${fontId}: "${TEXT}", maiuscole all'altezza attesa entro ±1 px`, async () => {
+    it(`${fontId}: "${TEXT}", capitals at the expected height within ±1 px`, async () => {
       const heightMm = 50;
       const r = await rasterize({ text: TEXT, fontId, heightMm }, readPublic);
       const font = await loadFont(fontId, readPublic);
@@ -230,14 +230,14 @@ describe('rasterize (testo)', () => {
       expect(r.advanceMm).toBeGreaterThan(0);
     });
 
-    it(`${fontId}: due rasterizzazioni identiche byte per byte`, async () => {
+    it(`${fontId}: two rasterizations identical byte for byte`, async () => {
       const a = await rasterize({ text: TEXT, fontId, heightMm: 40 }, readPublic);
       const b = await rasterize({ text: TEXT, fontId, heightMm: 40 }, readPublic);
       expect([a.width, a.height]).toEqual([b.width, b.height]);
       expect(Buffer.from(a.data).equals(Buffer.from(b.data))).toBe(true);
     });
 
-    it(`${fontId}: nessun tratto spezzato né buco spurio, lettera per lettera`, async () => {
+    it(`${fontId}: no broken stroke or spurious hole, letter by letter`, async () => {
       const heightMm = 40;
       let letterRegions = 0;
       for (const ch of TEXT.replace(/ /g, '')) {
@@ -253,7 +253,7 @@ describe('rasterize (testo)', () => {
       expect(topology(all).regions).toBeLessThanOrEqual(letterRegions);
     }, 30_000);
 
-    it(`${fontId}: carattere senza glifo → avviso, nessun riquadro .notdef`, async () => {
+    it(`${fontId}: character without a glyph → warning, no .notdef box`, async () => {
       const r = await rasterize({ text: 'Ciao 漢', fontId, heightMm: 30 }, readPublic);
       expect(r.missing).toEqual(['漢']);
       expect(r.warnings.some((w) => w.includes('漢') && w.includes('U+6F22'))).toBe(true);
@@ -263,7 +263,7 @@ describe('rasterize (testo)', () => {
     });
   }
 
-  it('gli a capo diventano spazi, con avviso', async () => {
+  it('line breaks become spaces, with a warning', async () => {
     const r = await rasterize({ text: 'Ciao\nTorino', fontId: 'sacramento', heightMm: 20 }, readPublic);
     expect(r.text).toBe('Ciao Torino');
     expect(r.warnings).toHaveLength(1);

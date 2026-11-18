@@ -9,7 +9,7 @@ async function waitNext(page: Page, before: number): Promise<void> {
   await expect.poll(() => generation(page)).toBeGreaterThan(before);
 }
 
-test('design: resta dopo un ricaricamento, si riapre da un link, Start over lo azzera', async ({ page, context }) => {
+test('design: survives a reload, reopens from a link, Start over resets it', async ({ page, context }) => {
   await context.grantPermissions(['clipboard-read', 'clipboard-write']);
   const track = trackPage(page);
   await page.setViewportSize({ width: 1280, height: 800 });
@@ -55,7 +55,7 @@ test('design: resta dopo un ricaricamento, si riapre da un link, Start over lo a
   expectClean(track.problems);
 });
 
-test('design: un link rotto non blocca la pagina', async ({ page }) => {
+test('design: a broken link does not block the page', async ({ page }) => {
   const track = trackPage(page);
   await page.goto('index.html#o=non-un-design', { waitUntil: 'load' });
   await expect(page.locator('input[name="text"]')).toHaveValue('Ciao');
@@ -64,7 +64,7 @@ test('design: un link rotto non blocca la pagina', async ({ page }) => {
   expectClean(track.problems);
 });
 
-test('design: i tracciati modificati restano dopo un ricaricamento', async ({ page }) => {
+test('design: edited paths survive a reload', async ({ page }) => {
   const track = trackPage(page);
   await page.setViewportSize({ width: 1280, height: 800 });
   await page.goto('index.html', { waitUntil: 'load' });

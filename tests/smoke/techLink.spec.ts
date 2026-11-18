@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { expectClean, trackPage } from './guard';
 
-test('Tecnica: il canale segue la striscia, e un canale troppo stretto lo dice', async ({ page }) => {
+test('Tech: the channel follows the strip, and a channel that is too narrow says so', async ({ page }) => {
   const track = trackPage(page);
   await page.setViewportSize({ width: 1280, height: 800 });
   await page.goto('index.html', { waitUntil: 'load' });

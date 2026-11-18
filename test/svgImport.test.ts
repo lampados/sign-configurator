@@ -61,8 +61,8 @@ function importInDom(svg: string, heightMm: number, name = 'prova.svg') {
   }
 }
 
-describe('import SVG', () => {
-  it('un path retto entra in [C] come tratto, alto heightMm', () => {
+describe('SVG import', () => {
+  it('a straight path enters [C] as a stroke, heightMm tall', () => {
     const elements = normalizeShapes([stroke('M0 0 L0 100')], 40);
     expect(elements).toEqual([{ d: 'M0 40 L0 0', kind: 'stroke' }]);
     const laid = layoutSvg(source(elements, 'retta.svg'), 40);
@@ -73,7 +73,7 @@ describe('import SVG', () => {
     expect(laid.raster.data.some((value) => value)).toBe(false);
   });
 
-  it('un anello è un tratto chiuso lungo la circonferenza', () => {
+  it('a ring is a closed stroke as long as the circumference', () => {
     const d = 'M100 50 A50 50 0 1 1 0 50 A50 50 0 1 1 100 50 Z';
     const elements = normalizeShapes([stroke(d)], 100);
     expect(elements[0]?.kind).toBe('stroke');
@@ -84,7 +84,7 @@ describe('import SVG', () => {
     expect(length).toBeLessThan(Math.PI * 100 * 1.03);
   });
 
-  it('compone i transform annidati prima di portare il disegno in mm', () => {
+  it('composes nested transforms before bringing the drawing to mm', () => {
     const nested = multiply(parseTransform('translate(10,20)'), parseTransform('scale(2)'));
     const pure = normalizeShapes([stroke('M0 0 L0 50', nested)], 100);
     const svg = `<svg xmlns="http://www.w3.org/2000/svg">
@@ -106,7 +106,7 @@ describe('import SVG', () => {
     expect(Math.max(...ys)).toBeCloseTo(100, 2);
   });
 
-  it('evenodd lascia il buco, nonzero lo riempie', () => {
+  it('evenodd leaves the hole, nonzero fills it', () => {
     const outer: Contour = [
       [0, 0],
       [100, 0],
@@ -140,7 +140,7 @@ describe('import SVG', () => {
     expect(pixel(fromDom.raster, 10, 50)).toBe(1);
   });
 
-  it('lo stesso JSON normalizzato produce gli stessi STL e la stessa BOM', async () => {
+  it('the same normalized JSON produces the same STLs and the same BOM', async () => {
     const elements = normalizeShapes([stroke('M0 0 L0 80')], 80);
     expect(JSON.stringify(normalizeShapes([stroke('M0 0 L0 80')], 80))).toBe(JSON.stringify(elements));
     const order = orderOf(source(elements, 'retta.svg'), 80);
@@ -153,7 +153,7 @@ describe('import SVG', () => {
     expect(second.bom).toEqual(first.bom);
   });
 
-  it('avvisa sul testo e ignora l\'elemento', () => {
+  it('warns about text and ignores the element', () => {
     const svg = `<svg xmlns="http://www.w3.org/2000/svg">
       <text x="0" y="10">Ciao</text>
       <path d="M0 0 L0 40" style="fill:none;stroke:#111"/>

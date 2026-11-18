@@ -15,8 +15,8 @@ const readPublic: FontBytesReader = async (file) => {
 
 const STROKE_IDS = ['hershey-script-simplex', 'ems-allure'] as const;
 
-describe('parser dei tratti singoli', () => {
-  it('legge M/L, una curva e il kerning di un SVG', () => {
+describe('single-stroke parser', () => {
+  it('reads M/L, a curve and the kerning of an SVG', () => {
     const font = parseStrokeFont(`<svg><font horiz-adv-x="100"><font-face font-family="Prova" units-per-em="1000"/>
       <glyph unicode="A" horiz-adv-x="200" d="M 0 0 L 10 80 L 20 0"/>
       <glyph unicode="V" horiz-adv-x="200" d="M 0 80 L 10 0 L 20 80"/>
@@ -32,7 +32,7 @@ describe('parser dei tratti singoli', () => {
     expect(curve[curve.length - 1]).toEqual([100, 100]);
   });
 
-  it('il JSON Hershey ha Y verso il basso e avanzamento o', () => {
+  it('the Hershey JSON has Y pointing down and advance o', () => {
     const font = parseStrokeFont(
       JSON.stringify({
         name: 'mini',
@@ -50,7 +50,7 @@ describe('parser dei tratti singoli', () => {
     ]);
   });
 
-  it('un path con virgole e coppie implicite resta una spezzata', () => {
+  it('a path with commas and implicit pairs stays a polyline', () => {
     const strokes = svgPath('M8,1 L7,2 5,14', 0.5);
     expect(strokes).toHaveLength(1);
     expect(strokes[0]!.points).toEqual([
@@ -61,9 +61,9 @@ describe('parser dei tratti singoli', () => {
   });
 });
 
-describe('Ciao nei font a tratto singolo', () => {
+describe('Ciao in the single-stroke fonts', () => {
   for (const fontId of STROKE_IDS) {
-    it(`${fontId}: la sommità di H e di x è quella del registro`, async () => {
+    it(`${fontId}: the top of H and of x is the one in the registry`, async () => {
       const entry = getFont(fontId)!;
       expect(entry.kind).toBe('stroke');
       const laid = await layoutStroke(entry, { text: 'H', heightMm: entry.capHeightMeasured }, readPublic);
@@ -74,7 +74,7 @@ describe('Ciao nei font a tratto singolo', () => {
       expect(laid.raster.data.every((v) => v === 0)).toBe(true);
     });
 
-    it(`${fontId}: Ciao non ha rami spuri, copre e si ripete`, async () => {
+    it(`${fontId}: Ciao has no spurious branches, is covered and repeats`, async () => {
       const entry = getFont(fontId)!;
       const once = await layoutStroke(entry, { text: 'Ciao', heightMm: 100 }, readPublic);
       const twice = await layoutStroke(entry, { text: 'Ciao', heightMm: 100 }, readPublic);

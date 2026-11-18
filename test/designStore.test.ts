@@ -48,12 +48,12 @@ const SUMMARY: [string, string][] = [
 const counter = (start: number) => (n: number) => Uint8Array.from({ length: n }, (_, i) => start + i);
 const NOW = new Date('2026-11-15T20:00:00Z');
 
-describe('design salvati per il negozio', () => {
-  it('il codice è leggibile: quattro più quattro, senza 0, O, 1, I, L', () => {
+describe('designs saved for the shop', () => {
+  it('the code is readable: four plus four, without 0, O, 1, I, L', () => {
     for (let seed = 0; seed < 250; seed += 7) expect(newCode(counter(seed))).toMatch(CODE_PATTERN);
   });
 
-  it('salva e rilegge: riepilogo e link per il negozio, ordine solo con full', async () => {
+  it('saves and reads back: summary and link for the shop, order only with full', async () => {
     const kv = memoryKv();
     const made = await createDesign(JSON.stringify({ order: ORDER, summary: SUMMARY }), kv, NOW, counter(3));
     expect(made.status).toBe(201);
@@ -73,7 +73,7 @@ describe('design salvati per il negozio', () => {
     expect(reopened.order?.heightMm).toBe(120);
   });
 
-  it('nel salvataggio non resta niente oltre a ordine e riepilogo', async () => {
+  it('nothing is stored beyond order and summary', async () => {
     const kv = memoryKv();
     const body = { order: ORDER, summary: SUMMARY, email: 'someone@example.test', name: 'Someone' };
     const made = await createDesign(JSON.stringify(body), kv, NOW, counter(9));
@@ -82,7 +82,7 @@ describe('design salvati per il negozio', () => {
     expect(Object.keys(JSON.parse(stored) as object).sort()).toEqual(['code', 'createdAt', 'order', 'summary', 'v']);
   });
 
-  it('rifiuta quello che non è un design', async () => {
+  it('rejects what is not a design', async () => {
     const kv = memoryKv();
     const post = (raw: string) => createDesign(raw, kv, NOW, counter(1));
     expect((await post('{')).status).toBe(400);
@@ -93,7 +93,7 @@ describe('design salvati per il negozio', () => {
     expect(kv.data.size).toBe(0);
   });
 
-  it('codice malformato o sconosciuto, archivio non collegato', async () => {
+  it('malformed or unknown code, store not bound', async () => {
     const kv = memoryKv();
     expect((await readDesign('../etc', kv, 'https://x.test', false)).status).toBe(400);
     expect((await readDesign('ABCD-EFGH', kv, 'https://x.test', false)).status).toBe(404);
@@ -101,7 +101,7 @@ describe('design salvati per il negozio', () => {
     expect((await createDesign('{}', undefined, NOW, counter(1))).status).toBe(503);
   });
 
-  it('un codice già occupato non si sovrascrive', async () => {
+  it('a code already taken is not overwritten', async () => {
     const kv = memoryKv();
     const first = await createDesign(JSON.stringify({ order: ORDER, summary: SUMMARY }), kv, NOW, counter(5));
     const before = kv.data.get(`design:${String(first.body.code)}`);
@@ -125,8 +125,8 @@ const QUOTE: StoredQuote = {
 // Un JPEG finto: comincia come uno vero (FF D8 FF), poi byte qualunque.
 const jpeg = (bytes: number): string => `data:image/jpeg;base64,${Buffer.from(Uint8Array.from({ length: bytes }, (_, i) => [0xff, 0xd8, 0xff, 0xe0][i] ?? i % 251)).toString('base64')}`;
 
-describe('stima e foto per il negozio (SPEC §12.7)', () => {
-  it('la stima e la foto si salvano e il negozio le rilegge', async () => {
+describe('estimate and photo for the shop (SPEC §12.7)', () => {
+  it('the estimate and the photo are saved and the shop reads them back', async () => {
     const kv = memoryKv();
     const made = await createDesign(JSON.stringify({ order: ORDER, summary: SUMMARY, quote: QUOTE, image: jpeg(3000) }), kv, NOW, counter(3));
     expect(made.status).toBe(201);
@@ -143,7 +143,7 @@ describe('stima e foto per il negozio (SPEC §12.7)', () => {
     expect([...image.bytes!.slice(0, 3)]).toEqual([0xff, 0xd8, 0xff]);
   });
 
-  it('senza stima e senza foto tutto resta com\'era', async () => {
+  it('without estimate and photo everything stays as it was', async () => {
     const kv = memoryKv();
     const made = await createDesign(JSON.stringify({ order: ORDER, summary: SUMMARY }), kv, NOW, counter(3));
     const code = String(made.body.code);
@@ -155,7 +155,7 @@ describe('stima e foto per il negozio (SPEC §12.7)', () => {
     expect((await readDesignImage(code, undefined)).status).toBe(503);
   });
 
-  it('una voce senza prezzo resta senza prezzo, e la stima dice che è incompleta', async () => {
+  it('a line without a price stays without a price, and the estimate says it is incomplete', async () => {
     const kv = memoryKv();
     const partial: StoredQuote = { ...QUOTE, complete: false, lines: [{ id: 'strip', label: 'LED strip', detail: 'WS2812B 30 LED/m IP20 · 0.80 m', amount: null }] };
     const made = await createDesign(JSON.stringify({ order: ORDER, summary: SUMMARY, quote: partial }), kv, NOW, counter(3));
@@ -163,7 +163,7 @@ describe('stima e foto per il negozio (SPEC §12.7)', () => {
     expect(shop.body.quote).toEqual(partial);
   });
 
-  it('una stima malformata o gonfiata non entra, e nel KV non resta niente', async () => {
+  it('a malformed or inflated estimate is not accepted, and nothing is left in the KV', async () => {
     const post = async (quote: unknown) => {
       const kv = memoryKv();
       const result = await createDesign(JSON.stringify({ order: ORDER, summary: SUMMARY, quote }), kv, NOW, counter(3));
@@ -192,7 +192,7 @@ describe('stima e foto per il negozio (SPEC §12.7)', () => {
     expect(kv.data.get(`design:${String(made.body.code)}`)).not.toContain('example.test');
   });
 
-  it('la foto è solo un JPEG entro il peso massimo', async () => {
+  it('the photo is only a JPEG within the maximum size', async () => {
     const post = async (image: unknown) => {
       const kv = memoryKv();
       const result = await createDesign(JSON.stringify({ order: ORDER, summary: SUMMARY, image }), kv, NOW, counter(3));

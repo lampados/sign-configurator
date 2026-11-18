@@ -10,20 +10,20 @@ function rect(x0: number, y0: number, x1: number, y1: number): SplitPoint[] {
   ];
 }
 
-describe('suddivisione per il piatto di stampa', () => {
-  it('un\'insegna che sta sul piatto non si taglia', () => {
+describe('splitting for the print bed', () => {
+  it('a sign that fits the bed is not cut', () => {
     const plan = planSplit({ outline: [rect(0, 0, 280, 120)], centerlines: [], keepOut: [], bedW: 300, bedH: 300 });
     expect(plan.cutsX).toEqual([]);
     expect(plan.pieces).toEqual([{ x0: 0, x1: 280 }]);
     expect(plan.warnings).toEqual([]);
   });
 
-  it('se sta girata di 90° non si taglia', () => {
+  it('if it fits rotated by 90° it is not cut', () => {
     const plan = planSplit({ outline: [rect(0, 0, 280, 120)], centerlines: [], keepOut: [], bedW: 150, bedH: 300 });
     expect(plan.cutsX).toEqual([]);
   });
 
-  it('il numero di pezzi è il minimo e ogni pezzo sta sul piatto', () => {
+  it('the number of pieces is the minimum and every piece fits the bed', () => {
     const plan = planSplit({ outline: [rect(10, 0, 710, 120)], centerlines: [], keepOut: [], bedW: 300, bedH: 300 });
     expect(plan.cutsX).toHaveLength(2);
     expect(plan.pieces).toHaveLength(3);
@@ -34,7 +34,7 @@ describe('suddivisione per il piatto di stampa', () => {
     for (const piece of plan.pieces) expect(Math.abs(piece.x1 - piece.x0 - 700 / 3)).toBeLessThan(1);
   });
 
-  it('il taglio schiva i fori', () => {
+  it('the cut avoids the holes', () => {
     const base = { outline: [rect(0, 0, 400, 120)], centerlines: [], bedW: 300, bedH: 300 };
     const free = planSplit({ ...base, keepOut: [] });
     expect(free.cutsX).toHaveLength(1);
@@ -47,7 +47,7 @@ describe('suddivisione per il piatto di stampa', () => {
     expect(hole.warnings).toEqual([]);
   });
 
-  it('un varco senza canali batte un taglio in mezzo a una lettera, anche con un\'asola dentro', () => {
+  it('a gap without channels beats a cut through a letter, even with a wire slot inside', () => {
     // Un canale continuo da 0 a 400, interrotto solo fra 195 e 205: lì c'è l'asola.
     const centerlines: SplitPoint[][] = [
       [
@@ -72,7 +72,7 @@ describe('suddivisione per il piatto di stampa', () => {
     expect(plan.warnings).toEqual([]);
   });
 
-  it('un pezzo in più si accetta se evita di tagliare un canale', () => {
+  it('one more piece is accepted if it avoids cutting a channel', () => {
     // Varchi senza canali a 200, 400 e 600. Con due soli tagli (il minimo per 800 mm) almeno uno
     // cadrebbe dentro una lettera; con tre cadono tutti nei varchi.
     const centerlines: SplitPoint[][] = [
@@ -101,7 +101,7 @@ describe('suddivisione per il piatto di stampa', () => {
     expect(plan.warnings).toEqual([]);
   });
 
-  it('il taglio passa dove attraversa meno canali', () => {
+  it('the cut goes where it crosses the fewest channels', () => {
     // Fra x = 150 e 250 ci sono tre canali orizzontali; fuori uno solo.
     const centerlines: SplitPoint[][] = [
       [
@@ -123,7 +123,7 @@ describe('suddivisione per il piatto di stampa', () => {
     expect(x < 150 || x > 250).toBe(true);
   });
 
-  it('un canale quasi parallelo al taglio si evita', () => {
+  it('a channel almost parallel to the cut is avoided', () => {
     const centerlines: SplitPoint[][] = [
       [
         [200, 10],
@@ -135,13 +135,13 @@ describe('suddivisione per il piatto di stampa', () => {
     expect(x < 200 || x > 201).toBe(true);
   });
 
-  it('un\'insegna più alta del piatto avvisa', () => {
+  it('a sign taller than the bed warns', () => {
     const plan = planSplit({ outline: [rect(0, 0, 500, 400)], centerlines: [], keepOut: [], bedW: 300, bedH: 300 });
     expect(plan.warnings.join(' ')).toMatch(/oltre il piatto/);
     expect(plan.cutsX.length).toBeGreaterThan(0);
   });
 
-  it('è deterministica', () => {
+  it('is deterministic', () => {
     const input = { outline: [rect(0, 0, 933.3, 120)], centerlines: [], keepOut: [{ x0: 300, x1: 320 }], bedW: 300, bedH: 300 };
     expect(planSplit(input)).toEqual(planSplit(input));
   });

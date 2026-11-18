@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { expectClean, trackPage } from './guard';
 
-test('Tecnica: il menu della striscia riscrive le misure', async ({ page }) => {
+test('Tech: the strip menu rewrites the measurements', async ({ page }) => {
   const track = trackPage(page);
   await page.setViewportSize({ width: 1280, height: 800 });
   await page.goto('index.html', { waitUntil: 'load' });

@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { bomAssembly } from '../src/export/bom';
 import { SUPPLIES, pickSupply } from '../src/parts/supplies';
 
-describe('catalogo degli alimentatori', () => {
-  it('dieci famiglie, ognuna con versioni solo a 5, 12 o 24 V', () => {
+describe('power supply catalogue', () => {
+  it('ten families, each with versions at 5, 12 or 24 V only', () => {
     expect(SUPPLIES).toHaveLength(10);
     expect(new Set(SUPPLIES.map((f) => f.id)).size).toBe(10);
     for (const family of SUPPLIES) {
@@ -15,7 +15,7 @@ describe('catalogo degli alimentatori', () => {
     }
   });
 
-  it("l'adattatore con spina quando basta, poi l'LRS più piccolo", () => {
+  it("the plug-in adapter when it is enough, then the smallest LRS", () => {
     expect(pickSupply(12, 4)?.variant.model).toBe('GST60A12-P1J');
     expect(pickSupply(5, 6)?.variant.model).toBe('GST60A05-P1J');
     expect(pickSupply(5, 7)?.variant.model).toBe('LRS-35-5');
@@ -23,7 +23,7 @@ describe('catalogo degli alimentatori', () => {
     expect(pickSupply(24, 9)?.variant.model).toBe('LRS-350-24');
   });
 
-  it('salta le famiglie senza la tensione, mai gli LPV; null se nessuno basta', () => {
+  it('skips the families without the voltage, never the LPVs; null if none is enough', () => {
     // LRS-150 non ha 5 V: da 18 A si passa all'LRS-200.
     expect(pickSupply(5, 19)?.variant.model).toBe('LRS-200-5');
     expect(SUPPLIES.filter((f) => f.kind === 'waterproof').length).toBe(2);
@@ -32,7 +32,7 @@ describe('catalogo degli alimentatori', () => {
     expect(pickSupply(12, 0)).toBeNull();
   });
 
-  it('la distinta porta il modello consigliato', () => {
+  it('the bill of materials carries the recommended model', () => {
     const at12 = bomAssembly([], [], 100, 60, 12);
     expect(at12.supplyA).toBe(4);
     expect(at12.supply).toEqual({ model: 'GST60A12-P1J', family: 'gst60a', watts: 60, amps: 5 });
@@ -40,8 +40,8 @@ describe('catalogo degli alimentatori', () => {
   });
 });
 
-describe('disegni degli alimentatori', () => {
-  it('uno per famiglia, alla stessa scala: il fronte è lungo L · ART_SCALE', async () => {
+describe('power supply drawings', () => {
+  it('one per family, at the same scale: the front is L · ART_SCALE long', async () => {
     const { ART_SCALE, supplyArt } = await import('../src/parts/supplyArt');
     for (const family of SUPPLIES) {
       const svg = supplyArt(family);

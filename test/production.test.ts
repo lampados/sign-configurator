@@ -57,8 +57,8 @@ async function diskHits(polys: readonly (readonly [number, number][])[], x: numb
   return area > 1e-6;
 }
 
-describe('geometria di produzione', () => {
-  it('dritto da 100 mm: un foro passante per capo più quelli del percorso, volume stabile, STL identico, ancoraggi fuori dai fori', async () => {
+describe('production geometry', () => {
+  it('100 mm straight: one through hole per end plus those along the path, stable volume, identical STL, anchors away from the holes', async () => {
     const wasm = await getManifold();
     const path = straight(100);
     const build = () => buildHousing(wasm, { paths: [path], crossings: [], unlit: [], params: BENDABLE });
@@ -89,7 +89,7 @@ describe('geometria di produzione', () => {
     }
   });
 
-  it('lo spigolo a 90° non mette ancoraggi nella tasca', async () => {
+  it('the 90° cusp puts no anchors in the pocket', async () => {
     const model = buildStrip(sourceFromPaths([{ points: vee() }]), BENDABLE, 100);
     const wasm = await getManifold();
     const built = buildHousing(wasm, { paths: model.chains, crossings: [], unlit: [], params: BENDABLE });
@@ -109,7 +109,7 @@ describe('geometria di produzione', () => {
     }
   });
 
-  it('Ciao Torino resta nei tempi: Sacramento sotto i 3 s, Neonderthaw sotto gli 8', async () => {
+  it('Ciao Torino stays within time: Sacramento under 3 s, Neonderthaw under 8', async () => {
     for (const fontId of ['sacramento', 'neonderthaw']) {
       const t0 = performance.now();
       const result = await generateSign(

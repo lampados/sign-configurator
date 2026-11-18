@@ -73,13 +73,13 @@ function volume(mesh: MeshData): number {
   return total / 6;
 }
 
-describe('insegna divisa per il piatto di stampa', () => {
-  it('«Ciao» a 12 cm sta sul piatto da 350 mm: nessun taglio', async () => {
+describe('sign split for the print bed', () => {
+  it('"Ciao" at 12 cm fits the 350 mm bed: no cut', async () => {
     const result = await generateSign(order('Ciao'), readPublic);
     expect(result.split).toBeNull();
   }, 120_000);
 
-  it('«Ciao Torino» si divide: ogni pezzo sta sul piatto e insieme rifanno l\'insegna', async () => {
+  it('"Ciao Torino" is split: every piece fits the bed and together they make the sign again', async () => {
     const result = await generateSign(order('Ciao Torino'), readPublic);
     const split = result.split;
     expect(split).not.toBeNull();
@@ -106,7 +106,7 @@ describe('insegna divisa per il piatto di stampa', () => {
     if (onChannel > 0) expect(notice[0]).toMatch(/canale acceso/);
   }, 120_000);
 
-  it('con un piatto più grande torna in un pezzo; il risultato è deterministico', async () => {
+  it('with a larger bed it is one piece again; the result is deterministic', async () => {
     const big = await generateSign(order('Ciao Torino', { BED_W: 1000 }), readPublic);
     expect(big.split).toBeNull();
     const a = await generateSign(order('Ciao Torino'), readPublic);

@@ -33,8 +33,8 @@ function circle(r: number, n: number, ccw: boolean): Contour {
 const graphOf = (contours: Contour[]): SkeletonGraph => buildGraph(rasterizeContours(contours));
 const degrees = (g: SkeletonGraph): number[] => g.nodes.map((n) => n.degree).sort((a, b) => a - b);
 
-describe('buildGraph (forme sintetiche, tratto 2 mm a 10 px/mm)', () => {
-  it('linea: due estremi, un arco lungo quanto la linea meno le punte', () => {
+describe('buildGraph (synthetic shapes, 2 mm stroke at 10 px/mm)', () => {
+  it('line: two endpoints, one edge as long as the line minus the tips', () => {
     const g = graphOf([bar(25, 0, 50, 2, 0)]);
     expect(degrees(g)).toEqual([1, 1]);
     expect(g.edges).toHaveLength(1);
@@ -43,7 +43,7 @@ describe('buildGraph (forme sintetiche, tratto 2 mm a 10 px/mm)', () => {
     expect(g.strokeWidthMm).toBeCloseTo(2, 0);
   });
 
-  it('cerchio (anello): un solo anello chiuso, lungo 2π·r medio', () => {
+  it('circle (ring): a single closed loop, 2π·r mean long', () => {
     const g = graphOf([circle(10, 720, true), circle(8, 720, false)]);
     expect(degrees(g)).toEqual([2]);
     expect(g.edges).toHaveLength(1);
@@ -51,7 +51,7 @@ describe('buildGraph (forme sintetiche, tratto 2 mm a 10 px/mm)', () => {
     expect(Math.abs(g.edges[0]!.lengthMm - 2 * Math.PI * 9) / (2 * Math.PI * 9)).toBeLessThan(0.03);
   });
 
-  it('"X": un nodo di grado 4 al centro, quattro estremi', () => {
+  it('"X": one degree-4 node in the centre, four endpoints', () => {
     const g = graphOf([bar(0, 0, 40, 2, 45), bar(0, 0, 40, 2, -45)]);
     expect(degrees(g)).toEqual([1, 1, 1, 1, 4]);
     expect(g.edges).toHaveLength(4);
@@ -59,7 +59,7 @@ describe('buildGraph (forme sintetiche, tratto 2 mm a 10 px/mm)', () => {
     expect(Math.hypot(center.x, center.y)).toBeLessThan(g.strokeWidthMm);
   });
 
-  it.each([20, 30, 40, 60])('"X" a %i°: le due giunzioni a Y si fondono in un nodo di grado 4', (deg) => {
+  it.each([20, 30, 40, 60])('"X" at %i°: the two Y junctions merge into one degree-4 node', (deg) => {
     const g = graphOf([bar(0, 0, 40, 2, deg / 2), bar(0, 0, 40, 2, -deg / 2)]);
     expect(degrees(g)).toEqual([1, 1, 1, 1, 4]);
     expect(g.edges).toHaveLength(4);
@@ -67,14 +67,14 @@ describe('buildGraph (forme sintetiche, tratto 2 mm a 10 px/mm)', () => {
     expect(Math.hypot(center.x, center.y)).toBeLessThan(g.strokeWidthMm);
   });
 
-  it('"H" stretta: le due giunzioni a T restano distinte anche se vicine (traversa di 3 tratti)', () => {
+  it('narrow "H": the two T junctions stay distinct even when close (crossbar of 3 stroke widths)', () => {
     const g = graphOf([bar(-4, 0, 30, 2, 90), bar(4, 0, 30, 2, 90), bar(0, 0, 8, 2, 0)]);
     expect(degrees(g)).toEqual([1, 1, 1, 1, 3, 3]);
     expect(g.edges).toHaveLength(5);
     expect(g.mergedJunctions).toBe(0);
   });
 
-  it('"T": un nodo di grado 3, tre estremi, nessun ramo spurio', () => {
+  it('"T": one degree-3 node, three endpoints, no spurious branch', () => {
     const g = graphOf([bar(0, 0, 40, 2, 0), bar(0, -10, 20, 2, 90)]);
     expect(degrees(g)).toEqual([1, 1, 1, 3]);
     expect(g.edges).toHaveLength(3);
@@ -82,19 +82,19 @@ describe('buildGraph (forme sintetiche, tratto 2 mm a 10 px/mm)', () => {
     expect(Math.hypot(j.x, j.y)).toBeLessThan(g.strokeWidthMm);
   });
 
-  it('forellino (area < tratto²) riempito: niente anello spurio', () => {
+  it('pinhole (area < stroke²) filled: no spurious loop', () => {
     const g = graphOf([bar(0, 0, 40, 4, 0), bar(0, 0, 0.3, 0.3, 0).reverse()]);
     expect(g.filledHoles).toBe(1);
     expect(degrees(g)).toEqual([1, 1]);
   });
 
-  it('deterministico', () => {
+  it('deterministic', () => {
     const shape = [bar(0, 0, 40, 2, 37), bar(3, 1, 30, 2, -61)];
     expect(JSON.stringify(graphOf(shape))).toBe(JSON.stringify(graphOf(shape)));
   });
 });
 
-describe('buildGraph su Sacramento (100 mm)', () => {
+describe('buildGraph on Sacramento (100 mm)', () => {
   const sacramento = (text: string, pxPerMm?: number) =>
     rasterize({ text, fontId: 'sacramento', heightMm: 100, ...(pxPerMm ? { pxPerMm } : {}) }, readPublic);
   const histogram = (g: SkeletonGraph): Record<number, number> => {
@@ -110,7 +110,7 @@ describe('buildGraph su Sacramento (100 mm)', () => {
         .map((e) => e.lengthMm / g.strokeWidthMm),
     );
 
-  it('"alebe": le asole di l, e, b si incrociano in nodi di grado 4, nessun ramo spurio', async () => {
+  it('"alebe": the loops of l, e, b cross at degree-4 nodes, no spurious branch', async () => {
     const r = await sacramento('alebe');
     const g = buildGraph(r);
     // Ogni nodo va all'ultimo glifo con l'origine alla sua sinistra.
@@ -123,7 +123,7 @@ describe('buildGraph su Sacramento (100 mm)', () => {
     expect(shortestEndEdge(g)).toBeGreaterThan(1);
   });
 
-  it('"alebe": stessa topologia a 8, 10 e 15 px/mm', async () => {
+  it('"alebe": same topology at 8, 10 and 15 px/mm', async () => {
     const hs = [];
     for (const ppm of [8, 10, 15]) hs.push(histogram(buildGraph(await sacramento('alebe', ppm))));
     expect(hs[1]).toEqual(hs[0]);
@@ -131,7 +131,7 @@ describe('buildGraph su Sacramento (100 mm)', () => {
   });
 
   it.each(['l', 'e', 'b'])(
-    '"%s" isolata: il tratto parte dentro l\'asola, quindi grado 3 (non c\'è tratto d\'attacco da incrociare)',
+    '"%s" alone: the stroke starts inside the loop, so degree 3 (there is no lead-in stroke to cross)',
     async (ch) => {
       const g = buildGraph(await sacramento(ch));
       expect(g.edges.some((e) => e.a === e.b)).toBe(true);
@@ -140,7 +140,7 @@ describe('buildGraph su Sacramento (100 mm)', () => {
     },
   );
 
-  it('alfabeto minuscolo: nessun ramo più corto del tratto, topologia stabile fra 8 e 12 px/mm', async () => {
+  it('lowercase alphabet: no branch shorter than the stroke, stable topology between 8 and 12 px/mm', async () => {
     for (const text of ['abcdefghijklm', 'nopqrstuvwxyz']) {
       const g = buildGraph(await sacramento(text));
       expect(shortestEndEdge(g), text).toBeGreaterThan(1);
@@ -152,7 +152,7 @@ describe('buildGraph su Sacramento (100 mm)', () => {
     }
   }, 60_000);
 
-  it('"Ciao Torino": i puntini delle due i restano anelli chiusi a sé (il buco non viene riempito)', async () => {
+  it('"Ciao Torino": the dots of the two i\'s stay closed loops of their own (the hole is not filled)', async () => {
     const r = await sacramento('Ciao Torino');
     const g = buildGraph(r);
     const dots = r.glyphs.filter((gl) => gl.char === 'i').map((i) =>

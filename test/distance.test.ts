@@ -14,7 +14,7 @@ function rng(seed: number): () => number {
 }
 
 describe('squaredDistanceTo', () => {
-  it('coincide con la forza bruta su griglie casuali', () => {
+  it('matches brute force on random grids', () => {
     const rand = rng(7);
     for (const [w, h, density] of [[17, 11, 0.05], [30, 23, 0.2], [9, 40, 0.01], [25, 25, 0.5]] as const) {
       const mask = new Uint8Array(w * h).map(() => (rand() < density ? 1 : 0));
@@ -34,14 +34,14 @@ describe('squaredDistanceTo', () => {
     }
   });
 
-  it('senza siti: distanza "infinita"', () => {
+  it('no sites: "infinite" distance', () => {
     const d = squaredDistanceTo(new Uint8Array(12), 4, 3, 1);
     expect(Math.min(...d)).toBeGreaterThan(1e19);
   });
 });
 
 describe('measureTubes', () => {
-  it('tubi sintetici: linee da 5 px, luce da 11 px', () => {
+  it('synthetic tubes: 5 px lines, 11 px gap', () => {
     const w = 240;
     const h = 200;
     const data = new Uint8Array(w * h);

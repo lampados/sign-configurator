@@ -12,9 +12,9 @@ const readPublic: FontBytesReader = async (file) => {
 
 const NEW_FONTS = ['beon', 'pecita', 'compagnon-italic', 'primer-print', 'wire-one'] as const;
 
-describe('font latini aggiunti', () => {
+describe('added Latin fonts', () => {
   for (const fontId of NEW_FONTS) {
-    it(`${fontId}: «Ciao» a 25 cm dà un pezzo stampabile`, async () => {
+    it(`${fontId}: "Ciao" at 25 cm gives a printable part`, async () => {
       expect(getFont(fontId)).toBeDefined();
       const order: SignOrderV4 = {
         schemaVersion: 4,

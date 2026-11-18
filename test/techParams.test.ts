@@ -6,13 +6,13 @@ import { DEFAULT_LED_DENSITY, LED_DENSITIES, TECH_FIELDS, ledDensityOptions, str
 import { lightPointsFromChains } from '../src/geometry/lights';
 import type { Point } from '../src/geometry/rasterize';
 
-describe('parametri tecnici della pagina cliente', () => {
-  it('i valori predefiniti non scrivono override', () => {
+describe('technical parameters of the customer page', () => {
+  it('default values write no overrides', () => {
     const numbers = Object.fromEntries(TECH_FIELDS.map((f) => [f.key, String(DEFAULT_PARAMS[f.key])]));
     expect(techParams({ numbers, edgeProfile: DEFAULT_PARAMS.EDGE_PROFILE })).toEqual({});
   });
 
-  it('scrive solo i valori cambiati e validi', () => {
+  it('writes only changed and valid values', () => {
     const params = techParams({
       numbers: { STRIP_T: '1.6', CHANNEL_DEPTH: '10', CHANNEL_W: 'abc', FLOOR: '999', WIRE_SLOT_L: '' },
       edgeProfile: 'outer',
@@ -20,11 +20,11 @@ describe('parametri tecnici della pagina cliente', () => {
     expect(params).toEqual({ STRIP_T: 1.6, CHANNEL_DEPTH: 10, EDGE_PROFILE: 'outer' });
   });
 
-  it('un profilo sconosciuto resta al default', () => {
+  it('an unknown profile stays at the default', () => {
     expect(techParams({ numbers: {}, edgeProfile: 'tondo' })).toEqual({});
   });
 
-  it('segna come non valido solo ciò che è fuori limite o non numerico', () => {
+  it('marks as invalid only what is out of range or not a number', () => {
     const field = TECH_FIELDS.find((f) => f.key === 'CHAMFER_ANGLE')!;
     expect(techFieldInvalid(field, '45')).toBe(false);
     expect(techFieldInvalid(field, '')).toBe(false);
@@ -32,7 +32,7 @@ describe('parametri tecnici della pagina cliente', () => {
     expect(techFieldInvalid(field, 'x')).toBe(true);
   });
 
-  it('ogni parametro tecnico sopravvive al link condiviso', () => {
+  it('every technical parameter survives the shared link', () => {
     const numbers = Object.fromEntries(
       // Un passo sopra il default, o sotto se il default è già il massimo.
       TECH_FIELDS.map((f) => [f.key, String(DEFAULT_PARAMS[f.key] + f.step <= f.max ? DEFAULT_PARAMS[f.key] + f.step : DEFAULT_PARAMS[f.key] - f.step)]),
@@ -54,7 +54,7 @@ describe('parametri tecnici della pagina cliente', () => {
     expect(read.order?.params).toEqual(params);
   });
 
-  it('densità dei LED: solo la scala 30–144, predefinita quella della striscia', () => {
+  it('LED density: only the 30–144 scale, defaulting to that of the strip', () => {
     expect(LED_DENSITIES).toEqual([30, 60, 74, 96, 144]);
     const options = ledDensityOptions();
     expect(options.map((o) => o.value)).toEqual([30, 60, 74, 96, 144]);
@@ -70,7 +70,7 @@ describe('parametri tecnici della pagina cliente', () => {
     expect(techParams({ numbers: {}, edgeProfile: 'square' })).toEqual({});
   });
 
-  it('la densità cambia il numero dei LED sulla stessa linea', () => {
+  it('the density changes the number of LEDs on the same line', () => {
     const line: Point[] = [
       [0, 0],
       [1000 + 2 * DEFAULT_PARAMS.WIRE_SLOT_L, 0],
@@ -82,8 +82,8 @@ describe('parametri tecnici della pagina cliente', () => {
   });
 });
 
-describe('modello di striscia', () => {
-  it('il menu elenca tutti i profili e segna quello predefinito', () => {
+describe('strip model', () => {
+  it('the menu lists every profile and marks the default', () => {
     const options = stripOptions();
     expect(options.map((o) => o.value)).toEqual(STRIP_PROFILES.map((s) => s.id));
     expect(options.filter((o) => o.isDefault).map((o) => o.value)).toEqual([DEFAULT_PARAMS.STRIP_ID]);
@@ -94,13 +94,13 @@ describe('modello di striscia', () => {
     expect(options.find((o) => o.value === 'cob-5mm')!.label).not.toMatch(/cut over/);
   });
 
-  it("l'id della striscia finisce nell'ordine solo se diversa dalla predefinita", () => {
+  it("the strip id ends up in the order only if it differs from the default", () => {
     expect(techParams({ numbers: {}, edgeProfile: 'square', strip: 'cob-5mm' })).toEqual({ STRIP_ID: 'cob-5mm' });
     expect(techParams({ numbers: {}, edgeProfile: 'square', strip: DEFAULT_PARAMS.STRIP_ID })).toEqual({});
     expect(techParams({ numbers: {}, edgeProfile: 'square', strip: 'inventata' })).toEqual({});
   });
 
-  it('il modello detta le misure, ma un valore scritto a mano vince', () => {
+  it('the model sets the measurements, but a hand-typed value wins', () => {
     const p = resolveParams({ STRIP_ID: 'ws2812b-60' });
     expect(p.STRIP_W).toBe(10);
     expect(p.STRIP_T).toBe(2);
@@ -115,7 +115,7 @@ describe('modello di striscia', () => {
     expect(resolveParams({ STRIP_ID: 'inventata' }).STRIP_W).toBe(DEFAULT_PARAMS.STRIP_W);
   });
 
-  it('la striscia sopravvive al link, una inventata avvisa', () => {
+  it('the strip survives the link, a made-up one warns', () => {
     const shared = (params: Record<string, unknown>) =>
       decodeShare(
         encodeShare(

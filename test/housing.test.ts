@@ -53,8 +53,8 @@ async function sliceArea(solid: Manifold, z: number, c: Vec2, half = 0.08): Prom
   return area;
 }
 
-describe('fori di ancoraggio', () => {
-  it('stesse stazioni della BOM, e salta un incrocio a meno di 10 mm', () => {
+describe('anchor holes', () => {
+  it('same stations as the BOM, and skips a crossing closer than 10 mm', () => {
     expect(anchorHoleCount(15, P)).toBe(0);
     expect(anchorHoleCount(50, P)).toBe(2);
     expect(anchorHoleCount(200, P)).toBe(3);
@@ -64,8 +64,8 @@ describe('fori di ancoraggio', () => {
   });
 });
 
-describe('fori spostati', () => {
-  it('spezzone corto con asole ai due capi: i fori si spostano, o resta un avviso', () => {
+describe('moved holes', () => {
+  it('short segment with wire slots at both ends: the holes move, or a warning is left', () => {
     const moved = placeAnchorHoles(
       [
         [0, 0],
@@ -95,7 +95,7 @@ describe('fori spostati', () => {
 });
 
 describe('housing', () => {
-  it('dritto: un foro tondo per i fili a ogni capo, dentro il canale, e il fondo resta attorno', async () => {
+  it('straight: a round wire hole at each end, inside the channel, with the floor left around it', async () => {
     const wasm = await getManifold();
     const built = buildHousing(wasm, { paths: [line(80, 1)], crossings: [], unlit: [], params: P });
     try {
@@ -132,7 +132,7 @@ describe('housing', () => {
     }
   });
 
-  it('fori piccoli lungo tutto il percorso, a passo regolare, lontani dagli altri fori', async () => {
+  it('small holes along the whole path, at a regular pitch, away from the other holes', async () => {
     const wasm = await getManifold();
     const built = buildHousing(wasm, { paths: [line(200, 1)], crossings: [], unlit: [], params: P });
     try {
@@ -176,7 +176,7 @@ describe('housing', () => {
     }
   });
 
-  it('il foro non è mai più largo del canale', async () => {
+  it('the hole is never wider than the channel', async () => {
     const wasm = await getManifold();
     const narrow = { ...P, CHANNEL_W: 3, WIRE_SLOT_W: 3, WIRE_HOLE_D: 8 };
     const built = buildHousing(wasm, { paths: [line(80, 1)], crossings: [], unlit: [], params: narrow });
@@ -191,7 +191,7 @@ describe('housing', () => {
     }
   });
 
-  it('WIRE_HOLE_D 0 e PATH_HOLE_D 0: asole passanti come prima, ancoraggio cieco, cavo e diffusore', async () => {
+  it('WIRE_HOLE_D 0 and PATH_HOLE_D 0: through slots as before, blind anchor, cable and diffuser', async () => {
     const wasm = await getManifold();
     const built = buildHousing(wasm, { paths: [line(80, 1)], crossings: [], unlit: [], params: { ...P, WIRE_HOLE_D: 0, PATH_HOLE_D: 0 } });
     try {
@@ -230,7 +230,7 @@ describe('housing', () => {
     }
   });
 
-  it("all'incrocio il canale prosegue e il fondo no", async () => {
+  it("at a crossing the channel continues and the floor does not", async () => {
     const wasm = await getManifold();
     const built = buildHousing(wasm, {
       paths: [line(20, 1), line(24, 2, [26, 0])],
@@ -252,7 +252,7 @@ describe('housing', () => {
     }
   });
 
-  it("sull'arco il canale è largo CHANNEL_W più la freccia", async () => {
+  it("on an arc the channel is CHANNEL_W plus the sagitta wide", async () => {
     const pts: Vec2[] = [];
     for (let i = 0; i <= 180; i++) {
       const a = (i * Math.PI) / 180;
@@ -288,7 +288,7 @@ describe('housing', () => {
     }
   });
 
-  it('i boss sporgono dal retro e il foro ci resta dentro', async () => {
+  it('the bosses stick out of the back and the hole stays inside them', async () => {
     const wasm = await getManifold();
     const built = buildHousing(wasm, {
       paths: [line(80, 1)],
@@ -309,8 +309,8 @@ describe('housing', () => {
   });
 });
 
-describe('tasca d\'angolo', () => {
-  it('spigolo a 90°: due spezzoni, una tasca, mesh manifold', async () => {
+describe('corner pocket', () => {
+  it('90° cusp: two segments, one pocket, manifold mesh', async () => {
     const arm = 40;
     const pts: Point[] = [];
     for (let t = arm; t > 0; t -= 1) pts.push([-t, t]);
@@ -348,8 +348,8 @@ describe('tasca d\'angolo', () => {
   });
 });
 
-describe('parete interna', () => {
-  it('una freccia oltre WALL − WALL_MIN avvisa con la posizione', async () => {
+describe('inner wall', () => {
+  it('a sagitta beyond WALL − WALL_MIN warns with the position', async () => {
     const pts: Vec2[] = [];
     for (let i = 0; i <= 180; i++) {
       const a = (i * Math.PI) / 180;
@@ -382,7 +382,7 @@ describe('parete interna', () => {
 });
 
 describe('generate', () => {
-  it('una parola di 8 lettere è manifold e resta sotto i 3 secondi', async () => {
+  it('an 8-letter word is manifold and stays under 3 seconds', async () => {
     const t0 = performance.now();
     const result = await generateSign(
       {

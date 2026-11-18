@@ -18,8 +18,8 @@ function maxTurnDeg(pts: readonly Point[]): number {
   return worst;
 }
 
-describe('spline dei font a tratto singolo', () => {
-  it('passa per ogni vertice e toglie i gomiti di una spezzata grossolana', () => {
+describe('spline of the single-stroke fonts', () => {
+  it('passes through every vertex and removes the elbows of a coarse polyline', () => {
     // Un arco approssimato con 6 corde, come i glifi Hershey: gomiti da 30°.
     const coarse: Point[] = Array.from({ length: 7 }, (_, i) => {
       const a = (i / 6) * Math.PI;
@@ -35,7 +35,7 @@ describe('spline dei font a tratto singolo', () => {
     expect(worst).toBeLessThan(chordGap / 2);
   });
 
-  it('una svolta oltre 75° resta uno spigolo', () => {
+  it('a turn beyond 75° stays a cusp', () => {
     const cusp: Point[] = [
       [0, 0],
       [10, 30],

@@ -40,8 +40,8 @@ function ring(cx: number, cy: number, radius: number): Point[] {
   return pts;
 }
 
-describe('classificazione delle pieghe', () => {
-  it('un arco di raggio noto, confrontato con la scala ×2, è una curva', () => {
+describe('bend classification', () => {
+  it('an arc of known radius, compared with the ×2 scale, is a curve', () => {
     const pts = arc(10, 180);
     const model = buildStrip(sourceFromPaths([{ points: pts }]), BENDABLE, 100);
     const bends = model.issues.filter((issue) => issue.bend !== null);
@@ -49,7 +49,7 @@ describe('classificazione delle pieghe', () => {
     expect(bends.every((issue) => issue.bend === 'curva')).toBe(true);
   });
 
-  it('uno spigolo a V resta spigolo a qualsiasi scala', () => {
+  it('a V-shaped cusp stays a cusp at any scale', () => {
     for (const scale of [1, 2, 4]) {
       const model = buildStrip(sourceFromPaths([{ points: vee(scale) }]), { ...BENDABLE, CUSP_MODE: 'warn' }, 100);
       const bends = model.issues.filter((issue) => issue.bend !== null);
@@ -58,7 +58,7 @@ describe('classificazione delle pieghe', () => {
     }
   });
 
-  it('CUSP_MODE split taglia lo spigolo in due spezzoni coerenti', () => {
+  it('CUSP_MODE split cuts the cusp into two consistent segments', () => {
     const model = buildStrip(
       sourceFromPaths([{ points: vee(1) }]),
       { ...BENDABLE, CUSP_MODE: 'split' },
@@ -85,7 +85,7 @@ describe('classificazione delle pieghe', () => {
     expect(right!.dinDir[1]).toBeGreaterThan(0.5);
   });
 
-  it('I_DOT_MODE dash produce uno spezzone lungo CUT_PITCH, orientato come l\'asta', () => {
+  it('I_DOT_MODE dash gives a segment CUT_PITCH long, oriented like the stem', () => {
     const stem: Point[] = [
       [0, 0],
       [0, 40],
@@ -108,7 +108,7 @@ describe('classificazione delle pieghe', () => {
     expect(model.unlit).toHaveLength(0);
   });
 
-  it('un trattino che non sta nel puntino diventa un rilievo senza striscia', () => {
+  it('a dash that does not fit in the dot becomes a raised shape with no strip', () => {
     const stem: Point[] = [
       [0, 0],
       [0, 40],
@@ -126,7 +126,7 @@ describe('classificazione delle pieghe', () => {
     expect(fallback!.y).toBeCloseTo(48, 0);
   });
 
-  it('I_DOT_MODE dot è uno spezzone proprio, senza asole, se la pillola ci sta', () => {
+  it('I_DOT_MODE dot is a segment of its own, without wire slots, if the pill fits', () => {
     const stem: Point[] = [
       [0, 0],
       [0, 40],
@@ -146,7 +146,7 @@ describe('classificazione delle pieghe', () => {
     expect(model.bom.wireSlots).toBe(2);
   });
 
-  it('un puntino più piccolo della pillola resta un LED, con un avviso sulla sporgenza', () => {
+  it('a dot smaller than the pill stays one LED, with a warning about the overhang', () => {
     const stem: Point[] = [
       [0, 0],
       [0, 30],
@@ -167,7 +167,7 @@ describe('classificazione delle pieghe', () => {
     expect(model.issues.some((issue) => issue.message.startsWith('Puntino troppo piccolo'))).toBe(false);
   });
 
-  it('un accento isolato e corto diventa una pillola con un LED, senza asole', () => {
+  it('a short isolated accent becomes a pill with one LED, without wire slots', () => {
     const stem: Point[] = [
       [0, 0],
       [0, 40],

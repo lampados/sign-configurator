@@ -22,7 +22,7 @@ async function bytesOf(download: Download): Promise<Buffer> {
   return Buffer.concat(chunks);
 }
 
-test('piatto di stampa: «Ciao Torino» si divide in pezzi, uno ZIP li contiene tutti', async ({ page }) => {
+test('print bed: "Ciao Torino" is split into pieces, one ZIP holds them all', async ({ page }) => {
   const track = trackPage(page);
   await page.setViewportSize({ width: 1280, height: 800 });
   await page.goto('index.html', { waitUntil: 'load' });
