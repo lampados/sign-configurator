@@ -4,6 +4,7 @@
 
 import { BOX_AUTO, BOX_NONE, BOXES } from '../parts/boxes';
 import { STRIP_PROFILES } from '../config';
+import type { SignFocus } from '../viewer/scene';
 import { CONTROLLERS, DEFAULT_PARAMS, STRIP_VOLTAGES, type EdgeProfile, type Params } from '../config';
 
 export type TechNumericKey =
@@ -14,6 +15,7 @@ export type TechNumericKey =
   | 'CHANNEL_W'
   | 'CHANNEL_DEPTH'
   | 'FLOOR'
+  | 'DIFFUSER_LEDGE'
   | 'WIRE_SLOT_W'
   | 'WIRE_SLOT_L'
   | 'SLOT_LIP_CHAMFER'
@@ -59,6 +61,7 @@ export const TECH_GROUPS: readonly TechGroup[] = [
       { key: 'CHANNEL_W', label: 'Channel width', unit: 'mm', min: 1, max: 25, step: 0.1 },
       { key: 'CHANNEL_DEPTH', label: 'Channel depth', unit: 'mm', min: 1, max: 40, step: 0.1 },
       { key: 'FLOOR', label: 'Floor thickness', unit: 'mm', min: 1, max: 20, step: 0.1 },
+      { key: 'DIFFUSER_LEDGE', label: 'Diffuser ledge', unit: 'mm', min: 0, max: 2, step: 0.1 },
     ],
   },
   {
@@ -69,7 +72,7 @@ export const TECH_GROUPS: readonly TechGroup[] = [
       { key: 'PATH_HOLE_D', label: 'Path hole', unit: 'mm', min: 0, max: 25, step: 0.1 },
       { key: 'PATH_HOLE_PITCH', label: 'Path hole spacing', unit: 'mm', min: 3, max: 200, step: 0.5 },
       { key: 'WIRE_SLOT_W', label: 'Slot width', unit: 'mm', min: 0.5, max: 25, step: 0.1 },
-      { key: 'WIRE_SLOT_L', label: 'Slot length', unit: 'mm', min: 0.5, max: 30, step: 0.1 },
+      { key: 'WIRE_SLOT_L', label: 'End clearance', unit: 'mm', min: 0.5, max: 30, step: 0.1 },
       { key: 'SLOT_LIP_CHAMFER', label: 'Lip chamfer', unit: 'mm', min: 0, max: 10, step: 0.1 },
     ],
   },
@@ -91,6 +94,43 @@ export const TECH_GROUPS: readonly TechGroup[] = [
     ],
   },
 ];
+
+/** What a field points at in the 3D preview. */
+export type TechFocus = SignFocus;
+
+/**
+ * The element of the preview each parameter refers to (SPEC §12.2, "Pointing at a parameter").
+ * The frame thickness and the edge profile are here too. The "LED strip" group points at nothing.
+ */
+export const TECH_FOCUS: Readonly<Partial<Record<TechNumericKey | 'WALL' | 'EDGE_PROFILE', TechFocus>>> = {
+  CHANNEL_W: 'channelWidth',
+  CHANNEL_DEPTH: 'channelDepth',
+  FLOOR: 'floor',
+  WALL: 'housing',
+  WIRE_HOLE_D: 'endHoles',
+  WIRE_SLOT_W: 'endHoles',
+  WIRE_SLOT_L: 'endHoles',
+  SLOT_LIP_CHAMFER: 'endHoles',
+  PATH_HOLE_D: 'pathHoles',
+  PATH_HOLE_PITCH: 'pathHoles',
+  EDGE_PROFILE: 'housing',
+  CHAMFER_SIZE: 'housing',
+  CHAMFER_ANGLE: 'housing',
+  LAYER_STEP: 'housing',
+  BED_W: 'cuts',
+  BED_H: 'cuts',
+};
+
+/**
+ * Fields that only shape the old wire slot: with a round end hole (`WIRE_HOLE_D` > 0) they change
+ * nothing the customer can see, and the Tech tool hides them (SPEC §12.2).
+ */
+export const SLOT_ONLY_FIELDS: readonly TechNumericKey[] = ['WIRE_SLOT_W', 'SLOT_LIP_CHAMFER'];
+
+/** The slot fields show only when the end hole is off (0, or not a valid number above 0). */
+export function slotFieldsShown(endHole: string): boolean {
+  return !(Number(endHole) > 0);
+}
 
 export const TECH_FIELDS: readonly TechField[] = TECH_GROUPS.flatMap((group) => group.fields);
 

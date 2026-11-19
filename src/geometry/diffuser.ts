@@ -1,5 +1,6 @@
 // Press-fit diffuser on top of the channel (SPEC §3): channel minus DIFFUSER_CLEARANCE,
-// extruded by DIFFUSER_T and resting flush with the top edge.
+// extruded by DIFFUSER_T and resting flush with the top edge. With DIFFUSER_LEDGE the housing passes
+// the wider seat instead of the channel, and the diffuser rests on its step.
 import type { CrossSection, Manifold, ManifoldToplevel } from 'manifold-3d';
 import { totalHeight, type Params } from '../config';
 

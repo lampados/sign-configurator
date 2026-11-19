@@ -230,6 +230,44 @@ describe('housing', () => {
     }
   });
 
+  it('DIFFUSER_LEDGE: the diffuser is wider than the channel and rests on a step', async () => {
+    const wasm = await getManifold();
+    const ledged = { ...P, DIFFUSER_LEDGE: 0.6 };
+    const built = buildHousing(wasm, { paths: [line(80, 1)], crossings: [], unlit: [], params: ledged });
+    try {
+      expect(built.solid.status()).toBe('NoError');
+      expect(built.diffuser.status()).toBe('NoError');
+      expect(built.solid.decompose()).toHaveLength(1);
+      const lidZ = totalHeight(P) - P.DIFFUSER_T / 2;
+      const underZ = totalHeight(P) - P.DIFFUSER_T - 0.3;
+      const onStep: Vec2 = [40, P.CHANNEL_W / 2 + 0.3];
+      // On the step: diffuser at the height of the lid, wall right under it.
+      expect(await sliceArea(built.diffuser, lidZ, onStep)).toBeGreaterThan(0.01);
+      expect(await sliceArea(built.solid, lidZ, onStep)).toBeLessThan(1e-6);
+      expect(await sliceArea(built.solid, underZ, onStep)).toBeGreaterThan(0.01);
+      // Beyond the step the wall goes up to the top, and the diffuser stops.
+      const beyond: Vec2 = [40, P.CHANNEL_W / 2 + 0.6 + 0.4];
+      expect(await sliceArea(built.solid, lidZ, beyond)).toBeGreaterThan(0.01);
+      expect(await sliceArea(built.diffuser, lidZ, beyond)).toBeLessThan(1e-6);
+    } finally {
+      built.solid.delete();
+      built.diffuser.delete();
+    }
+  });
+
+  it('DIFFUSER_LEDGE wider than the wall allows: at least 0.8 mm of wall stays on top', async () => {
+    const wasm = await getManifold();
+    const built = buildHousing(wasm, { paths: [line(80, 1)], crossings: [], unlit: [], params: { ...P, DIFFUSER_LEDGE: 2 } });
+    try {
+      const lidZ = totalHeight(P) - P.DIFFUSER_T / 2;
+      expect(await sliceArea(built.solid, lidZ, [40, P.CHANNEL_W / 2 + P.WALL - 0.4])).toBeGreaterThan(0.01);
+      expect(built.solid.decompose()).toHaveLength(1);
+    } finally {
+      built.solid.delete();
+      built.diffuser.delete();
+    }
+  });
+
   it("at a crossing the channel continues and the floor does not", async () => {
     const wasm = await getManifold();
     const built = buildHousing(wasm, {

@@ -113,6 +113,7 @@ recomputes `MIN_LETTER_H` from hinge and pitch.
 | `CROSSING_GAP` | 3.0 | interruption of the strip per side at a crossing |
 | `DIFFUSER_T` | 1.2 | diffuser thickness (press fit on top of the channel) |
 | `DIFFUSER_CLEARANCE` | 0.15 | |
+| `DIFFUSER_LEDGE` | 0 | width of the step the diffuser rests on: the top `DIFFUSER_T` of the channel, and the diffuser, are this much wider on every side. 0: no step, friction alone. The seat stays `MIN_TOP_WALL` (0.8) away from the outline and from the outer chamfer; with an inner chamfer it is ignored, with a warning. Tech menu "Diffuser ledge" |
 | `MIN_LETTER_H` | `2·R_MIN` | derived from the strip profile: diameter of the tightest bend |
 | `CUSP_MODE` | `"split"` | `"split"` cuts the segment at the cusp; `"warn"` only reports it |
 | `I_DOT_MODE` | `"dot"` | dot under R_MIN: `"dot"` segment with two holes, `"dash"` dash with slots, `"omit"` excludes it, `"unlit"` raised shape with no strip |
@@ -920,6 +921,19 @@ cover it. On opening no sheet is open.
   screen (64 px; 76 px on desktop), with seven large tools (≥ 48 px, icon + label) one
   below the other, centred. Each with `data-tool`: `text` "Text", `font` "Font", `size` "Size", `color` "Color", `image`
   "Image", `plate` "Backdrop", `tech` "Tech", `more` "More".
+- **Pointing at a parameter.** In the Tech tool, the mouse over a parameter, or the focus in its field
+  (on a phone: a tap), highlights in the preview exactly what the parameter refers to, and nothing more
+  (`TECH_FOCUS` in `src/ui/techParams.ts`, `scene.setFocus`, faces chosen by `src/viewer/housingParts.ts`):
+  the channel width draws a double arrow across the channel, from wall to wall at the highest LED, over the
+  view as it is; the channel depth tints only the inner walls of the channel; the floor thickness tints the
+  floor of the channel and the walls of the holes through it; frame, edges and layer height tint the housing;
+  the wire parameters ring the end holes or the path holes; the plate size tints the print-bed cuts. For walls,
+  floor and holes the sign shows switched off and without the diffuser. The "LED strip" group (strip, density,
+  voltage, controller, box) highlights nothing. The highlight is temporary: it goes away with the pointer or
+  the focus, it never enters the order or the photo for the shop.
+- **Wire fields.** `WIRE_SLOT_L` is labelled "End clearance": the stretch without strip at each end, with the
+  hole halfway. `WIRE_SLOT_W` and `SLOT_LIP_CHAMFER` only shape the old slot: the Tech tool hides them while
+  `WIRE_HOLE_D` is above 0 (`SLOT_ONLY_FIELDS`). Hidden, they keep their value and still enter the order.
 - **Everything in the open.** The tools do not alternate: they all sit in the same "Configure" sheet
   (`data-sheet="config"`), one below the other, each in a collapsible section
   (`details.section[data-section=…]`, open at start, header with an arrow). The bar is

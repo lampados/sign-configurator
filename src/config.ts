@@ -478,6 +478,11 @@ export interface Params {
   CROSSING_GAP: number;
   DIFFUSER_T: number;
   DIFFUSER_CLEARANCE: number;
+  /**
+   * Width of the step the diffuser rests on, mm: the top `DIFFUSER_T` of the channel is this much wider
+   * on every side, and the diffuser with it. 0: no step, the diffuser is held by friction alone.
+   */
+  DIFFUSER_LEDGE: number;
   EDGE_PROFILE: EdgeProfile;
   /** Vertical height of the chamfer; ≤ CHANNEL_DEPTH */
   CHAMFER_SIZE: number;
@@ -542,6 +547,7 @@ export const DEFAULT_PARAMS: Readonly<Params> = Object.freeze({
   CROSSING_GAP: 3.0,
   DIFFUSER_T: 1.2,
   DIFFUSER_CLEARANCE: 0.15,
+  DIFFUSER_LEDGE: 0,
   EDGE_PROFILE: 'square',
   CHAMFER_SIZE: 1.5,
   CHAMFER_ANGLE: 45,

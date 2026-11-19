@@ -133,7 +133,8 @@ describe('edge profile on the test parts', () => {
           r.manifold.delete();
         }
       }
-    });
+    // Three profiles of the largest part: about 3 s alone, over the default 5 s when the whole suite runs.
+    }, 30_000);
   }
 
   it('2 variants with a "both" chamfer: both manifold with the same genus', async () => {

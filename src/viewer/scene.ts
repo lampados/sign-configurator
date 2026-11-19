@@ -13,6 +13,7 @@ import {
   LineDashedMaterial,
   LineSegments,
   Mesh,
+  MeshBasicMaterial,
   MeshStandardMaterial,
   MOUSE,
   OrthographicCamera,
@@ -34,6 +35,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import type { StlMesh } from '../export/stl';
 import type { LightPoint } from '../geometry/lights';
 import type { PlateMaterial } from '../geometry/plate';
+import { PART_FLOOR, PART_OTHER, PART_WALL, classifyHousing, widthArrow, type ChannelInfo } from './housingParts';
 import {
   createDiffuserGlowMaterial,
   createEmitterMaterial,
@@ -49,6 +51,23 @@ import {
 
 export type PreviewMode = 'spenta' | 'accesa' | 'senza diffusore';
 
+/**
+ * What a Tech field points at in the preview (SPEC §12.2, "Pointing at a parameter"), and nothing more
+ * than that: `housing` tints the frame, `channelWidth` draws an arrow across the channel, `channelDepth`
+ * tints the inner walls of the channel, `floor` tints the floor and the walls of its holes, `endHoles` and
+ * `pathHoles` ring the wire holes, `cuts` tints the print-bed cuts.
+ */
+export type SignFocus = 'housing' | 'channelWidth' | 'channelDepth' | 'floor' | 'endHoles' | 'pathHoles' | 'cuts';
+
+/** A wire hole to ring when its Tech field is pointed at: centre, radius, and which kind. */
+export interface SignMarker {
+  kind: 'end' | 'path';
+  x: number;
+  y: number;
+  z: number;
+  r: number;
+}
+
 export interface SignViewData {
   housing: StlMesh;
   diffuser: StlMesh;
@@ -59,6 +78,10 @@ export interface SignViewData {
   plate?: { mesh: StlMesh; material: PlateMaterial } | null;
   /** Cuts for the print bed (SPEC §14): vertical segments at constant x, over the sign. */
   cuts?: readonly { x: number; y0: number; y1: number; z: number }[];
+  /** Wire holes in the channel floor, for `setFocus`. */
+  markers?: readonly SignMarker[];
+  /** The channel, to tell its walls and floor apart in the housing, for `setFocus`. */
+  channel?: ChannelInfo;
 }
 
 export interface SignScene {
@@ -75,6 +98,8 @@ export interface SignScene {
   setExposure(value: number): void;
   /** Radius of the halo. The bloom threshold does not go down. */
   setHalo(radius: number): void;
+  /** Highlights what a Tech field refers to; `null` goes back to the customer's view. Not in the snapshot. */
+  setFocus(focus: SignFocus | null): void;
   /**
    * Photo of the sign in the standard view (from the front, lit, with the diffuser, 4:3), as a JPEG
    * data URL. It does not depend on how the customer rotated or switched off the preview, which stays as it was.
@@ -91,6 +116,97 @@ const FRONT_LIMIT = (40 * Math.PI) / 180;
 /** Beyond this angle between two faces the edge stays sharp in the shading. */
 const CREASE_ANGLE = (35 * Math.PI) / 180;
 const WALL = 0xe6e0d6;
+const HOUSING = 0x141414;
+/** Colour of whatever a Tech field points at. */
+const FOCUS = 0x35c8ff;
+const RING_SEGMENTS = 28;
+
+/** Flat rings around the holes, in the XY plane: they are drawn over the sign. */
+function ringsGeometry(markers: readonly SignMarker[]): BufferGeometry {
+  const positions = new Float32Array(markers.length * RING_SEGMENTS * 18);
+  let o = 0;
+  for (const m of markers) {
+    const inner = Math.max(m.r, 0.5);
+    const outer = inner + Math.max(1, inner * 0.4);
+    for (let s = 0; s < RING_SEGMENTS; s++) {
+      const a0 = (s / RING_SEGMENTS) * Math.PI * 2;
+      const a1 = ((s + 1) / RING_SEGMENTS) * Math.PI * 2;
+      const c0 = Math.cos(a0), s0 = Math.sin(a0), c1 = Math.cos(a1), s1 = Math.sin(a1);
+      positions.set(
+        [
+          m.x + inner * c0, m.y + inner * s0, m.z,
+          m.x + outer * c0, m.y + outer * s0, m.z,
+          m.x + outer * c1, m.y + outer * s1, m.z,
+          m.x + inner * c0, m.y + inner * s0, m.z,
+          m.x + outer * c1, m.y + outer * s1, m.z,
+          m.x + inner * c1, m.y + inner * s1, m.z,
+        ],
+        o,
+      );
+      o += 18;
+    }
+  }
+  const geometry = new BufferGeometry();
+  geometry.setAttribute('position', new BufferAttribute(positions, 3));
+  return geometry;
+}
+
+/** A flat double arrow from `a` to `b` in the XY plane; `grow` fattens it, for the outline under it. */
+function arrowGeometry(a: readonly [number, number], b: readonly [number, number], z: number, grow: number): BufferGeometry {
+  const length = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1;
+  const ux = (b[0] - a[0]) / length;
+  const uy = (b[1] - a[1]) / length;
+  const head = Math.min(length * 0.32, 4);
+  const halfHead = head * 0.55 + grow;
+  const halfShaft = Math.max(head * 0.16, 0.25) + grow;
+  const at = (along: number, across: number): [number, number, number] => [
+    a[0] + ux * along - uy * across,
+    a[1] + uy * along + ux * across,
+    z,
+  ];
+  const tip0 = -grow * 1.6;
+  const tip1 = length + grow * 1.6;
+  const neck0 = head + grow * 0.2;
+  const neck1 = length - head - grow * 0.2;
+  const triangles = [
+    at(tip0, 0), at(neck0, -halfHead), at(neck0, halfHead),
+    at(tip1, 0), at(neck1, halfHead), at(neck1, -halfHead),
+    at(neck0, -halfShaft), at(neck1, -halfShaft), at(neck1, halfShaft),
+    at(neck0, -halfShaft), at(neck1, halfShaft), at(neck0, halfShaft),
+  ];
+  const geometry = new BufferGeometry();
+  geometry.setAttribute('position', new BufferAttribute(new Float32Array(triangles.flat()), 3));
+  return geometry;
+}
+
+/**
+ * Geometry of the housing in three groups, one per material: the rest, the inner walls of the
+ * channel, the floor. A Tech field tints only its own group.
+ */
+function housingGeometry(mesh: StlMesh, channel: ChannelInfo | undefined): BufferGeometry {
+  const triangles = Math.floor(mesh.triVerts.length / 3);
+  const parts = channel ? classifyHousing(mesh, channel) : new Uint8Array(triangles);
+  const sorted = new Uint32Array(triangles * 3);
+  const counts = [0, 0, 0];
+  let o = 0;
+  for (const part of [PART_OTHER, PART_WALL, PART_FLOOR]) {
+    for (let t = 0; t < triangles; t++) {
+      if (parts[t] !== part) continue;
+      sorted[o++] = mesh.triVerts[t * 3]!;
+      sorted[o++] = mesh.triVerts[t * 3 + 1]!;
+      sorted[o++] = mesh.triVerts[t * 3 + 2]!;
+      counts[part]!++;
+    }
+  }
+  // The creased geometry is not indexed: three vertices per triangle, in the same order.
+  const geometry = geometryOf({ ...mesh, triVerts: sorted });
+  let start = 0;
+  counts.forEach((count, part) => {
+    if (count > 0) geometry.addGroup(start * 3, count * 3, part);
+    start += count;
+  });
+  return geometry;
+}
 
 function cssHex(color: number): string {
   return `#${color.toString(16).padStart(6, '0')}`;
@@ -185,11 +301,14 @@ export function mountSignScene(host: HTMLElement, options?: { background?: numbe
   composer.addPass(new OutputPass());
 
   const housingMaterial = new MeshStandardMaterial({
-    color: 0x141414,
+    color: HOUSING,
     roughness: 0.78,
     metalness: 0.12,
     side: DoubleSide,
   });
+  // Same look, own colour: the inner walls of the channel and the floor (see `housingGeometry`).
+  const channelWallMaterial = housingMaterial.clone();
+  const floorMaterial = housingMaterial.clone();
   const diffuserOff = new MeshStandardMaterial({ color: 0xf7f4ef, roughness: 0.94, metalness: 0, side: DoubleSide });
   // Backdrop: black transparent acrylic (glossy smoke, the wall shows behind) or matt wood.
   const plateMaterials: Record<PlateMaterial, MeshStandardMaterial> = {
@@ -250,9 +369,29 @@ export function mountSignScene(host: HTMLElement, options?: { background?: numbe
   let plateMesh: Mesh | null = null;
   let cutLines: LineSegments | null = null;
   const cutMaterial = new LineDashedMaterial({ color: 0xffffff, dashSize: 4, gapSize: 3, depthTest: false, transparent: true, opacity: 0.9 });
+  const markerMaterial = new MeshBasicMaterial({ color: FOCUS, side: DoubleSide, depthTest: false, transparent: true, toneMapped: false });
+  const markerMeshes: Record<SignMarker['kind'], Mesh | null> = { end: null, path: null };
+  // The arrow of the channel width shows over a lit, an unlit and an open sign: dark, with a white edge.
+  const arrowMaterial = new MeshBasicMaterial({ color: 0x15131a, side: DoubleSide, depthTest: false, transparent: true, toneMapped: false });
+  const arrowEdgeMaterial = new MeshBasicMaterial({ color: 0xffffff, side: DoubleSide, depthTest: false, transparent: true, toneMapped: false });
+  let arrowMeshes: Mesh[] = [];
+  const dropArrow = (): void => {
+    for (const mesh of arrowMeshes) {
+      scene.remove(mesh);
+      mesh.geometry.dispose();
+    }
+    arrowMeshes = [];
+  };
   let lights: readonly LightPoint[] = [];
   let ledGap = 6;
   let mode: PreviewMode = 'accesa';
+  let focus: SignFocus | null = null;
+  /**
+   * The view on screen: the customer's, unless a Tech field is pointed at. The printed parts show
+   * switched off, in daylight; the width arrow and the cuts are drawn over the view as it is.
+   */
+  const shownMode = (): PreviewMode =>
+    focus === null || focus === 'cuts' || focus === 'channelWidth' ? mode : 'spenta';
   let effect: PreviewEffect = 'fisso';
   let haloRadius = DEFAULT_HALO;
   const baseColor = new Color('#ff2fd6');
@@ -347,10 +486,20 @@ export function mountSignScene(host: HTMLElement, options?: { background?: numbe
   resize();
 
   const applyMode = (): void => {
-    const on = mode === 'accesa';
-    const open = mode === 'senza diffusore';
+    const shown = shownMode();
+    const on = shown === 'accesa';
+    const open = shown === 'senza diffusore';
+    const holes = focus === 'endHoles' || focus === 'pathHoles';
+    housingMaterial.color.setHex(focus === 'housing' ? FOCUS : HOUSING);
+    channelWallMaterial.color.setHex(focus === 'housing' || focus === 'channelDepth' ? FOCUS : HOUSING);
+    floorMaterial.color.setHex(focus === 'housing' || focus === 'floor' ? FOCUS : HOUSING);
+    for (const mesh of arrowMeshes) mesh.visible = focus === 'channelWidth';
+    cutMaterial.color.setHex(focus === 'cuts' ? FOCUS : 0xffffff);
+    if (markerMeshes.end) markerMeshes.end.visible = focus === 'endHoles';
+    if (markerMeshes.path) markerMeshes.path.visible = focus === 'pathHoles';
     if (diffuserMesh) {
-      diffuserMesh.visible = !open;
+      // Walls, floor and holes are under the diffuser: it steps aside.
+      diffuserMesh.visible = !open && focus !== 'channelDepth' && focus !== 'floor' && !holes;
       diffuserMesh.material = on ? glowMaterial : diffuserOff;
     }
     emitters.visible = open && lights.length > 0;
@@ -489,9 +638,10 @@ export function mountSignScene(host: HTMLElement, options?: { background?: numbe
   renderer.setAnimationLoop((time) => {
     if (disposed) return;
     controls.update();
-    const glowing = mode !== 'spenta';
+    const shown = shownMode();
+    const glowing = shown !== 'spenta';
     if (glowing && animated() && !reducedMotion.matches) paintColors(time);
-    if (mode === 'accesa') renderGlow();
+    if (shown === 'accesa') renderGlow();
     if (glowing) composer.render();
     else renderer.render(scene, camera);
   });
@@ -528,8 +678,35 @@ export function mountSignScene(host: HTMLElement, options?: { background?: numbe
         cutLines.renderOrder = 10;
         scene.add(cutLines);
       }
+      for (const kind of ['end', 'path'] as const) {
+        const old = markerMeshes[kind];
+        if (old) {
+          scene.remove(old);
+          old.geometry.dispose();
+          markerMeshes[kind] = null;
+        }
+        const markers = (sign.markers ?? []).filter((m) => m.kind === kind);
+        if (markers.length === 0) continue;
+        const mesh = new Mesh(ringsGeometry(markers), markerMaterial);
+        mesh.renderOrder = 11;
+        mesh.visible = false;
+        scene.add(mesh);
+        markerMeshes[kind] = mesh;
+      }
+      dropArrow();
+      const arrow = sign.channel ? widthArrow(sign.lights, sign.channel.width) : null;
+      if (arrow && sign.channel) {
+        const z = sign.channel.top + 0.5;
+        const edge = new Mesh(arrowGeometry(arrow.a, arrow.b, z, 0.45), arrowEdgeMaterial);
+        const body = new Mesh(arrowGeometry(arrow.a, arrow.b, z, 0), arrowMaterial);
+        edge.renderOrder = 11;
+        body.renderOrder = 12;
+        edge.visible = body.visible = false;
+        scene.add(edge, body);
+        arrowMeshes = [edge, body];
+      }
       ledGap = Math.max(0.4, sign.ledGapMm);
-      housingMesh = new Mesh(geometryOf(sign.housing), housingMaterial);
+      housingMesh = new Mesh(housingGeometry(sign.housing, sign.channel), [housingMaterial, channelWallMaterial, floorMaterial]);
       diffuserMesh = new Mesh(geometryOf(sign.diffuser), diffuserOff);
       scene.add(housingMesh, diffuserMesh);
       if (sign.plate) {
@@ -572,15 +749,23 @@ export function mountSignScene(host: HTMLElement, options?: { background?: numbe
       haloRadius = Math.min(0.6, Math.max(0, radius));
       applyMode();
     },
+    setFocus(next: SignFocus | null): void {
+      if (next === focus) return;
+      focus = next;
+      applyMode();
+      if (shownMode() === 'accesa') renderGlow();
+    },
     snapshot(): string | null {
       if (!viewBox || !diffuserMesh) return null;
       const savedMode = mode;
+      const savedFocus = focus;
       const savedPosition = camera.position.clone();
       const savedTarget = controls.target.clone();
       const savedRatio = renderer.getPixelRatio();
       const savedCuts = cutLines?.visible ?? false;
       try {
         mode = 'accesa';
+        focus = null;
         applyMode();
         // The cuts for the print bed are a help for whoever prints, they are not part of the product.
         if (cutLines) cutLines.visible = false;
@@ -608,6 +793,7 @@ export function mountSignScene(host: HTMLElement, options?: { background?: numbe
       } finally {
         if (cutLines) cutLines.visible = savedCuts;
         mode = savedMode;
+        focus = savedFocus;
         applyMode();
         renderer.setPixelRatio(savedRatio);
         resize();
@@ -629,6 +815,14 @@ export function mountSignScene(host: HTMLElement, options?: { background?: numbe
       plateMesh?.geometry.dispose();
       cutLines?.geometry.dispose();
       cutMaterial.dispose();
+      markerMeshes.end?.geometry.dispose();
+      markerMeshes.path?.geometry.dispose();
+      markerMaterial.dispose();
+      dropArrow();
+      arrowMaterial.dispose();
+      arrowEdgeMaterial.dispose();
+      channelWallMaterial.dispose();
+      floorMaterial.dispose();
       splat.geometry.dispose();
       housingMaterial.dispose();
       diffuserOff.dispose();

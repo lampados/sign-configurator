@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { DEFAULT_PARAMS, GENERATOR_VERSION, resolveParams, STRIP_PROFILES } from '../src/config';
 import { migrateOrder } from '../src/order/schema';
 import { decodeShare, encodeShare } from '../src/order/share';
-import { DEFAULT_LED_DENSITY, LED_DENSITIES, TECH_FIELDS, ledDensityOptions, stripOptions, techFieldInvalid, techParams } from '../src/ui/techParams';
+import { DEFAULT_LED_DENSITY, LED_DENSITIES, TECH_FIELDS, TECH_FOCUS, slotFieldsShown, ledDensityOptions, stripOptions, techFieldInvalid, techParams } from '../src/ui/techParams';
 import { lightPointsFromChains } from '../src/geometry/lights';
 import type { Point } from '../src/geometry/rasterize';
 
@@ -10,6 +10,19 @@ describe('technical parameters of the customer page', () => {
   it('default values write no overrides', () => {
     const numbers = Object.fromEntries(TECH_FIELDS.map((f) => [f.key, String(DEFAULT_PARAMS[f.key])]));
     expect(techParams({ numbers, edgeProfile: DEFAULT_PARAMS.EDGE_PROFILE })).toEqual({});
+  });
+
+  it('channel fields point at their own element, the LED strip group at nothing', () => {
+    expect(TECH_FOCUS.CHANNEL_W).toBe('channelWidth');
+    expect(TECH_FOCUS.CHANNEL_DEPTH).toBe('channelDepth');
+    expect(TECH_FOCUS.FLOOR).toBe('floor');
+    for (const key of ['STRIP_W', 'STRIP_T', 'HINGE_PITCH', 'HINGE_MAX_DEG'] as const) expect(TECH_FOCUS[key], key).toBeUndefined();
+  });
+
+  it('the slot fields show only without a round end hole', () => {
+    expect(slotFieldsShown('8')).toBe(false);
+    expect(slotFieldsShown('0')).toBe(true);
+    expect(slotFieldsShown('')).toBe(true);
   });
 
   it('writes only changed and valid values', () => {

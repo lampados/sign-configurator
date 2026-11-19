@@ -45,8 +45,8 @@ import { PLATE_CORNER_R_MAX, PLATE_CORNER_R_MIN, PLATE_MARGIN_MAX, PLATE_MARGIN_
 import { SIZES } from './sizes';
 import { PLUGS, plugOf } from './plugs';
 import { stripSvg } from './stripSvg';
-import { DEFAULT_LED_DENSITY, LED_DENSITIES, EDGE_PROFILES, TECH_FIELDS, TECH_GROUPS, ledDensityOptions, voltageOptions, controllerOptions, boxOptions, stripOptions, techFieldInvalid, techParams, type TechNumericKey } from './techParams';
-import { mountSignScene, type PreviewEffect, type PreviewMode } from '../viewer/scene';
+import { DEFAULT_LED_DENSITY, LED_DENSITIES, EDGE_PROFILES, SLOT_ONLY_FIELDS, slotFieldsShown, TECH_FIELDS, TECH_FOCUS, TECH_GROUPS, ledDensityOptions, voltageOptions, controllerOptions, boxOptions, stripOptions, techFieldInvalid, techParams, type TechFocus, type TechNumericKey } from './techParams';
+import { mountSignScene, type PreviewEffect, type PreviewMode, type SignMarker } from '../viewer/scene';
 import { createGenerator } from '../worker/api';
 
 const WALL_MIN_MM = 1.6;
@@ -119,7 +119,7 @@ const techGroups = TECH_GROUPS.map((group) => `
     </label>
     <div id="strip-figure" class="strip-figure">${stripSvg(DEFAULT_STRIP)}</div>` : ''}
     ${group.fields.map((field) => `
-    <label class="tech-field">
+    <label class="tech-field"${TECH_FOCUS[field.key] ? ` data-focus="${TECH_FOCUS[field.key]}"` : ''}>
       <span>${field.label} <small>${field.key}</small></span>
       <span class="tech-input">
         <input name="tech-${field.key}" type="number" inputmode="decimal" min="${field.min}" max="${field.max}" step="${field.step}" value="${DEFAULT_PARAMS[field.key]}">
@@ -152,7 +152,7 @@ const techGroups = TECH_GROUPS.map((group) => `
       </select>
     </label>` : ''}
     ${group.id === 'channel' ? `
-    <label class="tech-field">
+    <label class="tech-field" data-focus="${TECH_FOCUS.WALL}">
       <span>${S.frame.label} <small>WALL</small></span>
       <span class="tech-input">
         <input name="wallMm" type="number" inputmode="decimal" min="${WALL_MIN_MM}" max="${WALL_MAX_MM}" step="0.1" value="${DEFAULT_PARAMS.WALL}">
@@ -160,7 +160,7 @@ const techGroups = TECH_GROUPS.map((group) => `
       </span>
     </label>` : ''}
     ${group.id === 'edges' ? `
-    <label class="tech-field">
+    <label class="tech-field" data-focus="${TECH_FOCUS.EDGE_PROFILE}">
       <span>${S.tech.profile} <small>EDGE_PROFILE</small></span>
       <select name="tech-EDGE_PROFILE">
         ${EDGE_PROFILES.map((p) => `<option value="${p.value}"${p.value === DEFAULT_PARAMS.EDGE_PROFILE ? ' selected' : ''}>${p.label}</option>`).join('')}
@@ -972,6 +972,7 @@ function closeSheet(): void {
   shell.dataset.sheet = '';
   markTool(null);
   openRequest.setAttribute('aria-pressed', 'false');
+  clearTechFocus();
 }
 
 function toggleSheet(pane: string): void {
@@ -1001,6 +1002,72 @@ scene.setMode('accesa');
 scene.setEffect('fisso');
 
 let previewDiffuser = true;
+
+// Pointing at a Tech parameter (mouse over it, or focus in its field: on a phone, a tap) highlights
+// in the preview what it refers to (SPEC §12.2). The mouse wins over the field being edited.
+let hoverFocus: TechFocus | null = null;
+let fieldFocus: TechFocus | null = null;
+
+function showTechFocus(): void {
+  const focus = hoverFocus ?? fieldFocus;
+  scene.setFocus(focus);
+  stage.dataset.focus = focus ?? '';
+}
+
+/** The wire holes of the housing, as rings for the preview: the ends of the strip pieces and the path holes. */
+function holeMarkers(
+  result: {
+    slots: readonly { points: readonly (readonly [number, number])[]; d?: number }[];
+    pathHoles: readonly { x: number; y: number; d: number }[];
+  },
+  z: number,
+): SignMarker[] {
+  const markers: SignMarker[] = [];
+  for (const slot of result.slots) {
+    if (slot.points.length === 0) continue;
+    let x = 0;
+    let y = 0;
+    for (const p of slot.points) {
+      x += p[0];
+      y += p[1];
+    }
+    x /= slot.points.length;
+    y /= slot.points.length;
+    // A slot that is not round is ringed at its farthest corner.
+    const reach = Math.max(...slot.points.map((p) => Math.hypot(p[0] - x, p[1] - y)));
+    markers.push({ kind: 'end', x, y, z, r: slot.d !== undefined ? slot.d / 2 : reach });
+  }
+  for (const hole of result.pathHoles) markers.push({ kind: 'path', x: hole.x, y: hole.y, z, r: hole.d / 2 });
+  return markers;
+}
+
+function clearTechFocus(): void {
+  hoverFocus = null;
+  fieldFocus = null;
+  showTechFocus();
+}
+
+for (const field of document.querySelectorAll<HTMLElement>('.tech-field[data-focus]')) {
+  const focus = field.dataset.focus as TechFocus;
+  field.addEventListener('pointerenter', (event) => {
+    if (event.pointerType !== 'mouse') return;
+    hoverFocus = focus;
+    showTechFocus();
+  });
+  field.addEventListener('pointerleave', () => {
+    if (hoverFocus === null) return;
+    hoverFocus = null;
+    showTechFocus();
+  });
+  field.addEventListener('focusin', () => {
+    fieldFocus = focus;
+    showTechFocus();
+  });
+  field.addEventListener('focusout', () => {
+    fieldFocus = null;
+    showTechFocus();
+  });
+}
 
 function applyPreviewMode(): void {
   const on = diffuserOn();
@@ -1348,6 +1415,14 @@ async function showSign(): Promise<void> {
             z: resolveParams(order.params).FLOOR + resolveParams(order.params).CHANNEL_DEPTH + 1,
           }))
         : [],
+      markers: holeMarkers(result, resolveParams(order.params).FLOOR),
+      channel: {
+        centerlines: result.centerlines.map((line) => line.points),
+        floor: resolveParams(order.params).FLOOR,
+        width: resolveParams(order.params).CHANNEL_W,
+        wall: resolveParams(order.params).WALL,
+        top: resolveParams(order.params).FLOOR + resolveParams(order.params).CHANNEL_DEPTH,
+      },
     });
     if (result.plate) {
       plateSize.hidden = false;
@@ -1526,6 +1601,13 @@ function rememberTechLinks(): void {
 }
 rememberTechLinks();
 
+/** With a round end hole the fields of the old slot are hidden: they keep their value. */
+function syncSlotFields(): void {
+  const shown = slotFieldsShown(techNumberInputs.get('WIRE_HOLE_D')!.value);
+  for (const key of SLOT_ONLY_FIELDS) techNumberInputs.get(key)!.closest<HTMLElement>('.tech-field')!.hidden = !shown;
+}
+syncSlotFields();
+
 function onTechChange(): void {
   // `lastTech` stays at the previous values for the whole pass: this way the channel just moved by the
   // strip also counts as changed for the next link, and the slot follows it.
@@ -1544,6 +1626,7 @@ function onTechChange(): void {
     const input = techNumberInputs.get(field.key)!;
     input.setAttribute('aria-invalid', techFieldInvalid(field, input.value) ? 'true' : 'false');
   }
+  syncSlotFields();
   invalidateStl();
   schedule();
 }
@@ -1918,6 +2001,7 @@ function applyOrder(order: SignOrderV4): void {
     input.value = String(params[field.key] ?? DEFAULT_PARAMS[field.key]);
     input.setAttribute('aria-invalid', techFieldInvalid(field, input.value) ? 'true' : 'false');
   }
+  syncSlotFields();
   rememberTechLinks();
   setSelect(techProfileInput, params.EDGE_PROFILE ?? DEFAULT_PARAMS.EDGE_PROFILE, DEFAULT_PARAMS.EDGE_PROFILE);
   const density = params.LED_PER_M ?? DEFAULT_PARAMS.LED_PER_M;

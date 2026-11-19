@@ -6,7 +6,7 @@ import { HOLE_CLEARANCE_MM, cornerJoints, crossingAhead, type CornerJoint } from
 import { totalHeight, type Params } from '../config';
 import type { ChainPath } from './chain';
 import { buildDiffuser } from './diffuser';
-import { planChamfer, profiledBody } from './edgeProfile';
+import { MIN_TOP_WALL, planChamfer, profiledBody } from './edgeProfile';
 import {
   anchorBossSolid,
   anchorHoleSolid,
@@ -589,6 +589,23 @@ export function buildHousing(wasm: ManifoldToplevel, request: HousingRequest): H
       body = grown;
     }
     const pocket = keep(channel.extrude(p.CHANNEL_DEPTH + 1).translate([0, 0, p.FLOOR]));
+    // Seat of the diffuser (DIFFUSER_LEDGE): the top DIFFUSER_T of the channel grows outwards, and the
+    // diffuser rests on the step. It never comes closer than MIN_TOP_WALL to the outline (or to the
+    // outer chamfer), so where the wall is already thin the step narrows instead of opening the wall.
+    let seat = channel;
+    const ledge = Math.max(0, p.DIFFUSER_LEDGE);
+    if (ledge > 0 && p.DIFFUSER_T > 0) {
+      if (chamfer.height > 0 && chamfer.inner) {
+        warnings.push('DIFFUSER_LEDGE ignored: the inner chamfer already widens the top of the channel.');
+      } else {
+        const grown = keep(channel.offset(ledge, 'Round', 2, 32));
+        const margin = MIN_TOP_WALL + (chamfer.height > 0 && chamfer.outer ? chamfer.run : 0);
+        const limit = keep(outline.offset(-margin, 'Round', 2, 32));
+        const inside = keep(grown.intersect(limit));
+        seat = keep(inside.add(channel));
+      }
+    }
+    const seatCut = seat !== channel ? keep(seat.extrude(p.DIFFUSER_T + 1).translate([0, 0, height - p.DIFFUSER_T])) : null;
     const anchorCuts = anchors
       .filter(() => p.ANCHOR_HOLE_D > 0)
       .map((hole) => keep(anchorHoleSolid(wasm, hole, p)));
@@ -596,7 +613,7 @@ export function buildHousing(wasm: ManifoldToplevel, request: HousingRequest): H
     const cable = cableAt && p.CABLE_HOLE_D > 0 ? keep(cableHoleSolid(wasm, cableAt, p)) : null;
     const dotCuts = dotWires.map((hole) => keep(floorHole(wasm, [hole.x, hole.y], p.DOT_WIRE_HOLE_D, p.FLOOR)));
     const pathCuts = pathHoles.map((hole) => keep(floorHole(wasm, [hole.x, hole.y], hole.d, p.FLOOR)));
-    const cuts = [pocket, ...anchorCuts, ...slotCuts, ...pocketCuts, ...dotCuts, ...pathCuts, ...(cable ? [cable] : [])];
+    const cuts = [pocket, ...(seatCut ? [seatCut] : []), ...anchorCuts, ...slotCuts, ...pocketCuts, ...dotCuts, ...pathCuts, ...(cable ? [cable] : [])];
     let solid = body;
     if (cuts.length === 1) solid = Manifold.difference([body, cuts[0]!]);
     else if (cuts.length > 1) {
@@ -617,7 +634,7 @@ export function buildHousing(wasm: ManifoldToplevel, request: HousingRequest): H
     const tracked = temps.indexOf(solid);
     if (tracked >= 0) temps.splice(tracked, 1);
 
-    const diffuser = buildDiffuser(wasm, channel, p);
+    const diffuser = buildDiffuser(wasm, seat, p);
 
     return {
       solid,
