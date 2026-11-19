@@ -9,58 +9,45 @@ The signs are driven by ESP32 controllers running [WLED](https://kno.wled.ge/), 
 firmware for addressable LEDs: colours and effects are set from the WLED interface. Ciao is an
 independent project and is not affiliated with or endorsed by WLED.
 
+## Run it locally
 
-## Download and request counters (optional)
+You need [Node.js](https://nodejs.org/) 22 or newer and git.
 
-The Order panel can show how many times **Download STL** and **Send request** have been used
-(for example "123 downloads · 12 requests so far"). The counter is anonymous: one row per click with
-its type and time, no IP address, no cookies, no personal data.
-
-It is off until you connect a database:
-
-1. In Cloudflare, create a D1 database (any name, for example `sign-stats`).
-2. Open its console and run `migrations/0001_events.sql`.
-3. In your Pages project go to Settings → Bindings, add a D1 binding named `STATS` that points to
-   that database, then redeploy.
-
-Without the `STATS` binding nothing is counted and the line never appears. Each total is shown only
-from `STATS_MIN_SHOWN` (in `src/config.ts`, default 10) upwards. Endpoints: `POST /api/event`,
-`GET /api/stats` (see SPEC §14). Totals per day:
-
-```sql
-SELECT substr(ts, 1, 10) AS day, type, COUNT(*) AS n FROM events GROUP BY day, type ORDER BY day DESC;
+```
+git clone https://github.com/lampados/sign-configurator.git
+cd sign-configurator
+npm install
+npm run dev
 ```
 
-## Your shop behind "Send request" (optional)
+`npm run dev` prints a local address (usually `http://localhost:5173/`): open it and the
+configurator is there, with live reload while you edit. Everything runs in the browser; no server
+or account is needed.
 
-"Send request" saves the design and takes the customer to the cart of a WooCommerce shop, where
-they enter their contact and shipping details. The shop is not written in the code: it comes from two
-build variables.
+| Command | What it does |
+|---|---|
+| `npm run dev` | Development server with live reload |
+| `npm run build` | Type check, then build every page into `dist/` |
+| `npm run build:public` | Build only the pages that go online (`index.html`, `parts.html`) |
+| `npm run preview` | Serve the built `dist/` locally, under `/sign-configurator/` |
+| `npm test` | Unit tests (`vitest`) |
+| `npm run check` | Everything before a pull request: types, unit tests, build, browser tests |
 
-| Variable | Example | Meaning |
-|---|---|---|
-| `VITE_SHOP_URL` | `https://shop.example.com` | Address of the shop |
-| `VITE_SHOP_PRODUCT_ID` | `123` | Generic product the design is attached to |
+The browser tests use Playwright. Install its browser once:
 
-- On Cloudflare Pages: Settings → Variables and secrets, for both Production and Preview, then
-  redeploy (they are read at build time).
-- Locally: copy `.env.example` to `.env.local`.
+```
+npx playwright install chromium
+```
 
-Without them the "Send request" button does not appear and the page only offers "Download STL", so
-a fork never sends its visitors to someone else's shop.
+Pages: `index.html` is the configurator, `parts.html` the open parts list. `bend-test.html` (test
+pieces for the LED strip) and `spec.html` (the specification, from `SPEC.md`) are for local use.
 
-## A coffee for whoever runs the site (optional)
+### Optional features
 
-The page can invite visitors to support the project: a line under the name, and one under
-"Download STL" for those who print the sign themselves. The link comes from one build variable,
-set like the shop's.
-
-| Variable | Example | Meaning |
-|---|---|---|
-| `VITE_SUPPORT_URL` | `https://ko-fi.com/yourname` | Your Ko-fi, Buy Me a Coffee or similar page |
-
-Without it neither line appears. The Sponsor button of the repository is separate: it is set in
-`.github/FUNDING.yml`.
+A local copy only offers "Download STL". The "Send request" button, the download counters and the
+"Offer me a coffee" link are off until you configure them: copy `.env.example` to `.env.local` and
+fill it in. `.env.example` explains each variable; SPEC §14–16 describes how they work and what a
+hosted copy needs.
 
 ## License
 GPL-3.0-or-later. Fonts in `public/fonts` keep their own licenses.
